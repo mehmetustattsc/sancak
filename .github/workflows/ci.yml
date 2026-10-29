@@ -36,6 +36,7 @@ jobs:
           python3 tests/landscape.py
           python3 tests/endless.py
           python3 tests/diplomacy.py
+          python3 tests/legends.py
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web

@@ -16,7 +16,9 @@ Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, i
 | Tur | Oyuncu hamlelerini yapar, "Devam et" der; rakipler sırayla oynar (izle, hızlandır ya da atla) |
 | Birlik | Her hücrede tek birlik, can çubuğu, seviye (▲). Kılıçlı > Atlı > Okçu > Kılıçlı (×1,5). Kendi birliklerinin içinden geçilir |
 | Diplomasi | Savaş ya da ittifak (10 tur, en fazla 2 müttefik). Müttefike saldırılmaz, içinden geçilir; boş şehrine girmek ihanettir (8 tur güvensizlik). Pazarlık masası: altın, gıda, demir, şehir/kale takası (başkent hariç). Şehirlerin %35'ini geçen oyuncuya karşı botlar birleşir. Bağlı krallık: gücü %40'ın altında, en fazla 2 şehri kalmış ülke altın karşılığında bütünüyle katılır |
-| Moral | Karşılıklı iki yanda düşman: kıskaç −%20; iki kıskaç ya da 4 düşman: −%30; her yan kapalı: çevrili −%45 (saldırı ve savunma) |
+| Moral | Düşüş (mavi ok): kıskaç −%20; iki kıskaç ya da 4 düşman −%30 (iki ok); çevrili −%45. Yükseliş (sarı ok): yanında 2 dost birlik +%10, son turda düşman yok ettiyse +%10 |
+| Efsaneler | 8 tarihî komutan, başarıyla açılır, her çağda kullanılır; en yüksek rütbe ve özel yetenek; yaralanınca 5 tur dinlenir. Sefere en fazla 4 general |
+| Senaryo | Zorluk Kolay/Normal/Zor (madalya ×0,75/1/1,5); Saf savaş seçilirse diplomasi kapalı; her ilhak sonrakini %25 pahalılaştırır |
 | Saldırı | Saldıran yerinde kalır; boşalan hücreye başka birlik sürülür. Atlı düşmanı yok ettikçe yeniden saldırır ve 1 hücre daha gider. Nakliyedeki birlik karaya %60 güçle çıkarma saldırısı yapar |
 | Ordu sınırı | 2 + şehir başına 2 + kale başına 1 (kuleler hariç) |
 | Karargâh | Madalyayla kalıcı geliştirme: birlik türleri (+%6/sv), kule (+%8/sv), hazine (+%10 altın/sv), tarım (+1 gıda/tarla), savaş sandığı (+40 altın/sv). Sadece oyuncuya |

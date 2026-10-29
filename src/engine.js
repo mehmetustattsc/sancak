@@ -105,8 +105,48 @@ var SKILLS = {
   kalkan:  { name: 'Kalkan Duvarı', desc: 'Birlik %25 daha az hasar alır.' },
   isabet:  { name: 'İsabetli Atış', desc: 'Okçu ise menzil +1; diğer birliklerde saldırı +%10.' },
   akinci:  { name: 'Akıncı', desc: 'Birlik her tur +1 hücre fazla hareket eder.' },
+  sifa:      { name: 'Şifa', desc: 'Birlik her tur nerede olursa olsun +25 can kazanır.', legend: 1 },
+  bozkir:    { name: 'Bozkır Fırtınası', desc: '+1 hareket; düşman yok edince birlik 20 can kazanır.', legend: 1 },
+  dahi:      { name: 'Dahi', desc: '2 hücre çevresindeki bütün dost birliklere saldırı +%15.', legend: 1 },
+  feth:      { name: 'Fetih', desc: 'Şehir ve kaleye saldırırken surların savunma bonusu işlemez.', legend: 1 },
+  derya:     { name: 'Derya Beyi', desc: 'Denizde +1 hareket ve saldırı +%30; çıkarma cezası yok.', legend: 1 },
+  pusu:      { name: 'Pusu', desc: 'Saldırdığında düşman karşılık veremez.', legend: 1 },
+  sarsilmaz: { name: 'Sarsılmaz', desc: 'Birliğin morali hiç düşmez, hep coşkuludur (+%10).', legend: 1 },
+  korku:     { name: 'Korku', desc: 'Yanındaki düşman birliklerin morali düşer (−%15).', legend: 1 },
   kusatma: { name: 'Kuşatma Ustası', desc: 'Şehir ve kalede savunma +%30; şehir ve kaleye saldırı +%25.' }
 };
+/* ---------- efsanevi generaller ----------
+   Tarihin büyük komutanları. Bir başarıyla açılır (sürpriz ekranı), her çağda ve her haritada kullanılabilir.
+   Rütbeleri en üst seviyededir ve her birinin kendine özgü bir yeteneği vardır. Yaralanınca 5 tur dinlenir. */
+var LEGENDS = [
+  { id: 'selahaddin', name: 'Selahaddin', epithet: 'Kudüs’ün fatihi, cömert hükümdar', role: 'yaya', skill: 'sifa',
+    goal: { k: 'wins', n: 1 }, hint: 'İlk zaferini kazan',
+    look: { skin: '#c99a6e', hair: '#1d1712', beard: 3, hat: 'sarik', legend: 1, robe: '#e9e2cf' } },
+  { id: 'cengiz', name: 'Cengiz Han', epithet: 'Bozkırın fırtınası', role: 'atli', skill: 'bozkir',
+    goal: { k: 'cavK', n: 25 }, hint: 'Atlılarınla 25 düşman birliği yok et',
+    look: { skin: '#d6a576', hair: '#2a1d14', beard: 1, hat: 'kurk', legend: 1, robe: '#5b3b22' } },
+  { id: 'napolyon', name: 'Napolyon', epithet: 'Savaş sanatının dahisi', role: 'menzil', skill: 'dahi',
+    goal: { k: 'rngK', n: 25 }, hint: 'Uzaktan saldırıyla 25 düşman birliği yok et',
+    look: { skin: '#efcaa6', hair: '#3a2a1e', beard: 0, hat: 'bicorne', legend: 1, robe: '#22324f' } },
+  { id: 'fatih', name: 'Fatih Sultan Mehmet', epithet: 'Surları deviren genç sultan', role: 'yaya', skill: 'feth',
+    goal: { k: 'forts', n: 6 }, hint: 'Toplam 6 kale ele geçir',
+    look: { skin: '#e2b48c', hair: '#3b2a1e', beard: 2, hat: 'kavuk', legend: 1, robe: '#7a1f2b' } },
+  { id: 'barbaros', name: 'Barbaros', epithet: 'Akdeniz’in hâkimi', role: 'deniz', skill: 'derya',
+    goal: { k: 'navK', n: 12 }, hint: 'Denizde ya da çıkarmayla 12 düşman birliği yok et',
+    look: { skin: '#dba67c', hair: '#a8331c', beard: 3, hat: 'sarik', legend: 1, robe: '#1f4d5a' } },
+  { id: 'hannibal', name: 'Hannibal', epithet: 'Alpleri aşan stratejist', role: 'yaya', skill: 'pusu',
+    goal: { k: 'pinK', n: 15 }, hint: 'Kıskaca alınmış 15 düşman birliğini yok et',
+    look: { skin: '#b8835a', hair: '#1a1410', beard: 2, hat: 'tolga', legend: 1, robe: '#6b2a1a' } },
+  { id: 'iskender', name: 'Büyük İskender', epithet: 'Hiç yenilmeyen kral', role: 'atli', skill: 'sarsilmaz',
+    goal: { k: 'stars3', n: 1 }, hint: 'Bir seferi üç yıldızla kazan (Normal ya da Zor)',
+    look: { skin: '#ecc39c', hair: '#b7863b', beard: 0, hat: 'mighfer', legend: 1, robe: '#5a2d6e' } },
+  { id: 'timur', name: 'Timur', epithet: 'Adı bile korku salar', role: 'atli', skill: 'korku',
+    goal: { k: 'hardW', n: 1 }, hint: 'Zor seviyede bir sefer kazan',
+    look: { skin: '#cf9d72', hair: '#2b2018', beard: 3, hat: 'sarik', legend: 1, robe: '#2d4a2a' } }
+];
+var LEGEND_REST = 5, GEN_REST = 3, MAX_GENS = 4;
+// rol → çağın birlik türü (uzmanlık)
+var ROLE_TYPE = { yaya: ['kilic', 'piyade', 'mpiyade'], atli: ['atli', 'zirhli', 'tank'], menzil: ['okcu', 'makineli', 'heli'], deniz: ['kadirga', 'kadirga', 'kadirga'] };
 var ENEMY_GENS = [
   { name: 'Kızıl Baron', spec: 'atli', look: { skin: '#e3b28a', hair: '#7a2e1a', beard: 2, hat: 'helm' } },
   { name: 'Yaşlı Kont', spec: 'kilic', look: { skin: '#ecc7a3', hair: '#cfcfcf', beard: 3, hat: 'crown' } },
@@ -175,7 +215,11 @@ function newGame(o) {
   G.factions.forEach(function (f, fi) {
     if (f.isPlayer) {
       pi = fi;
-      (o.generals || []).forEach(function (g) { f.generals.push({ id: g.id, name: g.name, spec: g.spec, skill: g.skill, xp: g.xp || 0, rank: rankOf(g.xp || 0), unit: 0, rest: 0, look: g.look, gained: 0 }); });
+      (o.generals || []).slice(0, MAX_GENS).forEach(function (g) {
+        var L = LEGENDS.filter(function (x) { return x.id === g.id; })[0];
+        if (L) f.generals.push({ id: L.id, name: L.name, spec: ROLE_TYPE[L.role][o.era || 0], skill: L.skill, xp: RANK_XP[RANK_XP.length - 1], rank: RANK_XP.length, unit: 0, rest: 0, look: L.look, gained: 0, legend: 1 });
+        else f.generals.push({ id: g.id, name: g.name, spec: g.spec, skill: g.skill, xp: g.xp || 0, rank: rankOf(g.xp || 0), unit: 0, rest: 0, look: g.look, gained: 0 });
+      });
     } else {
       var eg = ENEMY_GENS[(fi + G.seed) % ENEMY_GENS.length];
       var rank = Math.max(1, Math.min(RANK_XP.length, 1 + o.level + (R() < 0.4 ? 1 : 0) + diff - 1));
@@ -208,8 +252,8 @@ function unitById(G, id) { for (var i = 0; i < G.units.length; i++) if (G.units[
 function genOf(G, u) { if (!u || !u.gen || u.f < 0) return null; var gs = G.factions[u.f].generals; for (var i = 0; i < gs.length; i++) if (gs[i].id === u.gen) return gs[i]; return null; }
 function isNaval(u) { return UT[u.type].naval; }
 function unitMv(G, u) {
-  if (u.emb) return TRANSPORT.mv + (G.cells[u.c] && portBonus(G, u) ? 1 : 0);
-  var g = genOf(G, u); return UT[u.type].mv + (g && g.skill === 'akinci' ? 1 : 0);
+  if (u.emb) { var ge = genOf(G, u); return TRANSPORT.mv + (ge && ge.skill === 'derya' ? 1 : 0); }
+  var g = genOf(G, u); return UT[u.type].mv + (g && (g.skill === 'akinci' || g.skill === 'bozkir' || (g.skill === 'derya' && isNaval(u))) ? 1 : 0);
 }
 function portBonus(G, u) { return 0; }
 function unitRange(G, u) {
@@ -248,6 +292,8 @@ function startTurn(G, fi, first) {
     if (u.build && !first) {
       u.build--;
       if (!u.build) G.log.push({ t: 'tower', u: u.id, c: u.c, f: fi });
+    } else if (!first && genOf(G, u) && genOf(G, u).skill === 'sifa') {
+      u.hp = Math.min(100, u.hp + 25);
     } else if (!first && !u.emb && c.f === fi) {
       var heal = c.t === 3 ? 15 + 3 * c.lv : c.t === 4 ? 18 : 6;
       if (genOf(G, u)) heal += 10;
@@ -361,6 +407,7 @@ function capture(G, c, fi) {
   if (c.t === 2 && c.lv > 1) c.lv = 1;
   if (c.t === 4 && c.lv > 1) c.lv--;
   if (fi === G.player && c.t === 3) G.stats.cities++;
+  if (fi === G.player && c.t === 4 && from !== fi) G.stats.forts = (G.stats.forts || 0) + 1;
   if (from >= 0 && c.t === 3) { G.recentLoss = G.recentLoss || []; G.recentLoss[from] = G.turn; }
   G.log.push({ t: 'capture', c: c.i, from: from, to: fi });
   checkElim(G, from);
@@ -405,7 +452,9 @@ function stat(G, u, kind, vs, cell, attacking) {
     if (g.skill === 'isabet' && kind === 'atk' && T.rng < 2) m *= 1.1;
     if (g.skill === 'kusatma' && cell && (cell.t === 3 || cell.t === 4)) m *= kind === 'def' && !attacking ? 1.3 : (kind === 'atk' && attacking ? 1.25 : 1);
     if (g.spec === 'kale' && cell && (cell.t === 3 || cell.t === 4)) m *= specMul(g);
+    if (g.skill === 'derya' && (isNaval(u) || u.emb) && kind === 'atk') m *= u.emb ? 1 / 0.6 : 1.3;
   }
+  if (kind === 'atk' && dahiNear(G, u)) m *= 1.15;
   m *= 0.45 + 0.55 * u.hp / 100;
   m *= moraleMul(G, u);
   return base * m;
@@ -556,6 +605,25 @@ function aiOffer(G, R) {
    Birliğin karşılıklı iki yanında düşman varsa kıskaçtadır. Bütün yönleri düşman ya da geçilmez
    olduğunda tamamen çevrilidir. Moral saldırı ve savunmayı birlikte düşürür. */
 var MORALE = { kiskac: { m: 0.8, name: 'Kıskaç' }, agir: { m: 0.7, name: 'Ağır kıskaç' }, cevrili: { m: 0.55, name: 'Çevrili' } };
+// moral yükselişi: yanında en az iki dost birlik (destek), son turda düşman yok etti (zafer coşkusu)
+var MORALE_UP = { destek: { m: 1.1, name: 'Destek' }, zafer: { m: 1.1, name: 'Zafer coşkusu' }, korku: { m: 0.85, name: 'Korku' } };
+/* birliğin bütün moral durumu: m çarpanı, düşüş türü, yükselişler ve düşüş derecesi (0, 1 ya da 2 ok) */
+function moraleInfo(G, u) {
+  if (!u || UT[u.type].tower || u.c === undefined) return { m: 1, down: null, ups: [], lvl: 0 };
+  var g = genOf(G, u), firm = g && g.skill === 'sarsilmaz';
+  var down = firm ? null : morale(G, u), ups = [], m = down ? MORALE[down].m : 1;
+  var c = G.cells[u.c], friends = 0, foes = 0, fear = false;
+  for (var k = 0; k < c.nb.length; k++) {
+    var o = unitAt(G, c.nb[k]); if (!o) continue;
+    if (o.f === u.f || isAlly(G, o.f, u.f)) friends++;
+    else if (foe(G, o.f, u.f)) { foes++; var go = genOf(G, o); if (go && go.skill === 'korku') fear = true; }
+  }
+  if (fear && !firm) { m *= MORALE_UP.korku.m; ups.push('korku'); }
+  if (friends >= 2) { m *= MORALE_UP.destek.m; ups.push('destek'); }
+  if (firm || (u.won && G.turn - u.won <= 1)) { m *= MORALE_UP.zafer.m; ups.push('zafer'); }
+  var lvl = m > 1.001 ? 1 : m < 0.999 ? ((down === 'cevrili' || foes >= 4) ? -2 : -1) : 0;
+  return { m: m, down: down, ups: ups, lvl: lvl, foes: foes };
+}
 function morale(G, u) {
   if (!u || UT[u.type].tower || u.c === undefined) return null;
   var c = G.cells[u.c], dirs = [0, 0, 0, 0, 0, 0], blocked = [1, 1, 1, 1, 1, 1], n = 0;
@@ -575,7 +643,16 @@ function morale(G, u) {
   if (pairs >= 1) return 'kiskac';
   return null;
 }
-function moraleMul(G, u) { var k = morale(G, u); return k ? MORALE[k].m : 1; }
+function moraleMul(G, u) { return moraleInfo(G, u).m; }
+function dahiNear(G, u) {
+  if (u.c === undefined) return false;
+  var c = G.cells[u.c];
+  for (var i = 0; i < G.units.length; i++) {
+    var o = G.units[i]; if (o.f !== u.f || !o.gen) continue;
+    var g = genOf(G, o); if (g && g.skill === 'dahi' && hd(G.cells[o.c], c) <= 2) return true;
+  }
+  return false;
+}
 function genMul(g) { return 1.25 + 0.05 * g.rank; }   // 1. rütbe +%30 … 5. rütbe +%50
 function specMul(g) { return 1.15 + 0.05 * g.rank; }  // uzmanlık ek +%20 … +%40
 function terrainMul(G, c, u) {
@@ -599,7 +676,8 @@ function canAttack(G, a, d) {
 function predict(G, a, d) {
   var ca = G.cells[a.c], cd = G.cells[d.c], dist = hd(ca, cd);
   var A = stat(G, a, 'atk', d, cd, true);
-  var D = stat(G, d, 'def', a, cd, false) * terrainMul(G, cd, d);
+  var gA = genOf(G, a), feth = gA && gA.skill === 'feth' && (cd.t === 3 || cd.t === 4);
+  var D = stat(G, d, 'def', a, cd, false) * (feth ? (cd.mt ? 1.3 : 1) : terrainMul(G, cd, d));
   var dmg = 24 * Math.pow(A / Math.max(1, D), 0.7) * (dist > 1 ? 0.85 : 1);
   var gd = genOf(G, d); if (gd && gd.skill === 'kalkan') dmg *= 0.75;
   dmg = Math.max(4, dmg);
@@ -607,6 +685,7 @@ function predict(G, a, d) {
   if (left > 0) {
     var canBack = !d.emb && !d.build && (dist <= unitRange(G, d)) && !(isNaval(a) && !isNaval(d) && UT[d.type].rng < 2) && !((isNaval(d)) && !isNaval(a) && false);
     if (dist > 1 && UT[d.type].rng < 2) canBack = false;
+    if (gA && gA.skill === 'pusu') canBack = false;
     if (canBack) {
       var dd = Object.assign({}, d, { hp: left });
       var A2 = stat(G, dd, 'atk', a, ca, true);
@@ -632,6 +711,18 @@ function attack(G, a, d, R) {
   if (ga) ga.gained += 5;
   var ev = { t: 'attack', a: a.id, d: d.id, ac: a.c, dc: d.c, dmg: dmg, back: back, killD: killD, killA: killA, af: a.f, df: d.f, ranged: hd(ca, cd) > 1, naval: isNaval(a), atype: a.type, dtype: d.type, aemb: a.emb, demb: d.emb, ahp: a.hp, dhp: d.hp };
   G.log.push(ev);
+  if (killD) {
+    var mdD = morale(G, d);
+    if (a.f === G.player) {
+      var S = G.stats;
+      if (a.type === 'atli' || UT[a.type].pursue) S.cavK = (S.cavK || 0) + 1;
+      if (hd(ca, cd) > 1) S.rngK = (S.rngK || 0) + 1;
+      if (isNaval(a) || a.emb || isNaval(d) || d.emb) S.navK = (S.navK || 0) + 1;
+      if (mdD) S.pinK = (S.pinK || 0) + 1;
+    }
+    a.won = G.turn;
+    if (ga && ga.skill === 'bozkir' && !killA) a.hp = Math.min(100, a.hp + 20);
+  }
   if (killD) { removeUnit(G, d); a.kills++; if (ga) ga.gained += 15; if (a.kills % 2 === 0 && a.lvl < 3) a.lvl++; if (a.f === G.player) G.stats.kills++; }
   if (killA) removeUnit(G, a);
   // atlı takibi: düşmanı yok eden atlı 1 hücre daha hareket edebilir (saldıramaz)
@@ -641,7 +732,7 @@ function attack(G, a, d, R) {
 function removeUnit(G, u) {
   G.units = G.units.filter(function (x) { return x.id !== u.id; });
   var g = genOf(G, u);
-  if (g) { g.unit = 0; g.rest = G.turn + 3; G.log.push({ t: 'wounded', f: u.f, gen: g.id, c: u.c }); }
+  if (g) { g.unit = 0; g.rest = G.turn + (g.legend ? LEGEND_REST : GEN_REST); G.log.push({ t: 'wounded', f: u.f, gen: g.id, c: u.c }); }
   if (UT[u.type].tower) G.log.push({ t: 'towerDown', c: u.c, f: u.f });
   if (u.f === G.player) G.stats.lost++;
 }
@@ -982,5 +1073,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, MORALE: MORALE, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
 };

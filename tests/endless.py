@@ -27,7 +27,9 @@ async def main():
           const u={id:G.nextId++,f:P,type:"atli",c:nb,hp:100,lvl:1,mp:2,acted:false,kills:0,gen:0,emb:0};G.units.push(u);
           __sancak.tapCell(nb);__sancak.tapCell(t.i);return [mine,need,G.over]}''')
         print('kurulum', r)
-        await pg.wait_for_timeout(2000); await shot('E1-win')
+        await pg.wait_for_timeout(2000)
+        while await pg.locator('#rvOk').count(): await pg.click('#rvOk'); await pg.wait_for_timeout(200)   # efsane sürprizleri
+        await shot('E1-win')
         assert await pg.locator('#rCont').count(), 'devam düğmesi yok'
         await pg.click('#rCont'); await pg.wait_for_timeout(400)
         st = await pg.evaluate('()=>{const G=__sancak.B().G;return [G.over,G.endless,__sancak.B().phase]}')
@@ -51,7 +53,9 @@ async def main():
           const nb=c.nb.find(j=>G.cells[j].t&&!G.units.some(u=>u.c===j));G.cells[nb].f=P;
           const u={id:G.nextId++,f:P,type:"atli",c:nb,hp:100,lvl:1,mp:2,acted:false,kills:0,gen:0,emb:0};G.units.push(u);
           G.factions.forEach((f,i)=>{if(i!==P&&i!==c.f)f.alive=false});__sancak.tapCell(nb);__sancak.tapCell(c.i);}''')
-        await pg.wait_for_timeout(2000); await shot('E2-full')
+        await pg.wait_for_timeout(2000)
+        while await pg.locator('#rvOk').count(): await pg.click('#rvOk'); await pg.wait_for_timeout(200)
+        await shot('E2-full')
         h = await pg.evaluate('()=>document.querySelector("#modal h2")&&document.querySelector("#modal h2").textContent')
         print('ikinci sonuç', h); assert h == 'TAM FETİH'
         print('HATALAR', errs); assert not errs

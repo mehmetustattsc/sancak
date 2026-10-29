@@ -16,6 +16,20 @@ function persist() { store(SAVE_KEY, save); }
 function eraStars(e) { var n = 0; for (var l = 0; l < LEVELS.length; l++) n += save.stars[e + '-' + l] || 0; return n; }
 function genXP(id) { return save.gx[id] || 0; }
 function genUnlocked(g) { return eraStars(g.era) >= g.unlock; }
+/* efsaneler: ömür boyu sayaçlar save.ls, açılanlar save.leg */
+function legUnlocked(id) { return !!(save.leg && save.leg[id]); }
+function legProgress(L) { var v = (save.ls && save.ls[L.goal.k]) || 0; return Math.min(v, L.goal.n); }
+function rankLabel(g, era) { return g.legend ? 'Efsane' : ERAS[era].ranks[g.rank - 1] + ' ' + insignia(g.rank); }
+// sefere katılabilecek generaller: çağın açık generalleri ve açılmış efsaneler
+function availIds(e) {
+  return GENERALS.filter(function (g) { return g.era === e && genUnlocked(g); }).map(function (g) { return g.id; })
+    .concat(LEGENDS.filter(function (L) { return legUnlocked(L.id); }).map(function (L) { return L.id; }));
+}
+function chosenGens(e) {
+  var ids = availIds(e);
+  var sel = save.gsel ? save.gsel.filter(function (id) { return ids.indexOf(id) >= 0; }) : ids;
+  return sel.slice(0, MAX_GENS);
+}
 function levelUnlocked(e, l) { return l === 0 || (save.stars[e + '-' + (l - 1)] || 0) > 0; }
 function factionName(G, fi) { return fi < 0 ? 'Tarafsız' : FACTIONS[G.factions[fi].id].name + ' ' + ERAS[G.era].suffix; }
 function fname(fid, e) { return FACTIONS[fid].name + ' ' + ERAS[e].suffix; }
@@ -167,6 +181,7 @@ function openSetup(e, l) {
   function diff(n) { return n >= 15 ? 'Kolay' : n >= 9 ? 'Orta' : 'Zor'; }
   var gens = GENERALS.filter(function (g) { return g.era === e; });
   var dfc = save.diff == null ? 1 : save.diff, noDip = !!save.noDip;
+  var legs = LEGENDS.filter(function (L) { return legUnlocked(L.id); }), gsel = chosenGens(e);
   function draw() {
     modal('<div><div class="eyebrow">' + ERAS[e].name + ' · Sefer ' + (l + 1) + '</div><h2>' + M.name + '</h2></div>' +
       '<div class="eyebrow">Ülkeni seç</div><div class="choices">' + M.factions.map(function (fid) {
@@ -175,10 +190,14 @@ function openSetup(e, l) {
         return '<button class="choice' + (sel === fid ? ' on' : '') + '" data-f="' + fid + '">' + ART.flag(fid) + '<div style="min-width:0"><div class="t">' + fname(fid, e) + '</div>' +
           '<div class="s">' + (cap ? esc(cap[6]) + ' · ' : '') + n + ' bölge · ' + c + ' şehir · <span class="diff-' + diff(n) + '">' + diff(n) + '</span></div></div></button>';
       }).join('') + '</div>' +
-      '<div class="eyebrow">Yanındaki generaller</div><div class="choices">' + gens.map(function (g) {
-        var un = genUnlocked(g), r = rankOf(genXP(g.id));
-        return '<div class="choice' + (un ? ' on' : '') + '"' + (un ? '' : ' style="opacity:.45"') + '><span class="por">' + ART.portrait(g, e) + '</span><div style="min-width:0"><div class="t">' + g.name + '</div>' +
-          '<div class="s">' + (un ? ERAS[e].ranks[r - 1] + ' ' + insignia(r) : '★ ' + g.unlock + ' yıldızla açılır') + '</div></div></div>';
+      '<div class="eyebrow">Yanındaki generaller · ' + gsel.length + '/' + MAX_GENS + '</div><div class="choices">' + gens.map(function (g) {
+        var un = genUnlocked(g), r = rankOf(genXP(g.id)), on = gsel.indexOf(g.id) >= 0;
+        return '<button class="choice' + (on ? ' on' : '') + '"' + (un ? ' data-gs="' + g.id + '"' : ' style="opacity:.45"') + '><span class="por">' + ART.portrait(g, e) + '</span><div style="min-width:0"><div class="t">' + g.name + '</div>' +
+          '<div class="s">' + (un ? ERAS[e].ranks[r - 1] + ' ' + insignia(r) : '★ ' + g.unlock + ' yıldızla açılır') + '</div></div></button>';
+      }).join('') + legs.map(function (L) {
+        var on = gsel.indexOf(L.id) >= 0;
+        return '<button class="choice leg' + (on ? ' on' : '') + '" data-gs="' + L.id + '"><span class="por">' + ART.portrait({ look: L.look, spec: ROLE_TYPE[L.role][e] }, e) + '</span><div style="min-width:0"><div class="t">' + L.name + '</div>' +
+          '<div class="s">Efsane · ' + SKILLS[L.skill].name + '</div></div></button>';
       }).join('') + '</div>' +
       '<div class="eyebrow">Zorluk</div><div class="seg" id="sDiff">' + ['Kolay', 'Normal', 'Zor'].map(function (n, i) {
         return '<button class="' + (dfc === i ? 'on' : '') + '" data-d="' + i + '">' + n + '<small>' + I.medal.replace('<svg', '<svg width="12" height="12"') + '×' + DIFF_MEDAL[i] + '</small></button>';
@@ -187,6 +206,13 @@ function openSetup(e, l) {
       '<div class="goals"><span>Hedef: <b>şehirlerin %60’ını al</b> ya da bütün rakipleri yık</span><span>★★★ <b>' + L.par + '</b> tur</span><span>★★ <b>' + Math.round(L.par * 1.4) + '</b> tur</span><span>Sınır <b>' + L.limit + '</b> tur</span></div>' +
       '<div class="row"><button class="btn ghost" id="sCancel">Vazgeç</button><button class="btn" id="sGo">Sefere çık</button></div>');
     document.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { SFX.tap(); sel = b.dataset.f; draw(); }; });
+    document.querySelectorAll('[data-gs]').forEach(function (b) { b.onclick = function () {
+      var id = b.dataset.gs, k = gsel.indexOf(id);
+      if (k >= 0) gsel.splice(k, 1);
+      else if (gsel.length >= MAX_GENS) { toast('Bir sefere en fazla ' + MAX_GENS + ' general katılır'); return; }
+      else gsel.push(id);
+      SFX.tap(); save.gsel = gsel.slice(); persist(); draw();
+    }; });
     document.querySelectorAll('[data-d]').forEach(function (b) { b.onclick = function () { SFX.tap(); dfc = save.diff = +b.dataset.d; persist(); draw(); }; });
     document.querySelectorAll('[data-n]').forEach(function (b) { b.onclick = function () { SFX.tap(); noDip = save.noDip = b.dataset.n === '1'; persist(); draw(); }; });
     $('#sCancel').onclick = closeModal;
@@ -247,10 +273,26 @@ function genBonusText(g, r, era) {
   else s += '; kendi birlik türünde ek +%' + b;
   return s;
 }
+function legendsHTML() {
+  var n = LEGENDS.filter(function (L) { return legUnlocked(L.id); }).length;
+  return '<div class="eyebrow" style="margin-top:14px">Efsaneler · ' + n + '/' + LEGENDS.length + '</div>' +
+    '<p class="muted">Tarihin büyük komutanları. Bir başarıyla sürpriz olarak katılırlar; her çağda ve her haritada savaşırlar. Bir sefere en fazla ' + MAX_GENS + ' general katılır.</p>' +
+    '<div class="gens">' + LEGENDS.map(function (L) {
+      var un = legUnlocked(L.id), pr = legProgress(L), pct = Math.round(pr / L.goal.n * 100);
+      return '<div class="gen leg' + (un ? '' : ' locked') + '"><div class="por">' + ART.portrait({ look: L.look, spec: ROLE_TYPE[L.role][0] }, 0) + '</div><div style="min-width:0">' +
+        '<div class="nm">' + (un ? L.name : '???') + '</div><div class="ep">' + (un ? L.epithet : 'Bilinmeyen bir efsane') + '</div>' +
+        '<div class="rk"><span>Efsane</span></div></div>' +
+        '<div class="info">' + (un ? '<div><span class="k">Yetenek</span><b>' + SKILLS[L.skill].name + '</b>: ' + SKILLS[L.skill].desc + '</div>' +
+          '<div><span class="k">Güç</span>En yüksek rütbe: saldırı ve savunma +%' + Math.round((genMul({ rank: 5 }) - 1) * 100) + ', uzmanlıkta ek +%' + Math.round((specMul({ rank: 5 }) - 1) * 100) + '</div>' +
+          '<div><span class="k">Yara</span>Birliği yok olursa 5 tur dinlenir</div>'
+          : '<div class="xp"><div class="bar"><i style="width:' + pct + '%"></i></div><span>' + L.hint + (L.goal.n > 1 ? ' (' + pr + '/' + L.goal.n + ')' : '') + '</span></div>') +
+        '</div></div>';
+    }).join('') + '</div>';
+}
 function renderGenerals() {
   var el = $('#scr-gen .wrap'), E = ERAS[genEra];
   el.innerHTML = '<div class="topbar"><h2>Generaller</h2>' + medalsPill() + '</div>' +
-    '<p class="muted">Generalini savaşta bir birliğe ata. Her generalin genel bir bonusu, kendi birlik türünde ek bonusu ve bir yeteneği var. Birliği yok olursa general 3 tur yaralı kalır.</p>' +
+    '<p class="muted">Generalini savaşta bir birliğe ata. Her generalin genel bir bonusu, kendi birlik türünde ek bonusu ve bir yeteneği var. Birliği yok olursa general 3 tur yaralı kalır, efsaneler 5 tur.</p>' +
     '<div class="tabs">' + ERAS.map(function (x, i) { return '<button data-e="' + i + '" class="' + (i === genEra ? 'on' : '') + '">' + x.name + '</button>'; }).join('') + '</div>' +
     (E.ready ? '' : '<div class="card"><p class="muted">' + E.name + ' yakında. Generaller hazır, birlikler geliyor.</p></div>') +
     '<div class="gens">' + GENERALS.filter(function (g) { return g.era === genEra; }).map(function (g) {
@@ -268,7 +310,7 @@ function renderGenerals() {
           (next ? '<div class="row"><button class="btn small ghost" data-train="' + g.id + '"' + (save.medals < 25 ? ' disabled' : '') + '>' + I.medal.replace('<svg', '<svg width="18" height="18"') + ' 25 madalya ile eğit (+50 TP)</button></div>' : '')
           : (E.ready ? '<div class="xp">' + I.lock + '<span>' + E.name + ' seferlerinde toplam ★ ' + g.unlock + ' yıldıza ulaşınca açılır (şu an ' + eraStars(g.era) + ')</span></div>' : '')) +
         '</div></div>';
-    }).join('') + '</div>' +
+    }).join('') + '</div>' + legendsHTML() +
     '<div class="card"><h3>Rütbeler</h3><p class="muted">' + E.ranks.map(function (n, i) { return n + ' (' + RANK_XP[i] + ' TP)'; }).join(' → ') + '</p>' +
     '<p class="muted">Savaşta her saldırı 5 TP, her yok edilen düşman 15 TP getirir. Zaferde savaşan her general +40 TP alır.</p></div>';
   el.querySelectorAll('[data-e]').forEach(function (b) { b.onclick = function () { SFX.tap(); genEra = +b.dataset.e; renderGenerals(); }; });
@@ -344,6 +386,13 @@ function renderSettings() {
 var B = null; // { G, sel, view, reach, targets, preview, anim:[], phase:'player'|'ai'|'done', cam }
 var cv = $('#cv'), ctx = cv.getContext('2d');
 var W = 0, H = 0, DPR = 1, dirty = true;
+function drawMoraleArrow(x, y, w, h, up) {
+  var d = up ? -1 : 1, t = y - d * h / 2, tip = y + d * h / 2;
+  ctx.beginPath();
+  ctx.moveTo(x, tip); ctx.lineTo(x + w / 2, tip - d * h * 0.48); ctx.lineTo(x + w * 0.2, tip - d * h * 0.48); ctx.lineTo(x + w * 0.2, t);
+  ctx.lineTo(x - w * 0.2, t); ctx.lineTo(x - w * 0.2, tip - d * h * 0.48); ctx.lineTo(x - w / 2, tip - d * h * 0.48); ctx.closePath();
+  ctx.fillStyle = up ? '#f2c230' : '#3d8bf0'; ctx.fill(); ctx.lineWidth = 1.4; ctx.strokeStyle = up ? '#5a4200' : '#0b2a5c'; ctx.stroke();
+}
 function resize() {
   DPR = Math.min(2.5, window.devicePixelRatio || 1);
   var r = cv.getBoundingClientRect();
@@ -355,8 +404,9 @@ function resize() {
 window.addEventListener('resize', resize);
 
 function startGame(e, l, fid) {
-  var gens = GENERALS.filter(function (g) { return g.era === e && genUnlocked(g); }).map(function (g) {
-    return { id: g.id, name: g.name, spec: g.spec, skill: g.skill, xp: genXP(g.id), look: g.look };
+  var gens = chosenGens(e).map(function (id) {
+    var g = GENERALS.filter(function (x) { return x.id === id; })[0];
+    return g ? { id: g.id, name: g.name, spec: g.spec, skill: g.skill, xp: genXP(g.id), look: g.look } : { id: id };
   });
   var G = newGame({ era: e, level: l, player: fid, generals: gens, diff: save.diff == null ? 1 : save.diff, noDip: !!save.noDip, upgrades: Object.assign({}, save.upg || {}), seed: (Date.now() & 0x7fffffff) | 1 });
   enterBattle(G);
@@ -532,8 +582,7 @@ function unitHTML(u) {
   if (u.emb) tags += '<span class="tag">' + I.anchor + '</span>';
   if (u.build) tags += '<span class="tag">' + I.hammer + u.build + '</span>';
   if (u.chase && u.mp > 0) tags += '<span class="tag good">' + I.boot + '+1</span>';
-  var mk = morale(G, u);
-  if (mk) tags += '<span class="tag bad" title="' + MORALE[mk].name + '">' + I.pincer + '−' + Math.round((1 - MORALE[mk].m) * 100) + '%</span>';
+  tags += moraleTag(G, u, true);
   var s = '<div class="ucard"><div class="ufig' + (mine && !hasMoves(u) && !UT[u.type].tower ? ' done' : '') + '">' + ART.figInline(figType(u), col) + '</div><div class="umain">' +
     '<div class="uh"><b>' + unitName(u) + '</b><span class="ulv">' + '▲'.repeat(u.lvl) + '</span>' + tags + (mine || u.f < 0 ? '' : ART.flag(G.factions[u.f].id, 'fl mini')) + '</div>' +
     hpBar(u.hp) + '<div class="ust">' + statChips(G, u) + '</div></div>';
@@ -552,6 +601,13 @@ function unitHTML(u) {
   }
   return s + (acts ? '<div class="uacts">' + acts + '</div>' : '') + '</div>';
 }
+/* moral: sarı yukarı ok yükseliş, mavi aşağı ok düşüş, 4+ düşmanla çevriliyse iki mavi ok */
+function moraleTag(G, u, named) {
+  var mi = moraleInfo(G, u); if (!mi.lvl) return '';
+  var pct = Math.round((mi.m - 1) * 100), ic = mi.lvl > 0 ? I.mUp : mi.lvl < -1 ? I.mDown2 : I.mDown;
+  var names = (mi.down ? [MORALE[mi.down].name] : []).concat(mi.ups.map(function (k) { return MORALE_UP[k].name; }));
+  return '<span class="tag ' + (mi.lvl > 0 ? 'mup' : 'mdn') + '" title="' + names.join(', ') + '">' + ic + (pct > 0 ? '+' : '−') + Math.abs(pct) + '%' + (named ? '<small>' + names.join(' · ') + '</small>' : '') + '</span>';
+}
 function previewHTML() {
   var G = B.G, a = unitById(G, B.sel), d = unitById(G, B.preview);
   if (!a || !d) { B.preview = null; return ''; }
@@ -562,9 +618,7 @@ function previewHTML() {
   if (UT[d.type].beats === a.type && !d.emb) tags += '<span class="tag bad">×1,5</span>';
   if (terrainMul(G, G.cells[d.c], d) > 1.01) tags += '<span class="tag">' + I.shield + '×' + terrainMul(G, G.cells[d.c], d).toFixed(1).replace('.', ',') + '</span>';
   if (p.die) tags += '<span class="tag bad">' + I.skull + '</span>';
-  var md = morale(G, d), ma = morale(G, a);
-  if (md) tags += '<span class="tag good">' + I.pincer + '−' + Math.round((1 - MORALE[md].m) * 100) + '%</span>';
-  if (ma) tags += '<span class="tag bad">' + I.pincer + '−' + Math.round((1 - MORALE[ma].m) * 100) + '%</span>';
+  tags += moraleTag(G, a) + moraleTag(G, d);
   return '<div class="pv"><div class="pvs"><div class="ufig sm">' + ART.figInline(figType(a), colA) + '</div>' + hpBar(a.hp, a.hp - p.back) + '</div>' +
     '<div class="vs">' + I.sword + tags + '</div>' +
     '<div class="pvs"><div class="ufig sm">' + ART.figInline(figType(d), colD) + '</div>' + hpBar(d.hp, d.hp - p.dmg) + '</div>' +
@@ -740,7 +794,7 @@ function offerPopup() {
 function genMenu() {
   var G = B.G, u = unitById(G, B.sel), g = genOf(G, u); if (!g) return;
   var mine = u.f === G.player, si = ART.specInfo(g.spec), isSpec = g.spec === u.type || (g.spec === 'kale' && G.cells[u.c].t >= 3);
-  modal('<div class="gm"><span class="gmp">' + ART.portrait(g, G.era) + '</span><div><h3>' + esc(g.name) + '</h3><div class="muted">' + ERAS[G.era].ranks[g.rank - 1] + ' ' + insignia(g.rank) + '</div>' +
+  modal('<div class="gm"><span class="gmp">' + ART.portrait(g, G.era) + '</span><div><h3>' + esc(g.name) + '</h3><div class="muted">' + rankLabel(g, G.era) + '</div>' +
     '<span class="spec sm" style="--sc:' + si.col + '"><svg viewBox="0 0 24 24">' + si.icon + '</svg>' + si.name + '</span></div></div>' +
     '<div class="rinfo"><div>' + I.sword + '<span>Güç</span><b>+' + Math.round((genMul(g) - 1) * 100) + '%</b><i>' + (isSpec ? 'uzman: +' + Math.round((specMul(g) - 1) * 100) + '% daha' : 'uzmanlık dışı') + '</i></div>' +
     (g.skill ? '<div>' + I.medal + '<span>' + SKILLS[g.skill].name + '</span><i style="grid-column:2/-1">' + SKILLS[g.skill].desc + '</i></div>' : '') + '</div>' +
@@ -753,7 +807,7 @@ function assignMenu() {
   modal('<h3>General ata: ' + unitName(u) + '</h3><div class="choices">' + free.map(function (g) {
     var spec = g.spec === u.type || (g.spec === 'kale' && (G.cells[u.c].t >= 3)), si = ART.specInfo(g.spec);
     return '<button class="choice" data-g="' + g.id + '"><span class="por">' + ART.portrait(g, G.era) + '</span><div style="min-width:0"><div class="t">' + esc(g.name) + '</div>' +
-      '<div class="s">' + ERAS[G.era].ranks[g.rank - 1] + ' · ' + SKILLS[g.skill].name + '</div><div class="s"><span class="spec sm" style="--sc:' + si.col + '"><svg viewBox="0 0 24 24">' + si.icon + '</svg>' + si.name + '</span>' + (spec ? ' <span class="good">✓ bu birliğe uygun</span>' : '') + '</div></div></button>';
+      '<div class="s">' + rankLabel(g, G.era) + ' · ' + SKILLS[g.skill].name + '</div><div class="s"><span class="spec sm" style="--sc:' + si.col + '"><svg viewBox="0 0 24 24">' + si.icon + '</svg>' + si.name + '</span>' + (spec ? ' <span class="good">✓ bu birliğe uygun</span>' : '') + '</div></div></button>';
   }).join('') + '</div><div class="row"><button class="btn ghost" id="aNo">Vazgeç</button></div>');
   $('#aNo').onclick = closeModal;
   document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () {
@@ -1025,8 +1079,10 @@ function finish(win, timeout, stopped) {
   if (win && !full && !stopped && st > prev) { medals += 10 * (st - prev); save.stars[key] = st; }
   var canGoOn = win && !full && !stopped && G.factions.some(function (f, i) { return i !== G.player && f.alive; });
   var before = eraStars(G.era) - (win && !full && !stopped && st > prev ? st - prev : 0);
+  var newLegs = bankLegendStats(G, win, st);
   var gens = G.factions[G.player].generals, ups = [];
   gens.forEach(function (g) {
+    if (g.legend) { g.add = 0; g.gained = 0; return; }
     var add = g.gained + (win && g.gained > 0 ? 40 : 0);
     g.gained = 0;
     var r0 = rankOf(genXP(g.id)); save.gx[g.id] = genXP(g.id) + add; var r1 = rankOf(save.gx[g.id]);
@@ -1044,7 +1100,7 @@ function finish(win, timeout, stopped) {
     (win ? '<div class="big">' + [1, 2, 3].map(function (k) { return k <= st ? '<b>★</b>' : '★'; }).join('') + '</div>' :
       '<p class="muted">' + (timeout ? 'Tur sınırı doldu. Daha hızlı ilerlemek için asker üretimini artır ve zayıf komşuya yüklen.' : 'Bütün şehirlerini kaybettin. Şehirlerini boş bırakma, kaleleri ve dağları savunmada kullan.') + '</p>') +
     '<div class="rewards"><span class="pill">' + I.medal + '+' + medals + ' madalya</span></div>' +
-    '<div class="gsum">' + gens.map(function (g) { return '<div class="gline"><span class="gp">' + ART.portrait(g, G.era) + '</span><span>' + esc(g.name) + '</span><b>+' + g.add + ' TP</b></div>'; }).join('') + '</div>' +
+    '<div class="gsum">' + gens.map(function (g) { return '<div class="gline"><span class="gp">' + ART.portrait(g, G.era) + '</span><span>' + esc(g.name) + '</span><b>' + (g.legend ? 'Efsane' : '+' + g.add + ' TP') + '</b></div>'; }).join('') + '</div>' +
     '<p class="muted">Yok edilen düşman: ' + G.stats.kills + ' · alınan şehir: ' + G.stats.cities + ' · kaybedilen birlik: ' + G.stats.lost + '</p>' +
     ups.map(function (t) { return '<div class="rankup">' + t + '</div>'; }).join('') +
     newGens.map(function (x) { return '<div class="rankup">Yeni general açıldı: ' + x.name + '</div>'; }).join('') +
@@ -1064,6 +1120,37 @@ function finish(win, timeout, stopped) {
     if (B.phase === 'ai') runAI();
   };
   $('#rMenu').onclick = function () { closeModal(); B = null; $('#scr-battle').hidden = true; openEra(x.e); };
+  if (newLegs.length) revealLegends(newLegs, G.era);
+}
+/* sefer sonunda sayaçları ömür boyu toplamlara ekle; aynı sefer ikinci kez bitince (fethe devam) sadece farkı ekler */
+function bankLegendStats(G, win, st) {
+  save.ls = save.ls || {}; save.leg = save.leg || {}; G.banked = G.banked || {};
+  ['cavK', 'rngK', 'navK', 'pinK', 'forts'].forEach(function (k) {
+    var v = G.stats[k] || 0; save.ls[k] = (save.ls[k] || 0) + v - (G.banked[k] || 0); G.banked[k] = v;
+  });
+  var d = G.diff == null ? 1 : G.diff;
+  if (win && !G.banked.win) { G.banked.win = 1; save.ls.wins = (save.ls.wins || 0) + 1; if (st >= 3 && d >= 1) save.ls.stars3 = (save.ls.stars3 || 0) + 1; if (d === 2) save.ls.hardW = (save.ls.hardW || 0) + 1; }
+  var fresh = LEGENDS.filter(function (L) { return !save.leg[L.id] && (save.ls[L.goal.k] || 0) >= L.goal.n; });
+  fresh.forEach(function (L) { save.leg[L.id] = 1; });
+  persist();
+  return fresh;
+}
+/* sürpriz ekranı: sonuç penceresinin önüne gelir, kapatınca sonuç görünür */
+function revealLegends(list, era) {
+  var m = $('#modal'), box = m.querySelector('.mbox');
+  box.style.display = 'none';
+  var L = list[0], d = document.createElement('div');
+  d.className = 'mbox reveal';
+  d.innerHTML = '<div class="eyebrow">Efsanevi general</div><h2>' + L.name + ' sancağına katıldı!</h2>' +
+    '<div class="rv-por">' + ART.portrait({ look: L.look, spec: ROLE_TYPE[L.role][era || 0] }, era) + '</div>' +
+    '<p class="rv-ep">' + L.epithet + '</p>' +
+    '<div class="rinfo"><div>' + I.medal + '<span>' + SKILLS[L.skill].name + '</span><i style="grid-column:2/-1">' + SKILLS[L.skill].desc + '</i></div>' +
+    '<div>' + I.flag + '<span>Neden?</span><i style="grid-column:2/-1">' + L.hint + '</i></div></div>' +
+    '<p class="muted">Efsaneler en yüksek rütbeyle savaşır, her çağda ve her haritada sefere katılabilir. Yaralanırsa 5 tur dinlenir.</p>' +
+    '<div class="row"><button class="btn" id="rvOk">' + (list.length > 1 ? 'Sıradaki' : 'Harika') + '</button></div>';
+  m.appendChild(d);
+  AUDIO.play('fanfare');
+  $('#rvOk').onclick = function () { SFX.tap(); d.remove(); if (list.length > 1) { box.style.display = ''; revealLegends(list.slice(1), era); } else box.style.display = ''; };
 }
 
 /* ---------- dokunma ---------- */
@@ -1291,13 +1378,11 @@ function drawUnit(u, now) {
     rr(bx - 1, by - 1, bw + 2, bh + 2, bh / 2); ctx.fillStyle = 'rgba(15,10,6,.85)'; ctx.fill();
     var hp = Math.max(0, u.hp) / 100;
     rr(bx, by, bw * hp, bh, bh / 2); ctx.fillStyle = hp > 0.6 ? '#6dcf6a' : hp > 0.3 ? '#e8c03a' : '#e2503f'; ctx.fill();
-    var mk2 = morale(G, u);
-    if (mk2) {
-      var mr = Math.max(7, s * 0.2), mx = bx - mr - 2, my = by + bh / 2;
-      ctx.beginPath(); ctx.arc(mx, my, mr, 0, 7); ctx.fillStyle = mk2 === 'cevrili' ? '#b3261e' : '#d9534a'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(1.5, mr * 0.28); ctx.beginPath();
-      ctx.moveTo(mx - mr * 0.55, my - mr * 0.45); ctx.lineTo(mx - mr * 0.1, my); ctx.lineTo(mx - mr * 0.55, my + mr * 0.45);
-      ctx.moveTo(mx + mr * 0.55, my - mr * 0.45); ctx.lineTo(mx + mr * 0.1, my); ctx.lineTo(mx + mr * 0.55, my + mr * 0.45); ctx.stroke();
+    var ml = moraleInfo(G, u).lvl;
+    if (ml) {
+      var ah = Math.max(10, s * 0.32), aw = ah * 0.72, ax = bx - aw / 2 - 3, ay = by + bh / 2;
+      var nA = ml < -1 ? 2 : 1;
+      for (var ai = 0; ai < nA; ai++) drawMoraleArrow(ax - ai * (aw + 1), ay, aw, ah, ml > 0);
     }
     // renk şeridi (sahiplik)
     rr(bx - 1, by + bh + 1.5, bw + 2, Math.max(2.5, s * 0.06), 2); ctx.fillStyle = col; ctx.fill();
@@ -1335,5 +1420,5 @@ for (var lv = 1; lv <= 6; lv++) { ART.bImg('city', lv).onload = function () { di
 renderHelp();
 show('home');
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { dirty = true; if (cur === 'home') renderHome(); });
-window.__sancak = { clamp: function () { clampCam(B); }, save: function () { return save; }, B: function () { return B; }, startGame: startGame, openEra: openEra, show: show, endPlayerTurn: endPlayerTurn, tapCell: tapCell };
+window.__sancak = { clamp: function () { clampCam(B); }, save: function () { return save; }, B: function () { return B; }, startGame: startGame, openEra: openEra, show: show, endPlayerTurn: endPlayerTurn, tapCell: tapCell, finish: finish, openSetup: openSetup, renderGenerals: renderGenerals };
 })();

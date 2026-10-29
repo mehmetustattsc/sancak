@@ -559,3 +559,19 @@ p.bad { color: #ff8a6a; }
 .seg #sDip button, #sDip button { flex-direction: row; gap: 6px; }
 .seg button small { font: 600 12px var(--f-num); color: var(--muted); display: flex; align-items: center; gap: 2px; }
 .seg button.on { border-color: var(--brass2); background: #2f2a1c; color: var(--brass2); }
+.tag.mup { color: #f2c230; } .tag.mdn { color: #7fb4ff; }
+.tag svg { width: 14px; height: 14px; } .tag.mdn svg[viewBox="0 0 30 24"] { width: 18px; }
+.tag small { font: 600 11px var(--f-body); color: var(--muted); margin-left: 4px; }
+/* efsaneler */
+.choice.leg { border-color: #8a6a1e; background: linear-gradient(135deg, #2b2312, #1b2128); }
+.choice.leg.on { border-color: #f2c94c; box-shadow: 0 0 0 1px #f2c94c inset; }
+.mbox.reveal { text-align: center; border: 1px solid #c9a24a; background: radial-gradient(circle at 50% 30%, #4a3a14, var(--panel) 70%); animation: rvIn .5s ease-out; }
+.mbox.reveal h2 { color: var(--brass2); }
+.rv-por { width: 150px; height: 150px; margin: 6px auto; border-radius: 16px; overflow: hidden; box-shadow: 0 0 40px rgba(242, 201, 76, .45); animation: rvGlow 2s ease-in-out infinite alternate; }
+.rv-por svg { width: 100%; height: 100%; display: block; }
+.rv-ep { font-family: var(--f-display); color: var(--brass2); margin: 4px 0 8px; }
+.mbox.reveal .rinfo { text-align: left; }
+@keyframes rvIn { from { transform: scale(.85); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes rvGlow { from { box-shadow: 0 0 18px rgba(242, 201, 76, .3); } to { box-shadow: 0 0 46px rgba(242, 201, 76, .6); } }
+.gen.leg { border-color: #8a6a1e; background: linear-gradient(135deg, #2b2312, var(--panel) 60%); }
+.gen.leg.locked .por { filter: brightness(0) opacity(.55); }

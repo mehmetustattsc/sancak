@@ -149,6 +149,7 @@ var ART = (function () {
     kilic: { col: '#3f6fb5', name: 'Kılıçlı', icon: '<path d="M12 2.5l1.6 2.4v9.6h-3.2V4.9zM7 14.5h10M12 14.5v5M9.5 20.5h5" fill="#fff" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>' },
     okcu:  { col: '#3d8a3a', name: 'Okçu',    icon: '<path d="M8 3C15 7 15 17 8 21M8 3v18M4 12h15M16 9l3 3-3 3" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' },
     atli:  { col: '#a5482b', name: 'Atlı',    icon: '<path d="M7 21l1.2-6.4C6.2 12.6 6.4 8.6 9.2 6.4L10.8 3l1.4 2.9c3.4.1 6.2 3 6.4 6.5l-3 1.2-2-2-.2 3.6 3 5.8z" fill="#fff"/>' },
+    kadirga: { col: '#2c6a8a', name: 'Kadırga', icon: '<path d="M3 15h18l-3 5H6zM12 3v11M12 4l6 8h-6z" fill="#fff"/>' },
     kale:  { col: '#7d6d4c', name: 'Şehir ve kale', icon: '<path d="M3 21V9h3v3h3V9h2v3h2V9h2v3h3V9h3v12z" fill="#fff"/>' }
   };
   function specInfo(sp) { return SPEC[sp] || { col: '#666', name: sp || '', icon: '' }; }
@@ -181,7 +182,7 @@ var ART = (function () {
   var PN = 0;
   function portrait(g, era, opt) {
     var L = g.look || { skin: '#ddb08a', hair: '#333', beard: 1, hat: 'helm' }, id = 'p' + (PN++), sp = specInfo(g.spec);
-    var bgc = ['#3b2d20', '#26313d', '#24302a'][era || 0];
+    var bgc = L.legend ? '#5a4214' : ['#3b2d20', '#26313d', '#24302a'][era || 0];
     var cape = shade(sp.col, -0.35), skinD = shade(L.skin, -0.22), skinL = shade(L.skin, 0.12), hairD = shade(L.hair, -0.25);
     var s = '<svg viewBox="0 0 100 100" aria-hidden="true"><defs>' +
       '<radialGradient id="' + id + 'b" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="' + shade(bgc, 0.25) + '"/><stop offset="1" stop-color="' + shade(bgc, -0.35) + '"/></radialGradient>' +
@@ -201,13 +202,15 @@ var ART = (function () {
       '<path d="M7 83q15-8 30 0M63 83q15-8 30 0" fill="none" stroke="#c9a24a" stroke-width="1.6"/>' +
       '<path d="M44 58h12v14H44z" fill="' + skinD + '"/>' +
       '<path d="M37 70q13 9 26 0v6q-13 9-26 0z" fill="url(#' + id + 's)" stroke="#2a2f34" stroke-width="1"/>' +
+      (L.legend ? '<path d="M8 100q4-24 42-26 38 2 42 26z" fill="' + L.robe + '" stroke="rgba(0,0,0,.4)" stroke-width="1"/>' +
+        '<path d="M50 74l-9 26M50 74l9 26" stroke="#e3c25c" stroke-width="2"/><path d="M40 75q10 6 20 0" fill="none" stroke="#e3c25c" stroke-width="1.6"/>' : '') +
       // nişan
       '<path d="M63 86l3 6 3-6z" fill="#b2392f"/><circle cx="66" cy="93" r="3.4" fill="#e3c25c" stroke="#7a5a12" stroke-width=".8"/>' +
       // baş
       '<ellipse cx="33.5" cy="46" rx="2.6" ry="4" fill="' + skinD + '"/><ellipse cx="66.5" cy="46" rx="2.6" ry="4" fill="' + skinD + '"/>' +
       '<path d="M34 40q0-15 16-16 16 1 16 16l-1 12q-4 13-15 15-11-2-15-15z" fill="url(#' + id + 'k)"/>' +
       '<path d="M36 50q2 9 8 13M64 50q-2 9-8 13" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="2"/>';
-    if (L.hat !== 'helm' && L.hat !== 'hood' && L.hat !== 'helmetm' && L.hat !== 'pilot') s += '<path d="M34 42q-2-16 16-17 18 1 16 17-3-8-5-9-11 3-22 0-3 1-5 9z" fill="url(#' + id + 'h)"/>';
+    if (['helm', 'hood', 'helmetm', 'pilot', 'sarik', 'kavuk', 'mighfer', 'tolga', 'kurk'].indexOf(L.hat) < 0) s += '<path d="M34 42q-2-16 16-17 18 1 16 17-3-8-5-9-11 3-22 0-3 1-5 9z" fill="url(#' + id + 'h)"/>';
     // kaşlar, gözler
     s += '<path d="M37 41.5l9 1.6M63 41.5l-9 1.6" stroke="' + hairD + '" stroke-width="2.6" stroke-linecap="round"/>' +
       '<path d="M38 44.5q4-1.5 7 .5M62 44.5q-4-1.5-7 .5" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1"/>' +
@@ -235,6 +238,19 @@ var ART = (function () {
     if (h === 'pilot') s += '<path d="M30 45q-2-27 20-27t20 27h-5q-2-17-15-17t-15 17z" fill="#55606a"/><rect x="36" y="28" width="28" height="8" rx="4" fill="#1e2a33" stroke="#9aa1a8"/>';
     if (h === 'helmetm') s += '<path d="M29 42q0-24 21-24t21 24q-10-5-21-5t-21 5z" fill="#5d6a46" stroke="#2f3624" stroke-width="1"/>';
     if (h === 'peaked') s += '<path d="M33 34l2-15h30l2 15z" fill="#3b4c3a"/><path d="M29 34h42q-5 5-21 5t-21-5z" fill="#1b1b1b"/><path d="M40 26h20" stroke="#d9b04f" stroke-width="2"/>';
+    if (h === 'sarik') s += '<path d="M29 40q-3-22 21-23 24 1 21 23-4-6-21-7-17 1-21 7z" fill="#f1ead8" stroke="#a89f88" stroke-width="1"/>' +
+      '<path d="M31 33q19-9 38 0M30 37q20-8 40 0M33 28q17-7 34 0" fill="none" stroke="#c9bfa5" stroke-width="1.3"/><circle cx="50" cy="27" r="2.6" fill="#2a8a6a" stroke="#e3c25c" stroke-width="1"/>';
+    if (h === 'kavuk') s += '<path d="M33 38q-1-8 17-9 18 1 17 9-17-5-34 0z" fill="#f4eee0" stroke="#a89f88" stroke-width="1"/>' +
+      '<path d="M37 31l1-21q12-5 24 0l1 21q-13-3-26 0z" fill="#f4eee0" stroke="#a89f88" stroke-width="1"/><path d="M38 23q12-4 24 0M38 16q12-4 24 0" fill="none" stroke="#cfc6b0" stroke-width="1.2"/>' +
+      '<path d="M45 11q5-6 10 0v6h-10z" fill="#9c1f2a"/><path d="M50 8v-5" stroke="#e3c25c" stroke-width="1.6"/>';
+    if (h === 'kurk') s += '<path d="M29 40q-2-24 21-24 23 0 21 24-21-6-42 0z" fill="#7a2a1e"/><path d="M27 41q23-9 46 0v6q-23-8-46 0z" fill="#b08a5a" stroke="#6b5232" stroke-width=".8"/><path d="M30 41l2-3M36 39l1-3M43 38v-3M50 37v-3M57 38v-3M64 39l-1-3M70 41l-2-3" stroke="#6b5232" stroke-width="1"/>' +
+      '<path d="M27 43q-3 8 0 18l5-2q-2-8 0-15zM73 43q3 8 0 18l-5-2q2-8 0-15z" fill="#b08a5a"/><path d="M50 16v-6" stroke="#e3c25c" stroke-width="2"/><circle cx="50" cy="9" r="2.2" fill="#e3c25c"/>';
+    if (h === 'mighfer') s += '<path d="M31 46q-2-28 19-28 21 0 19 28l-6-3q-1-8-13-9-12 1-13 9z" fill="#c9a24a" stroke="#6b4f12" stroke-width="1"/>' +
+      '<path d="M33 46l4 14 4-1-2-13zM67 46l-4 14-4-1 2-13z" fill="#c9a24a" stroke="#6b4f12" stroke-width=".8"/>' +
+      '<path d="M30 22q20-22 40 0-6 2-20-4-14 6-20 4z" fill="#b2392f"/><path d="M50 18q-1-8 0-12" stroke="#b2392f" stroke-width="5" stroke-linecap="round"/>';
+    if (h === 'tolga') s += '<path d="M31 44q-2-26 19-26t19 26l-4-2q-2-14-15-15-13 1-15 15z" fill="#b87a3a" stroke="#5a3a14" stroke-width="1"/>' +
+      '<path d="M31 37h38" stroke="#e0b06a" stroke-width="1.6"/><path d="M50 18v-6M44 13h12" stroke="#5a3a14" stroke-width="2"/><path d="M44 12q6-9 12 0z" fill="#e9e2cf"/>';
+    if (L.legend) s += '<rect x="1.5" y="1.5" width="97" height="97" rx="6" fill="none" stroke="#e3c25c" stroke-width="3"/><path d="M8 8l4 7 4-7 4 7 4-7v10H8z" fill="#e3c25c"/>';
     // uzmanlık rozeti
     if (!opt || !opt.nobadge) s += '<circle cx="84" cy="84" r="13" fill="' + sp.col + '" stroke="#f3ecdc" stroke-width="2.4"/><g transform="translate(73.5 73.5) scale(.875)">' + sp.icon + '</g>';
     return s + '</svg>';
@@ -289,6 +305,9 @@ var ART = (function () {
     lock: '<svg class="lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2" fill="currentColor"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
     crown: '<svg viewBox="0 0 24 24"><path d="M3 18l1.5-10 5 4.5L12 5l2.5 7.5 5-4.5L21 18z" fill="currentColor"/><path d="M3 20h18" stroke="currentColor" stroke-width="2"/></svg>',
     handshake: '<svg viewBox="0 0 24 24"><path d="M2 11l4-4 4 2 3-2 3 1 6 3-3 4-3-2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/><path d="M6 13l3 3 2-1 2 2 2-1 2 1 2-2M9 16l-1 1M11 15l2 2" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    mUp: '<svg viewBox="0 0 24 24"><path d="M12 3l8 9h-5v9H9v-9H4z" fill="#f2c230" stroke="#6b4f00" stroke-width="1.2" stroke-linejoin="round"/></svg>',
+    mDown: '<svg viewBox="0 0 24 24"><path d="M12 21l8-9h-5V3H9v9H4z" fill="#3d8bf0" stroke="#0c2f66" stroke-width="1.2" stroke-linejoin="round"/></svg>',
+    mDown2: '<svg viewBox="0 0 30 24"><path d="M8 21l6.5-8.5h-4V3h-5v9.5h-4zM22 21l6.5-8.5h-4V3h-5v9.5h-4z" fill="#3d8bf0" stroke="#0c2f66" stroke-width="1.1" stroke-linejoin="round"/></svg>',
     pincer: '<svg viewBox="0 0 24 24"><path d="M3 6l6 6-6 6M21 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     hourglass: '<svg viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
     ff: '<svg viewBox="0 0 24 24"><path d="M3 6l8 6-8 6zM12 6l8 6-8 6z" fill="currentColor"/></svg>',
