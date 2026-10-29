@@ -27,7 +27,12 @@ E.attack(G, atli, foe, null);
 assert.strictEqual(atli.c, a.i, 'saldıran yerinde kalmalı');
 assert(!G.units.includes(foe), 'düşman yok olmalı');
 assert.strictEqual(atli.mp, 1, 'atlı takip hareketi kazanmalı');
-assert(!E.canAttack(G, atli, add(G, enemyF, 'kilic', c.i)), 'takipte ikinci saldırı yok');
+const far = add(G, enemyF, 'kilic', c.i);
+assert(!E.canAttack(G, atli, far), 'menzil dışına saldırı yok');
+const adj = G.cells[a.i].nb.find(j => G.cells[j].t && !G.units.some(u => u.c === j));
+const foe2 = add(G, enemyF, 'okcu', adj); foe2.hp = 5;
+assert(E.canAttack(G, atli, foe2), 'atlı öldürdükten sonra yeniden saldırabilmeli');
+E.attack(G, atli, foe2, null); assert(!G.units.includes(foe2) && !atli.acted && atli.mp >= 1, 'zincir sürmeli');
 const r2 = E.reach(G, atli); assert(r2[b.i], 'takipte boşalan hücreye gidebilmeli');
 let kil = add(G, P, 'kilic', G.cells.find(x => x.t && x.f === P && !G.units.some(u => u.c === x.i) && x.nb.includes(a.i)).i);
 foe = G.units.find(u => u.c === c.i); foe.hp = 5;
@@ -77,4 +82,22 @@ if (cas) {
   cas.lv = 3; assert(E.recruitInfo(G, cas, 'atli').ok, '3. seviye kalede atlı');
   console.log('✓ kalede asker');
 }
+// 8) nakliyeden karaya saldırı
+G = fresh();
+const coast = G.cells.find(x => x.t && x.nb.some(j => G.cells[j].t === 0));
+const seaC = coast.nb.find(j => G.cells[j].t === 0);
+const boat = add(G, P, 'kilic', seaC); boat.emb = 1;
+const shore = add(G, enemyF, 'okcu', coast.i);
+assert(E.canAttack(G, boat, shore), 'nakliyeden karaya saldırılabilmeli');
+const landK = Object.assign({}, boat, { emb: 0 });
+const pe = E.predict(G, boat, shore);
+console.log('  çıkarma hasarı', pe.dmg.toFixed(1));
+E.attack(G, boat, shore, null); assert(boat.emb === 1, 'gemide kalmalı');
+console.log('✓ nakliyeden saldırı');
+// 9) ordu sınırı
+G = fresh(); G.factions[P].gold = 9999; G.factions[P].iron = 99;
+const cap = E.armyCap(G, P); let made = 0;
+for (let t = 0; t < 30 && made < cap + 3; t++) { for (const c of G.cells.filter(x => x.t === 3 && x.f === P)) { G.factions[P].recruited = {}; if (E.recruit(G, c.i, 'kilic')) made++; } }
+assert(E.armySize(G, P) <= cap, 'ordu sınırı aşılmamalı');
+console.log('✓ ordu sınırı', cap);
 console.log('KURAL TESTLERİ TAMAM');

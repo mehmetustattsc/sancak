@@ -145,40 +145,104 @@ var ART = (function () {
     }
     return '<svg class="' + (cls || 'fl') + '" viewBox="0 0 30 20" aria-hidden="true">' + p + '</svg>';
   }
-  function portrait(g, era) {
-    var L = g.look || { skin: '#ddb08a', hair: '#333', beard: 1, hat: 'helm' }, eraBg = ['#3d2f22', '#2a3340', '#26332b'][era || 0];
-    var s = '<svg viewBox="0 0 80 80" aria-hidden="true"><rect width="80" height="80" fill="' + eraBg + '"/>' +
-      '<circle cx="40" cy="44" r="40" fill="rgba(255,255,255,.04)"/>' +
-      '<path d="M8 80c2-16 14-22 32-22s30 6 32 22z" fill="' + ['#6b4a2a', '#2f4058', '#45553a'][era || 0] + '"/>' +
-      '<path d="M30 60l10 9 10-9" fill="none" stroke="#e8c977" stroke-width="2"/>' +
-      '<rect x="34" y="50" width="12" height="10" fill="' + L.skin + '"/>' +
-      '<ellipse cx="40" cy="38" rx="15" ry="17" fill="' + L.skin + '"/>' +
-      '<ellipse cx="34" cy="37" rx="1.8" ry="2" fill="#1c140e"/><ellipse cx="46" cy="37" rx="1.8" ry="2" fill="#1c140e"/>' +
-      '<path d="M31 32.5q3-2 6 0M43 32.5q3-2 6 0" stroke="' + L.hair + '" stroke-width="2" fill="none" stroke-linecap="round"/>' +
-      '<path d="M40 38v6l-2 1.5" stroke="rgba(0,0,0,.25)" stroke-width="1.4" fill="none"/>';
-    if (L.beard === 1) s += '<path d="M32 47q8-4 16 0q-8 3-16 0z" fill="' + L.hair + '"/>';
-    if (L.beard === 2) s += '<path d="M31 46q9-4 18 0q-1 8-9 9q-8-1-9-9z" fill="' + L.hair + '"/>';
-    if (L.beard === 3) s += '<path d="M27 40q2 18 13 19q11-1 13-19q-4 6-13 6t-13-6z" fill="' + L.hair + '"/>';
-    if (L.beard !== 3) s += '<path d="M36 50q4 2 8 0" stroke="#7a3f2e" stroke-width="1.6" fill="none" stroke-linecap="round"/>';
+  var SPEC = {
+    kilic: { col: '#3f6fb5', name: 'Kılıçlı', icon: '<path d="M12 2.5l1.6 2.4v9.6h-3.2V4.9zM7 14.5h10M12 14.5v5M9.5 20.5h5" fill="#fff" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>' },
+    okcu:  { col: '#3d8a3a', name: 'Okçu',    icon: '<path d="M8 3C15 7 15 17 8 21M8 3v18M4 12h15M16 9l3 3-3 3" fill="none" stroke="#fff" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>' },
+    atli:  { col: '#a5482b', name: 'Atlı',    icon: '<path d="M7 21l1.2-6.4C6.2 12.6 6.4 8.6 9.2 6.4L10.8 3l1.4 2.9c3.4.1 6.2 3 6.4 6.5l-3 1.2-2-2-.2 3.6 3 5.8z" fill="#fff"/>' },
+    kale:  { col: '#7d6d4c', name: 'Şehir ve kale', icon: '<path d="M3 21V9h3v3h3V9h2v3h2V9h2v3h3V9h3v12z" fill="#fff"/>' }
+  };
+  function specInfo(sp) { return SPEC[sp] || { col: '#666', name: sp || '', icon: '' }; }
+  /* ana menü arka planı: alacakaranlıkta kale, dağlar ve sancaklar */
+  function scene() {
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">' +
+      '<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d1622"/><stop offset=".38" stop-color="#2a3346"/><stop offset=".52" stop-color="#8a5a3c"/><stop offset=".62" stop-color="#e0a458"/></linearGradient>' +
+      '<radialGradient id="sun" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#ffe2a0"/><stop offset=".4" stop-color="#f3b45c" stop-opacity=".9"/><stop offset="1" stop-color="#f3b45c" stop-opacity="0"/></radialGradient></defs>' +
+      '<rect width="400" height="800" fill="url(#sky)"/>' +
+      '<circle cx="275" cy="468" r="120" fill="url(#sun)"/><circle cx="275" cy="476" r="26" fill="#ffe3a6" opacity=".9"/>' +
+      '<g fill="#f6e7c8" opacity=".55"><circle cx="40" cy="60" r="1"/><circle cx="120" cy="30" r="1.3"/><circle cx="210" cy="80" r="1"/><circle cx="330" cy="45" r="1.2"/><circle cx="370" cy="130" r=".9"/><circle cx="80" cy="160" r=".9"/><circle cx="300" cy="190" r="1"/><circle cx="170" cy="200" r=".8"/></g>' +
+      '<path d="M0 560l60-70 40 30 70-90 60 70 50-40 60 60 60-50v370H0z" fill="#3a3448"/>' +
+      '<path d="M0 600l50-40 60 35 60-55 70 50 60-30 100 45v395H0z" fill="#2c2838"/>' +
+      // tepe ve kale
+      '<path d="M120 640q80-70 200-40l80 20v180H0V680z" fill="#1e1b26"/>' +
+      '<g fill="#15131b">' +
+      '<path d="M196 596v-58h14v-10h8v10h8v-10h8v10h14v58z"/>' +
+      '<path d="M226 528v-46h6v-6h4v6h6v46z"/><path d="M232 476l-8-14h16z"/>' +
+      '<path d="M178 600v-40h10v-6h6v6h4v40zM254 600v-36h10v-6h6v6h6v36z"/>' +
+      '<path d="M170 604h120v14H170z"/></g>' +
+      '<path d="M234 462v-26" stroke="#15131b" stroke-width="2"/><path d="M234 437l20 6-20 6z" fill="#b2392f"/>' +
+      '<g fill="#f0c36a" opacity=".8"><rect x="212" y="560" width="3" height="5"/><rect x="232" y="500" width="2.5" height="4"/><rect x="200" y="570" width="3" height="5"/><rect x="262" y="578" width="2.5" height="4"/></g>' +
+      // ön plan: mızraklar ve sancaklar
+      '<path d="M0 720q100-30 200-10t200-20v110H0z" fill="#100e14"/>' +
+      '<g stroke="#100e14" stroke-width="3">' +
+      '<path d="M30 760V610M60 765V630M92 770V600M330 765V615M362 770V635M300 772V640"/></g>' +
+      '<path d="M92 602l34 10-34 12z" fill="#8f1d18"/><path d="M330 617l30 9-30 10z" fill="#1e4f8f"/><path d="M30 612l26 8-26 9z" fill="#c9a24a"/>' +
+      '</svg>';
+  }
+  var PN = 0;
+  function portrait(g, era, opt) {
+    var L = g.look || { skin: '#ddb08a', hair: '#333', beard: 1, hat: 'helm' }, id = 'p' + (PN++), sp = specInfo(g.spec);
+    var bgc = ['#3b2d20', '#26313d', '#24302a'][era || 0];
+    var cape = shade(sp.col, -0.35), skinD = shade(L.skin, -0.22), skinL = shade(L.skin, 0.12), hairD = shade(L.hair, -0.25);
+    var s = '<svg viewBox="0 0 100 100" aria-hidden="true"><defs>' +
+      '<radialGradient id="' + id + 'b" cx="50%" cy="38%" r="70%"><stop offset="0" stop-color="' + shade(bgc, 0.25) + '"/><stop offset="1" stop-color="' + shade(bgc, -0.35) + '"/></radialGradient>' +
+      '<linearGradient id="' + id + 's" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4e8ec"/><stop offset=".5" stop-color="#9aa3ab"/><stop offset="1" stop-color="#4f575e"/></linearGradient>' +
+      '<linearGradient id="' + id + 'k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + skinL + '"/><stop offset="1" stop-color="' + skinD + '"/></linearGradient>' +
+      '<linearGradient id="' + id + 'h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="' + L.hair + '"/><stop offset="1" stop-color="' + hairD + '"/></linearGradient>' +
+      '</defs><rect width="100" height="100" fill="url(#' + id + 'b)"/>' +
+      // sancak arka planı (uzmanlık rengi)
+      '<path d="M62 0h26v46l-13-8-13 8z" fill="' + sp.col + '" opacity=".55"/>' +
+      '<path d="M0 100l3-24q18-14 47-15 29 1 47 15l3 24z" fill="' + cape + '"/>' +
+      // zırh
+      '<path d="M21 100q2-20 29-24 27 4 29 24z" fill="url(#' + id + 's)" stroke="#2a2f34" stroke-width="1.2"/>' +
+      '<path d="M50 77v23" stroke="#3a4046" stroke-width="1.4"/>' +
+      '<path d="M30 92q20-6 40 0" fill="none" stroke="#c9a24a" stroke-width="1.6"/>' +
+      '<ellipse cx="22" cy="81" rx="17" ry="10" fill="url(#' + id + 's)" stroke="#2a2f34" stroke-width="1.2"/>' +
+      '<ellipse cx="78" cy="81" rx="17" ry="10" fill="url(#' + id + 's)" stroke="#2a2f34" stroke-width="1.2"/>' +
+      '<path d="M7 83q15-8 30 0M63 83q15-8 30 0" fill="none" stroke="#c9a24a" stroke-width="1.6"/>' +
+      '<path d="M44 58h12v14H44z" fill="' + skinD + '"/>' +
+      '<path d="M37 70q13 9 26 0v6q-13 9-26 0z" fill="url(#' + id + 's)" stroke="#2a2f34" stroke-width="1"/>' +
+      // nişan
+      '<path d="M63 86l3 6 3-6z" fill="#b2392f"/><circle cx="66" cy="93" r="3.4" fill="#e3c25c" stroke="#7a5a12" stroke-width=".8"/>' +
+      // baş
+      '<ellipse cx="33.5" cy="46" rx="2.6" ry="4" fill="' + skinD + '"/><ellipse cx="66.5" cy="46" rx="2.6" ry="4" fill="' + skinD + '"/>' +
+      '<path d="M34 40q0-15 16-16 16 1 16 16l-1 12q-4 13-15 15-11-2-15-15z" fill="url(#' + id + 'k)"/>' +
+      '<path d="M36 50q2 9 8 13M64 50q-2 9-8 13" fill="none" stroke="rgba(0,0,0,.12)" stroke-width="2"/>';
+    if (L.hat !== 'helm' && L.hat !== 'hood' && L.hat !== 'helmetm' && L.hat !== 'pilot') s += '<path d="M34 42q-2-16 16-17 18 1 16 17-3-8-5-9-11 3-22 0-3 1-5 9z" fill="url(#' + id + 'h)"/>';
+    // kaşlar, gözler
+    s += '<path d="M37 41.5l9 1.6M63 41.5l-9 1.6" stroke="' + hairD + '" stroke-width="2.6" stroke-linecap="round"/>' +
+      '<path d="M38 44.5q4-1.5 7 .5M62 44.5q-4-1.5-7 .5" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1"/>' +
+      '<ellipse cx="41.5" cy="46.5" rx="3" ry="1.5" fill="#efe6d6"/><ellipse cx="58.5" cy="46.5" rx="3" ry="1.5" fill="#efe6d6"/>' +
+      '<circle cx="42" cy="46.6" r="1.25" fill="#20160f"/><circle cx="58" cy="46.6" r="1.25" fill="#20160f"/>' +
+      '<path d="M50 45l-2.2 9q2.2 1.6 4.4 0" fill="none" stroke="' + skinD + '" stroke-width="1.3" stroke-linejoin="round"/>' +
+      '<path d="M45 60q5 1.2 10 0" fill="none" stroke="#5e3324" stroke-width="1.5" stroke-linecap="round"/>';
+    if (L.scar) s += '<path d="M60 40l4 10" stroke="#a0574a" stroke-width="1.2"/>';
+    var must = '<path d="M41 57.5q9-4.5 18 0-5 1.8-9 .4-4 1.4-9-.4z" fill="url(#' + id + 'h)"/>';
+    if (L.beard === 1) s += must;
+    if (L.beard === 2) s += '<path d="M35 50q1 14 15 18 14-4 15-18-3 10-15 10-12 0-15-10z" fill="url(#' + id + 'h)"/>' + must;
+    if (L.beard === 3) s += '<path d="M34 47q-1 25 16 32 17-7 16-32-4 12-16 12-12 0-16-12z" fill="url(#' + id + 'h)"/><path d="M44 66q6 5 12 0" stroke="' + hairD + '" stroke-width="1" fill="none"/>' + must;
     var h = L.hat;
-    if (h === 'helm') s += '<path d="M24 34q0-17 16-17t16 17v3H24z" fill="#9aa1a8"/><path d="M38.5 30h3v14h-3z" fill="#7e858c"/><path d="M24 34h32" stroke="#6b7177" stroke-width="2"/>';
-    if (h === 'hood') s += '<path d="M21 46q-2-26 19-28 21 2 19 28-3-14-19-15-16 1-19 15z" fill="#3c5a2e"/>';
-    if (h === 'kalpak') s += '<path d="M25 30q0-14 15-14t15 14z" fill="#3a2a1d"/><path d="M25 30h30" stroke="#57402c" stroke-width="3"/>';
-    if (h === 'crown') s += '<path d="M26 27l2-10 6 6 6-9 6 9 6-6 2 10z" fill="#d9b04f" stroke="#7a5a12" stroke-width="1.2"/><path d="M25 25q15 6 30 0" stroke="' + L.hair + '" stroke-width="5" fill="none"/>';
-    if (h === 'kepi') s += '<path d="M28 27l1-11h22l1 11z" fill="#8c2b2b"/><path d="M25 27h32" stroke="#222" stroke-width="3" stroke-linecap="round"/><path d="M29 20h22" stroke="#d9b04f" stroke-width="1.5"/>';
-    if (h === 'pickel') s += '<path d="M25 30q0-14 15-14t15 14z" fill="#2d2d2d"/><path d="M40 16V8" stroke="#c9a24a" stroke-width="2.6"/><path d="M23 30h34" stroke="#1a1a1a" stroke-width="2.5"/>';
-    if (h === 'cap') s += '<path d="M25 28q2-12 15-12t15 12z" fill="#5b5640"/><path d="M24 28h22q-6 4-22 0z" fill="#2c2a20"/>';
-    if (h === 'bicorne') s += '<path d="M16 28q12-16 24-14 12-2 24 14-24-5-48 0z" fill="#1f1f24"/><circle cx="40" cy="20" r="2.4" fill="#c9a24a"/>';
-    if (h === 'beret') s += '<path d="M23 28q2-12 19-11 13 1 15 9-12-2-34 2z" fill="#7a1f24"/><circle cx="31" cy="23" r="2" fill="#d9b04f"/>';
-    if (h === 'pilot') s += '<path d="M24 36q-1-20 16-20t16 20h-4q-2-12-12-12t-12 12z" fill="#55606a"/><rect x="29" y="22" width="22" height="7" rx="3.5" fill="#1e2a33" stroke="#9aa1a8"/>';
-    if (h === 'helmetm') s += '<path d="M23 34q0-18 17-18t17 18q-8-4-17-4t-17 4z" fill="#5d6a46"/>';
-    if (h === 'peaked') s += '<path d="M27 28l2-11h22l2 11z" fill="#3b4c3a"/><path d="M24 28h32q-4 4-16 4t-16-4z" fill="#1b1b1b"/><path d="M33 21h14" stroke="#d9b04f" stroke-width="2"/>';
+    if (h === 'helm') s += '<path d="M31 43q-1-24 19-25 20 1 19 25l-3-2q-2-13-16-14-14 1-16 14z" fill="url(#' + id + 's)" stroke="#2a2f34" stroke-width="1"/>' +
+      '<path d="M48.6 26.5h2.8v20h-2.8z" fill="#7d858c" stroke="#2a2f34" stroke-width=".6"/><path d="M33 34q17-5 34 0" fill="none" stroke="#c9a24a" stroke-width="1.4"/>' +
+      '<path d="M50 18q5-13 22-11-11 4-16 13z" fill="#b2392f" stroke="#5a1410" stroke-width=".8"/>';
+    if (h === 'hood') s += '<path d="M27 58q-5-38 23-40 28 2 23 40-3-25-23-27-20 2-23 27z" fill="#33502a" stroke="#1a2a15" stroke-width="1"/><path d="M30 50q2-18 20-20" fill="none" stroke="#4d7040" stroke-width="1.5"/>';
+    if (h === 'kalpak') s += '<path d="M31 35q0-22 19-22t19 22z" fill="#3a2a1d"/><path d="M31 33h38v6H31z" fill="#57402c"/><path d="M35 22q5-4 8 0M47 19q5-4 8 0M58 23q4-3 7 1" stroke="#5a4532" stroke-width="1.4" fill="none"/>';
+    if (h === 'crown') s += '<path d="M33 31l2-13 7 7 8-11 8 11 7-7 2 13z" fill="#e0b84a" stroke="#7a5a12" stroke-width="1"/><circle cx="50" cy="24" r="1.8" fill="#b2392f"/><circle cx="40" cy="27" r="1.3" fill="#2f6fd6"/><circle cx="60" cy="27" r="1.3" fill="#2f6fd6"/>';
+    if (h === 'kepi') s += '<path d="M34 33l2-14h28l2 14z" fill="#8c2b2b"/><path d="M30 33h40" stroke="#1b1b1b" stroke-width="3.4" stroke-linecap="round"/><path d="M36 25h28" stroke="#d9b04f" stroke-width="1.6"/>';
+    if (h === 'pickel') s += '<path d="M31 36q0-20 19-20t19 20z" fill="#2d2d2d"/><path d="M50 16V7" stroke="#c9a24a" stroke-width="3"/><path d="M29 36h42" stroke="#111" stroke-width="3"/><circle cx="50" cy="27" r="3" fill="#c9a24a"/>';
+    if (h === 'cap') s += '<path d="M31 34q2-17 19-17t19 17z" fill="#5b5640"/><path d="M30 34h26q-8 5-26 0z" fill="#2c2a20"/>';
+    if (h === 'bicorne') s += '<path d="M18 34q15-20 32-18 17-2 32 18-32-7-64 0z" fill="#1f1f24"/><circle cx="50" cy="24" r="3" fill="#c9a24a"/>';
+    if (h === 'beret') s += '<path d="M29 34q2-17 23-16 17 1 19 12-15-3-42 4z" fill="#7a1f24"/><circle cx="38" cy="27" r="2.4" fill="#d9b04f"/>';
+    if (h === 'pilot') s += '<path d="M30 45q-2-27 20-27t20 27h-5q-2-17-15-17t-15 17z" fill="#55606a"/><rect x="36" y="28" width="28" height="8" rx="4" fill="#1e2a33" stroke="#9aa1a8"/>';
+    if (h === 'helmetm') s += '<path d="M29 42q0-24 21-24t21 24q-10-5-21-5t-21 5z" fill="#5d6a46" stroke="#2f3624" stroke-width="1"/>';
+    if (h === 'peaked') s += '<path d="M33 34l2-15h30l2 15z" fill="#3b4c3a"/><path d="M29 34h42q-5 5-21 5t-21-5z" fill="#1b1b1b"/><path d="M40 26h20" stroke="#d9b04f" stroke-width="2"/>';
+    // uzmanlık rozeti
+    if (!opt || !opt.nobadge) s += '<circle cx="84" cy="84" r="13" fill="' + sp.col + '" stroke="#f3ecdc" stroke-width="2.4"/><g transform="translate(73.5 73.5) scale(.875)">' + sp.icon + '</g>';
     return s + '</svg>';
   }
   var PIMG = {};
   function portraitImg(g, era) {
     var k = (g.id || g.name);
-    if (!PIMG[k]) { var im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(portrait(g, era).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" ')); PIMG[k] = im; }
+    if (!PIMG[k]) { var im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(portrait(g, era, { nobadge: true }).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" ')); PIMG[k] = im; }
     return PIMG[k];
   }
   /* bina simgeleri (canvas), parşömen tonlarında */
@@ -234,5 +298,5 @@ var ART = (function () {
     castle: '<svg viewBox="0 0 24 24"><path d="M3 21V9h3v3h3V9h2v3h2V9h2v3h3V9h3v12z" fill="currentColor"/></svg>',
     city: '<svg viewBox="0 0 24 24"><path d="M3 21V11h5V6h6v5h7v10z" fill="currentColor"/></svg>'
   };
-  return { fig: figImg, figInline: figInline, flag: flag, portrait: portrait, portraitImg: portraitImg, bImg: bImg, UI: UI, shade: shade };
+  return { fig: figImg, figInline: figInline, flag: flag, portrait: portrait, portraitImg: portraitImg, specInfo: specInfo, scene: scene, bImg: bImg, UI: UI, shade: shade };
 })();

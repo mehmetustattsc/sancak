@@ -64,12 +64,13 @@ var SFX = {
 /* ---------------- ekranlar ---------------- */
 var cur = 'home';
 function show(id) {
-  ['home', 'era', 'gen', 'help', 'set'].forEach(function (s) { $('#scr-' + s).hidden = s !== id; });
+  ['home', 'era', 'hq', 'gen', 'help', 'set'].forEach(function (s) { $('#scr-' + s).hidden = s !== id; });
   $('#tabbar').hidden = false; $('#scr-battle').hidden = true;
   cur = id;
   document.querySelectorAll('#tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.go === id || (id === 'era' && b.dataset.go === 'home')); });
   if (id === 'home') renderHome();
   if (id === 'gen') renderGenerals();
+  if (id === 'hq') renderHQ();
   if (id === 'set') renderSettings();
   $('#scr-' + id).scrollTop = 0;
 }
@@ -101,13 +102,14 @@ function drawMini(cv, mi, owners) {
 }
 
 /* ---------------- ANA SAYFA ---------------- */
+(function () { var bg = document.getElementById('bgScene'); if (bg) bg.innerHTML = ART.scene(); })();
 var heroAnim = null;
 function renderHome() {
   var el = $('#scr-home .wrap');
   var g = load(GAME_KEY);
   el.innerHTML =
     '<div class="topbar"><span class="brand">SANCAK</span>' + medalsPill() + '</div>' +
-    '<div class="hero"><canvas id="heroCv"></canvas><div class="title"><h1>Sancak</h1><p class="sub">Avrupa haritasında sıra tabanlı strateji. Şehirlerini büyüt, ordunu kur, generallerinle fethet.</p></div></div>' +
+    '<div class="hero"><div class="hscene">' + ART.scene().replace('xMidYMid slice', 'xMidYMax slice') + '</div><canvas id="heroCv" class="heromap"></canvas><div class="title"><h1>Sancak</h1><p class="sub">Avrupa haritasında sıra tabanlı strateji. Şehirlerini büyüt, ordunu kur, generallerinle fethet.</p></div></div>' +
     (g && !g.over ? '<button class="resume" id="resume"><span>' + ART.flag(g.factions[g.player].id) + '</span><span style="min-width:0;flex:1"><b>Kaldığın yerden devam et</b><br><span class="muted">' + MAPS[g.mapIdx].name + ' · Tur ' + g.turn + ' · ' + fname(g.factions[g.player].id, g.era) + '</span></span><span class="go">▶</span></button>' : '') +
     '<div class="eyebrow">Çağ seç</div>' +
     '<div class="eras">' + ERAS.map(function (E, i) {
@@ -215,6 +217,41 @@ $('#modal').addEventListener('click', function (ev) { if (ev.target.id === 'moda
 var toastT = 0;
 function toast(t) { var el = $('#toast'); el.textContent = t; el.hidden = false; el.style.opacity = 1; clearTimeout(toastT); toastT = setTimeout(function () { el.style.opacity = 0; setTimeout(function () { el.hidden = true; }, 300); }, 2000); }
 
+/* ---------------- KARARGÂH ---------------- */
+function upLv(id) { return (save.upg && save.upg[id]) || 0; }
+function upEffect(u, lv) {
+  if (u.kind === 'unit') return 'Saldırı ve savunma +%' + Math.round(u.per * 100 * lv);
+  if (u.id === 'hazine') return 'Altın geliri +%' + Math.round(u.per * 100 * lv);
+  if (u.id === 'tarim') return 'Her tarla +' + lv + ' gıda';
+  if (u.id === 'baslangic') return 'Sefere +' + (u.per * lv) + ' altınla başla';
+  return '';
+}
+function renderHQ() {
+  var el = $('#scr-hq .wrap');
+  function card(u) {
+    var lv = upLv(u.id), max = lv >= u.max, cost = max ? 0 : u.cost[lv];
+    var pips = ''; for (var i = 0; i < u.max; i++) pips += '<i class="' + (i < lv ? 'on' : '') + '"></i>';
+    var art = u.kind === 'unit' ? '<span class="hqfig">' + ART.figInline(u.id === 'kule' ? 'kule' : u.id, '#3c6fb4') + '</span>' :
+      '<span class="hqfig ico">' + (u.id === 'hazine' ? I.coin : u.id === 'tarim' ? I.food : I.medal) + '</span>';
+    return '<div class="hq">' + art + '<div class="hqm"><b>' + u.name + '</b><span class="pips">' + pips + '</span>' +
+      '<span class="muted">' + (lv ? 'Şimdi: ' + upEffect(u, lv) : 'Henüz geliştirilmedi') + '</span>' +
+      (max ? '<span class="good">En üst seviye</span>' : '<span class="nx">Sonraki: ' + upEffect(u, lv + 1) + '</span>') + '</div>' +
+      (max ? '' : '<button class="btn small" data-hq="' + u.id + '"' + (save.medals < cost ? ' disabled' : '') + '>' + I.medal + cost + '</button>') + '</div>';
+  }
+  el.innerHTML = '<div class="topbar"><h2>Karargâh</h2>' + medalsPill() + '</div>' +
+    '<p class="muted">Seferlerden kazandığın madalyalarla ordunu kalıcı olarak geliştir. Geliştirmeler sadece senin birliklerine işler; rakip krallıklar bunları kullanmaz.</p>' +
+    '<div class="eyebrow">Birlikler</div><div class="hqs">' + UPGRADES.filter(function (u) { return u.kind === 'unit'; }).map(card).join('') + '</div>' +
+    '<div class="eyebrow">Hazine ve erzak</div><div class="hqs">' + UPGRADES.filter(function (u) { return u.kind === 'eco'; }).map(card).join('') + '</div>' +
+    '<div class="card"><h3>Madalya nasıl kazanılır?</h3><p class="muted">Zafer: 20 + yıldız başına 10 + seferin zorluğu. Bir seferde ilk kez aldığın her yıldız için +10. Yenilgide bile 10 madalya. Generallerini Generaller sekmesinden madalyayla eğitebilirsin.</p></div>';
+  el.querySelectorAll('[data-hq]').forEach(function (b) { b.onclick = function () {
+    var u = UPGRADES.filter(function (x) { return x.id === b.dataset.hq; })[0], lv = upLv(u.id);
+    if (lv >= u.max || save.medals < u.cost[lv]) return;
+    save.medals -= u.cost[lv]; save.upg = save.upg || {}; save.upg[u.id] = lv + 1; persist(); SFX.build();
+    toast(u.name + ' seviye ' + (lv + 1) + ': ' + upEffect(u, lv + 1));
+    renderHQ();
+  }; });
+}
+
 /* ---------------- GENERALLER ---------------- */
 var genEra = 0;
 function genBonusText(g, r, era) {
@@ -239,7 +276,7 @@ function renderGenerals() {
       return '<div class="gen' + (un ? '' : ' locked') + '"><div class="por">' + ART.portrait(g, g.era) + '</div><div style="min-width:0">' +
         '<div class="nm">' + g.name + '</div><div class="ep">' + g.epithet + '</div>' +
         '<div class="rk"><span>' + E.ranks[r - 1] + '</span><span class="ins">' + insignia(r) + '</span></div></div>' +
-        '<div class="info"><div><span class="k">Uzmanlık</span>' + sp + '</div>' +
+        '<div class="info"><div class="specrow"><span class="spec" style="--sc:' + ART.specInfo(g.spec).col + '"><svg viewBox="0 0 24 24">' + ART.specInfo(g.spec).icon + '</svg>' + sp + ' uzmanı</span></div>' +
         '<div><span class="k">Bonus</span>' + genBonusText(g, r) + '</div>' +
         '<div><span class="k">Yetenek</span><b>' + SKILLS[g.skill].name + '</b>: ' + SKILLS[g.skill].desc + '</div>' +
         (un ? '<div class="xp"><div class="bar"><i style="width:' + pct + '%"></i></div><span>' + (next ? xp + ' / ' + next + ' TP' : 'En yüksek rütbe') + '</span></div>' +
@@ -272,7 +309,8 @@ function renderHelp() {
     '<div class="card"><h3>Kaynaklar</h3><ul>' +
     '<li><b>Altın:</b> şehirlerden gelir, seviye arttıkça artar. Asker ve binalar altınla alınır.</li>' +
     '<li><b>Gıda:</b> tarlalar ve şehirler üretir. Her birlik tur başına 1 gıda yer. Gıda biterse bütün birlikler her tur 8 can kaybeder.</li>' +
-    '<li><b>Demir:</b> demirciden gelir. Atlı ve gemiler demir ister.</li></ul></div>' +
+    '<li><b>Demir:</b> demirciden gelir. Atlı ve gemiler demir ister.</li>' +
+    '<li><b>Ordu sınırı:</b> 2 + şehir başına 2 + kale başına 1 birlik (kuleler sayılmaz). Sınır dolunca altını binalara harca: şehir geliştirmek kendini 5–8 turda öder.</li></ul></div>' +
     '<div class="card"><h3>Yapılar</h3><ul>' +
     '<li><b>Şehir (6 seviye):</b> gelir, savunma ve iyileşme artar. Ele geçirilen şehir 1 seviye düşer.</li>' +
     '<li><b>Demirci (3 seviye):</b> demir üretir. 1. seviye atlıyı açar; 2. ve 3. seviyede yeni birlikler daha tecrübeli doğar.</li>' +
@@ -284,7 +322,8 @@ function renderHelp() {
     '<li>Okçu 2 hücre uzaktan atar; uzaktan vurulan karşılık veremez. Yakın dövüşte savunan karşılık verir.</li>' +
     '<li>Dağ +%30, şehir seviye başına +%8, kale +%30–90 savunma verir. Yaralı birlik daha zayıf vurur.</li>' +
     '<li>Saldıran birlik yerinde kalır. Boşalan hücreye başka bir birliğini sürüp oradan saldırmaya devam edebilirsin. İki düşman öldüren birlik tecrübe kazanır.</li>' +
-    '<li><b>Atlı</b> 2 hücre gider ve düşman yanından geçerken durmaz. Saldırıp düşmanı yok ederse 1 hücre daha ilerleyebilir.</li>' +
+    '<li><b>Atlı</b> 2 hücre gider ve düşman yanından geçerken durmaz. Saldırıp düşmanı yok ederse yeniden saldırabilir ve 1 hücre daha ilerleyebilir; gücü yettikçe zincirleme devam eder.</li>' +
+    '<li><b>Nakliyedeki birlik</b> kıyıdaki düşmana çıkarma saldırısı yapabilir: gücünün %60’ıyla vurur, karşılığı kendi savunmasının %70’iyle yer, gemide kalır.</li>' +
     '<li>Kendi birliklerinin içinden geçebilirsin, ama dolu hücrede duramazsın.</li></ul></div>' +
     '<div class="card"><h3>Kule</h3><p>Her tur kendi boş arazine bir kule kurabilirsin (tarla, şehir ve kaleye olmaz). Kule 2 turda biter; inşaat sırasında savunması yarıdır ve karşılık veremez. Hasar alan inşaat bitince kule o canla başlar. Kule saldırmaz ama saldırana karşılık verir. Yıkılırsa arazi boşalır.</p></div>' +
     '<div class="card"><h3>Ticaret</h3><p>Başkentinde her tur en fazla 3 takas: 10 gıda → 12 altın, 18 altın → 10 gıda, 25 altın → 2 demir, 2 demir → 14 altın.</p></div>' +
@@ -295,7 +334,7 @@ function renderSettings() {
     '<div class="card"><div class="setrow"><div><h3>Ses</h3><p class="muted">Savaş sesleri ve melodiler</p></div><button class="switch' + (save.sound ? ' on' : '') + '" id="swSound" aria-label="Ses"></button></div></div>' +
     '<div class="card"><div class="setrow"><div><h3>Eğitim ipuçları</h3><p class="muted">İlk seferdeki ipuçlarını yeniden göster</p></div><button class="btn small ghost" id="tutAgain">Sıfırla</button></div></div>' +
     '<div class="card"><h3>İlerlemeyi sil</h3><p class="muted">Yıldızlar, madalyalar, general rütbeleri ve yarım kalan sefer silinir.</p><div class="row" id="resetRow"><button class="btn small ghost" id="resetBtn">İlerlemeyi sil</button></div></div>' +
-    '<p class="muted" style="text-align:center">Sancak · sürüm 0.3 · Harita verisi: Natural Earth (kamu malı)</p>';
+    '<p class="muted" style="text-align:center">Sancak · sürüm 0.4 · Harita verisi: Natural Earth (kamu malı)</p>';
   $('#swSound').onclick = function () { save.sound = !save.sound; persist(); renderSettings(); SFX.tap(); };
   $('#tutAgain').onclick = function () { save.tut = false; persist(); toast('İpuçları bir sonraki seferde görünecek.'); };
   $('#resetBtn').onclick = function () {
@@ -323,14 +362,14 @@ function startGame(e, l, fid) {
   var gens = GENERALS.filter(function (g) { return g.era === e && genUnlocked(g); }).map(function (g) {
     return { id: g.id, name: g.name, spec: g.spec, skill: g.skill, xp: genXP(g.id), look: g.look };
   });
-  var G = newGame({ era: e, level: l, player: fid, generals: gens, seed: (Date.now() & 0x7fffffff) | 1 });
+  var G = newGame({ era: e, level: l, player: fid, generals: gens, upgrades: Object.assign({}, save.upg || {}), seed: (Date.now() & 0x7fffffff) | 1 });
   enterBattle(G);
 }
 function resumeGame(G) { enterBattle(G); }
 function enterBattle(G) {
   B = { G: G, sel: 0, view: null, reach: null, targets: [], preview: null, anim: [], phase: 'player', fast: 1, skip: false, tut: (!save.tut && G.level === 0 && G.turn === 1) ? 1 : 0 };
   $('#tabbar').hidden = true;
-  ['home', 'era', 'gen', 'help', 'set'].forEach(function (s) { $('#scr-' + s).hidden = true; });
+  ['home', 'era', 'hq', 'gen', 'help', 'set'].forEach(function (s) { $('#scr-' + s).hidden = true; });
   $('#scr-battle').hidden = false;
   G.log.length = 0;
   buildHud();
@@ -383,7 +422,7 @@ function buildHud() {
     '<div class="hud-top"><div class="hud-row"><button class="hbtn" id="hPause" aria-label="Menü">' + I.pause + '</button>' +
     '<div class="who">' + ART.flag(f.id, 'f') + '<span class="nm">' + factionName(G, G.player) + '</span></div>' +
     '<span class="pill turn" id="hCity"></span><span class="pill turn" id="hTurn"></span></div>' +
-    '<div class="hud-row res"><span class="pill" id="rG">' + I.coin + '<b></b><i></i></span><span class="pill" id="rF">' + I.food + '<b></b><i></i></span><span class="pill" id="rI">' + I.iron + '<b></b><i></i></span>' +
+    '<div class="hud-row res"><span class="pill" id="rG">' + I.coin + '<b></b><i></i></span><span class="pill" id="rF">' + I.food + '<b></b><i></i></span><span class="pill" id="rI">' + I.iron + '<b></b><i></i></span><span class="pill" id="rA">' + I.sword + '<b></b><i></i></span>' +
     '<button class="hbtn" id="hFit" aria-label="Haritayı sığdır">' + I.fit + '</button></div></div>' +
     '<div id="aiBar" class="aibar" hidden><span id="aiWho"></span><button class="btn small ghost" id="aiFast">Hızlı ⏩</button><button class="btn small ghost" id="aiSkip">Atla ⏭</button></div>' +
     '<div id="hBanner" class="banner" hidden></div><div id="hTip" class="tip" hidden></div>';
@@ -403,6 +442,7 @@ function updateHud() {
   set('#rG', f.gold, inc.g);
   set('#rF', f.food, inc.food - inc.up, f.food + inc.food - inc.up < 0);
   set('#rI', f.iron, inc.iron);
+  var ea = $('#rA'); ea.querySelector('b').textContent = armySize(G, G.player); ea.querySelector('i').textContent = '/' + armyCap(G, G.player); ea.querySelector('i').className = 'cap';
 }
 var bannerT = 0;
 function banner(t, ms) { var el = $('#hBanner'); el.textContent = t; el.hidden = false; clearTimeout(bannerT); bannerT = setTimeout(function () { el.hidden = true; }, ms || 1400); }
@@ -425,7 +465,8 @@ function showTip() {
 function panelHTML() {
   var G = B.G;
   if (B.phase === 'ai') return '';
-  var end = '<button class="btn endturn" id="pEnd">Devam et ▶</button>';
+  var leftN = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
+  var end = B.confirmEnd ? '<button class="btn endturn warn" id="pEnd">' + leftN + ' birlik bekliyor · Yine de bitir</button>' : '<button class="btn endturn" id="pEnd">Devam et</button>';
   var nxt = '<button class="hbtn" id="pNext" aria-label="Sıradaki birlik">' + I.next + '</button>';
   var body = '';
   if (B.preview) body = previewHTML();
@@ -433,9 +474,11 @@ function panelHTML() {
   else if (B.view !== null && B.view !== undefined) body = cellHTML(G.cells[B.view]);
   else {
     var left = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
-    body = '<div class="pinfo"><b>' + (left ? left + ' birliğin hamle bekliyor' : 'Bütün birlikler hazır') + '</b><span class="muted">Birliğe ya da şehre dokun. Bitince Devam et.</span></div>';
+    body = '<div class="pinfo"><b>' + (left ? 'Emir bekleniyor' : 'Bütün birlikler hazır') + '</b><span class="muted">Birliğe, şehre ya da boş araziye dokun. Ortadaki düğme sıradaki birliği seçer.</span></div>';
   }
-  return '<div class="pbody">' + body + '</div><div class="pfoot">' + nxt + end + '</div>';
+  var cs = cityShare(G, G.player);
+  var mid = B.confirmEnd ? '' : '<span class="pmid">' + (leftN ? '<b>' + leftN + '</b> birlik hamle bekliyor' : 'Hamleler tamam') + '</span>';
+  return '<div class="pbody">' + body + '</div><div class="pfoot">' + nxt + mid + end + '</div>';
 }
 function hasMoves(u) { return !UT[u.type].tower && (u.mp > 0 || (!u.acted && hasTarget(u))); }
 function hasTarget(u) { var G = B.G; return G.units.some(function (e) { return canAttack(G, u, e); }); }
@@ -547,7 +590,11 @@ function renderPanel() {
   el.hidden = false;
   el.innerHTML = panelHTML();
   var G = B.G;
-  $('#pEnd').onclick = endPlayerTurn;
+  $('#pEnd').onclick = function () {
+    var left = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
+    if (left && !B.confirmEnd) { B.confirmEnd = true; SFX.tap(); renderPanel(); clearTimeout(B.confirmT); B.confirmT = setTimeout(function () { if (B) { B.confirmEnd = false; renderPanel(); } }, 3500); return; }
+    B.confirmEnd = false; endPlayerTurn();
+  };
   $('#pNext').onclick = function () { SFX.tap(); nextUnit(); };
   if ($('#pvNo')) $('#pvNo').onclick = function () { B.preview = null; renderPanel(); dirty = true; };
   if ($('#pvGo')) $('#pvGo').onclick = doAttack;
@@ -574,9 +621,9 @@ function renderPanel() {
 function assignMenu() {
   var G = B.G, u = unitById(G, B.sel), free = freeGenerals(G, G.player);
   modal('<h3>General ata: ' + unitName(u) + '</h3><div class="choices">' + free.map(function (g) {
-    var spec = g.spec === u.type || (g.spec === 'kale' && (G.cells[u.c].t >= 3));
+    var spec = g.spec === u.type || (g.spec === 'kale' && (G.cells[u.c].t >= 3)), si = ART.specInfo(g.spec);
     return '<button class="choice" data-g="' + g.id + '"><span class="por">' + ART.portrait(g, G.era) + '</span><div style="min-width:0"><div class="t">' + esc(g.name) + '</div>' +
-      '<div class="s">' + ERAS[G.era].ranks[g.rank - 1] + ' · ' + SKILLS[g.skill].name + (spec ? ' · <span class="good">uzman</span>' : '') + '</div></div></button>';
+      '<div class="s">' + ERAS[G.era].ranks[g.rank - 1] + ' · ' + SKILLS[g.skill].name + '</div><div class="s"><span class="spec sm" style="--sc:' + si.col + '"><svg viewBox="0 0 24 24">' + si.icon + '</svg>' + si.name + '</span>' + (spec ? ' <span class="good">✓ bu birliğe uygun</span>' : '') + '</div></div></button>';
   }).join('') + '</div><div class="row"><button class="btn ghost" id="aNo">Vazgeç</button></div>');
   $('#aNo').onclick = closeModal;
   document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () {
@@ -774,7 +821,7 @@ function pauseMenu() {
 function finish(win, timeout) {
   var G = B.G, key = G.era + '-' + G.level, prev = save.stars[key] || 0;
   var st = win ? starsFor(G) : 0;
-  var medals = win ? 20 + 10 * st + 10 * G.level : 5;
+  var medals = win ? 20 + 10 * st + 10 * G.level : 10;
   if (win && st > prev) { medals += 10 * (st - prev); save.stars[key] = st; }
   var before = eraStars(G.era) - (win && st > prev ? st - prev : 0);
   var gens = G.factions[G.player].generals, ups = [];

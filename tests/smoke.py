@@ -66,7 +66,10 @@ async def main():
             await pg.evaluate(f'()=>{{__sancak.tapCell({atk["uc"]});__sancak.tapCell({atk["ec"]});}}'); await pg.wait_for_timeout(300); await shot('10-preview')
             await pg.click('#pvGo'); await pg.wait_for_timeout(1200); await shot('11-attacked')
         # tur sonu ve rakip turu
-        await pg.click('#pEnd'); await pg.wait_for_timeout(1200); await shot('12-ai')
+        await pg.click('#pEnd'); await pg.wait_for_timeout(150)
+        if await pg.locator('#pEnd.warn').count():
+            await shot('12a-confirm'); await pg.click('#pEnd')
+        await pg.wait_for_timeout(1200); await shot('12-ai')
         await pg.click('#aiSkip')
         for i in range(60):
             await pg.wait_for_timeout(250)
@@ -95,6 +98,11 @@ async def main():
         elif await pg.locator('#hPause').count():
             await pg.click('#hPause'); await pg.wait_for_timeout(200); await shot('15-menu'); await pg.click('#pQuit'); await pg.wait_for_timeout(300)
         await pg.click('#tabbar [data-go="home"]'); await pg.wait_for_timeout(300); await shot('16-home-resume')
+        await pg.click('#tabbar [data-go="hq"]'); await pg.wait_for_timeout(200); await shot('17a-hq')
+        await pg.evaluate('()=>{__sancak.save().medals=200}'); await pg.click('#tabbar [data-go="gen"]'); await pg.click('#tabbar [data-go="hq"]'); await pg.wait_for_timeout(200)
+        await pg.click('[data-hq="kilic"]'); await pg.wait_for_timeout(200)
+        lv = await pg.evaluate('()=>__sancak.save().upg.kilic'); assert lv == 1, lv
+        await shot('17b-hq-bought')
         await pg.click('#tabbar [data-go="gen"]'); await pg.wait_for_timeout(200); await shot('17-gen')
         await pg.click('#tabbar [data-go="help"]'); await pg.wait_for_timeout(200); await shot('18-help')
         print('HATALAR', errs)

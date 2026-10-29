@@ -2,9 +2,9 @@
 const fs = require('fs'); const E = require('../src/engine.js');
 E.setMaps(JSON.parse(fs.readFileSync(__dirname + '/../src/maps.json', 'utf8')));
 const M = JSON.parse(fs.readFileSync(__dirname + '/../src/maps.json', 'utf8'));
-function play(level, player, seed, idle) {
+function play(level, player, seed, idle, upgrades) {
   const gens = E.GENERALS.filter(g => g.era === 0 && g.unlock === 0).map(g => Object.assign({}, g, { xp: 0 }));
-  const G = E.newGame({ era: 0, level, player, generals: gens, seed });
+  const G = E.newGame({ era: 0, level, player, generals: gens, seed, upgrades: upgrades || {} });
   const R = E.rng(seed * 31 + 5);
   let guard = 0;
   while (!G.over && guard++ < 5000) {
@@ -28,7 +28,8 @@ for (let level = 0; level < E.LEVELS.length; level++) {
 // CI kontrolü: çökme yok, her oyun biter, İber'de en az bir ülke kazanılabiliyor
 if (process.env.CI_CHECK) {
   let wins = 0;
-  for (const p of M[0].factions) for (let s = 1; s <= 2; s++) { const r = play(0, p, s); if (r.over === 1) wins++; if (!r.over) throw new Error('oyun bitmedi'); }
-  if (!wins) throw new Error('İber Yarımadası hiç kazanılamadı');
+  const UPG = { kilic: 3, okcu: 3, atli: 3, hazine: 2, baslangic: 1 }; // Karargâhta ilerlemiş oyuncu
+  for (const p of M[0].factions) for (let s = 1; s <= 2; s++) { const r = play(0, p, s, false, UPG); if (r.over === 1) wins++; if (!r.over) throw new Error('oyun bitmedi'); }
+  if (wins < 2) throw new Error('İber Yarımadası neredeyse hiç kazanılamıyor: ' + wins);
   console.log('CI kontrolü tamam, kazanılan oyun:', wins);
 }

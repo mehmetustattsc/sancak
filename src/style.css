@@ -347,3 +347,54 @@ p { margin: 0; line-height: 1.45; }
 .trb svg, .upb .un svg { width: 15px; height: 15px; }
 .pill.turn svg { width: 15px; height: 15px; color: var(--brass); }
 .hud-row .who { min-width: 0; }
+
+/* ===================== Sürüm 0.4: görsel ===================== */
+:root { --crimson: #a8322a; --glass: rgba(22,26,33,.78); --glass2: rgba(34,40,49,.82); }
+#bgScene { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+#bgScene svg { width: 100%; height: 100%; display: block; }
+#bgScene::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10,13,18,.35) 0%, rgba(10,13,18,.55) 45%, rgba(10,13,18,.82) 100%); }
+.screen { position: relative; z-index: 1; }
+#tabbar { position: relative; z-index: 2; background: rgba(20,24,30,.94); backdrop-filter: blur(6px); }
+#tabbar button { font-size: 11.5px; letter-spacing: .04em; }
+.era, .lvl, .card, .gen, .tcard, .triangle, .resume { background: var(--glass); backdrop-filter: blur(6px); }
+.era { border-color: rgba(201,162,74,.28); }
+.era:not(.soon)::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 4px; background: linear-gradient(var(--brass2), var(--crimson)); }
+.hero { border-color: rgba(201,162,74,.45); box-shadow: 0 10px 30px rgba(0,0,0,.45); background: radial-gradient(120% 90% at 50% 35%, rgba(29,60,85,.92), rgba(15,35,51,.95)); }
+.brand { text-shadow: 0 2px 8px rgba(0,0,0,.6); }
+.eyebrow { text-shadow: 0 1px 4px rgba(0,0,0,.7); }
+/* karargâh */
+.hqs { display: flex; flex-direction: column; gap: 8px; }
+.hq { display: grid; grid-template-columns: 56px 1fr auto; gap: 10px; align-items: center; padding: 10px; border-radius: 14px; background: var(--glass); border: 1px solid var(--line); backdrop-filter: blur(6px); }
+.hqfig { width: 56px; height: 56px; border-radius: 12px; background: radial-gradient(circle at 50% 70%, #3a4652, #20272f); display: grid; place-items: center; }
+.hqfig.ico svg { width: 30px; height: 30px; }
+.hqm { display: flex; flex-direction: column; gap: 2px; min-width: 0; font-size: 13px; }
+.hqm b { font-family: var(--f-display); font-size: 16px; }
+.hqm .nx { color: var(--brass2); }
+.pips { display: flex; gap: 3px; }
+.pips i { width: 14px; height: 6px; border-radius: 3px; background: var(--panel2); border: 1px solid var(--line); }
+.pips i.on { background: linear-gradient(90deg, var(--brass), var(--brass2)); border-color: var(--brass); }
+.hq .btn svg { width: 16px; height: 16px; }
+/* uzmanlık rozeti */
+.spec { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 4px; border-radius: 999px; background: var(--sc); color: #fff; font-family: var(--f-num); font-weight: 700; letter-spacing: .03em; font-size: 14px; }
+.spec svg { width: 20px; height: 20px; padding: 2px; border-radius: 50%; background: rgba(0,0,0,.25); }
+.spec.sm { font-size: 12px; padding: 1px 8px 1px 3px; }
+.spec.sm svg { width: 15px; height: 15px; }
+.specrow { margin-bottom: 2px; }
+/* alt panel ayakları */
+.pfoot { gap: 10px; }
+.pmid { flex: 1; min-width: 0; font-size: 13px; color: var(--muted); text-align: center; }
+.pmid b { color: var(--brass2); font-family: var(--f-num); font-size: 15px; }
+.pfoot .endturn { flex: none; min-height: 40px; font-size: 16px; padding: 0 18px; border-radius: 12px; }
+.pfoot .endturn.warn { background: linear-gradient(#c9533f, #8f2a1e); color: #fff3e6; box-shadow: 0 2px 0 #5a160f; font-size: 14px; }
+#rA i.cap { color: var(--muted); }
+#panel { background: rgba(24,29,36,.96); }
+
+.hero .hscene { position: absolute; inset: 0; }
+.hero .hscene svg { width: 100%; height: 100%; display: block; }
+.hero canvas.heromap { position: absolute; right: 10px; top: 10px; left: auto; width: 34%; height: 30%; opacity: .9; border-radius: 10px; border: 1px solid rgba(201,162,74,.5); background: rgba(15,35,51,.75); }
+#bgScene::after { background: linear-gradient(180deg, rgba(10,13,18,.15) 0%, rgba(10,13,18,.5) 50%, rgba(10,13,18,.8) 100%); }
+.pfoot .endturn.warn { flex: 1; }
+
+.hero { aspect-ratio: 1 / .92; }
+.hero .title { top: 0; bottom: auto; padding: 16px 18px 40px; background: linear-gradient(to bottom, rgba(10,14,18,.85), rgba(10,14,18,0)); }
+.hero canvas.heromap { top: auto; bottom: 10px; right: 10px; width: 30%; height: 26%; }

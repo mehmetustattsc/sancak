@@ -43,19 +43,37 @@ var UT = {
 var ADV = 1.5;
 var TRANSPORT = { name: 'Nakliye', def: 8, mv: 2 };
 
-var CITY_INCOME = [0, 8, 11, 14, 18, 22, 27];
-var CITY_COST = [0, 0, 40, 70, 110, 160, 220];      // seviyeye çıkmak için altın
-var CITY_IRON = [0, 0, 0, 0, 2, 4, 6];
+var CITY_INCOME = [0, 8, 12, 17, 23, 30, 38];
+var CITY_COST = [0, 0, 35, 60, 90, 130, 180];      // seviyeye çıkmak için altın
+var CITY_IRON = [0, 0, 0, 0, 1, 2, 4];
 var CASTLE_DEF = [0, 0.3, 0.5, 0.7, 0.9];
 var CASTLE_COST = [0, 0, 50, 90, 140];
 var CASTLE_IRON = [0, 0, 0, 1, 2];
 var SMITH_COST = [0, 50, 90, 140];
 var SMITH_IRON = [0, 0, 2, 4];
-var FARM_FOOD = [0, 2, 4];
-var FARM_COST = 30;
+var FARM_FOOD = [0, 2, 5];
+var FARM_COST = 20;
 var PORT_COST = [0, 50, 80];
 var PORT_IRON = [0, 0, 2];
 var TOWER_TURNS = 2;
+/* Karargâh: madalyayla kalıcı geliştirmeler (sadece oyuncuya) */
+var UPGRADES = [
+  { id: 'kilic', kind: 'unit', name: 'Kılıçlı eğitimi', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
+  { id: 'okcu', kind: 'unit', name: 'Okçu eğitimi', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
+  { id: 'atli', kind: 'unit', name: 'Atlı eğitimi', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
+  { id: 'kadirga', kind: 'unit', name: 'Donanma', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
+  { id: 'kule', kind: 'unit', name: 'Kule ustaları', max: 5, cost: [25, 40, 60, 90, 130], per: 0.08 },
+  { id: 'hazine', kind: 'eco', name: 'Hazine', max: 3, cost: [40, 80, 140], per: 0.10 },
+  { id: 'tarim', kind: 'eco', name: 'Tarım', max: 2, cost: [40, 90], per: 1 },
+  { id: 'baslangic', kind: 'eco', name: 'Savaş sandığı', max: 3, cost: [30, 60, 100], per: 40 }
+];
+function upg(G, fi, id) { var f = fi >= 0 ? G.factions[fi] : null; return f && f.upg && f.upg[id] || 0; }
+function armyCap(G, fi) {
+  var n = 2;
+  G.cells.forEach(function (c) { if (c.f === fi) { if (c.t === 3) n += 2; if (c.t === 4) n += 1; } });
+  return n;
+}
+function armySize(G, fi) { return G.units.filter(function (u) { return u.f === fi && !UT[u.type].tower; }).length; }
 /* başkentte ticaret: tur başına en fazla 3 takas */
 var TRADES = [
   { id: 'sellFood', give: { food: 10 }, get: { gold: 12 }, name: 'Gıda sat' },
@@ -92,9 +110,9 @@ var SKILLS = {
 var ENEMY_GENS = [
   { name: 'Kızıl Baron', spec: 'atli', look: { skin: '#e3b28a', hair: '#7a2e1a', beard: 2, hat: 'helm' } },
   { name: 'Yaşlı Kont', spec: 'kilic', look: { skin: '#ecc7a3', hair: '#cfcfcf', beard: 3, hat: 'crown' } },
-  { name: 'Kara Şövalye', spec: 'kilic', look: { skin: '#c79a74', hair: '#111', beard: 1, hat: 'helm' } },
+  { name: 'Kara Şövalye', spec: 'kilic', look: { skin: '#c79a74', hair: '#1b1612', beard: 1, hat: 'helm' } },
   { name: 'Demir Dük', spec: 'atli', look: { skin: '#dcae88', hair: '#3e2b1f', beard: 0, hat: 'kalpak' } },
-  { name: 'Gri Kurt', spec: 'okcu', look: { skin: '#cf9e78', hair: '#777', beard: 2, hat: 'hood' } },
+  { name: 'Gri Kurt', spec: 'okcu', look: { skin: '#cf9e78', hair: '#7a7a7a', beard: 2, hat: 'hood' } },
   { name: 'Aslan Yürek', spec: 'kilic', look: { skin: '#e8bd96', hair: '#b5732e', beard: 2, hat: 'helm' } }
 ];
 var RANK_XP = [0, 120, 320, 650, 1100];
@@ -121,7 +139,8 @@ function newGame(o) {
   var fidx = {};
   G.factions = M.factions.map(function (id, i) {
     fidx[id] = i;
-    return { id: id, gold: 100, food: 8, iron: 3, alive: true, isPlayer: id === o.player, generals: [], eco: id === o.player ? 1 : L.aiEco, recruited: {} };
+    var me = id === o.player, up = me ? (o.upgrades || {}) : {};
+    return { id: id, gold: 100 + 40 * (up.baslangic || 0), food: 8, iron: 3, alive: true, isPlayer: me, generals: [], eco: me ? 1 + 0.1 * (up.hazine || 0) : L.aiEco, recruited: {}, upg: up };
   });
   M.cells.forEach(function (c, i) {
     var p = hexXY(c[0], c[1]);
@@ -188,7 +207,6 @@ function unitMv(G, u) {
 }
 function portBonus(G, u) { return 0; }
 function unitRange(G, u) {
-  if (u.emb) return 0;
   var g = genOf(G, u); var r = UT[u.type].rng;
   if (r > 1 && g && g.skill === 'isabet') r++;
   return r;
@@ -200,7 +218,7 @@ function income(G, fi) {
   G.cells.forEach(function (c) {
     if (c.f !== fi || !c.t) return;
     if (c.t === 3) { g += CITY_INCOME[c.lv]; food += 1; iron += c.smith; g += c.port * 2; }
-    if (c.t === 2) food += FARM_FOOD[c.lv];
+    if (c.t === 2) food += FARM_FOOD[c.lv] + upg(G, fi, 'tarim');
   });
   G.units.forEach(function (u) { if (u.f === fi && !UT[u.type].tower) up += 1; });
   var e = G.factions[fi].eco;
@@ -359,9 +377,9 @@ function checkElim(G, fi) {
 /* ---------- savaş ---------- */
 function stat(G, u, kind, vs, cell, attacking) {
   var T = UT[u.type];
-  var base = u.emb ? (kind === 'atk' ? 0 : TRANSPORT.def) : T[kind];
+  var base = u.emb ? (kind === 'atk' ? T.atk * 0.6 : TRANSPORT.def) : T[kind];
   if (u.build && kind === 'def') base *= 0.5; // inşaat yarı savunmalı
-  var m = 1 + 0.15 * (u.lvl - 1);
+  var m = (1 + 0.15 * (u.lvl - 1)) * (1 + (u.type === 'kule' ? 0.08 : 0.06) * upg(G, u.f, u.type));
   if (!u.emb && vs && !vs.emb && T.beats === vs.type) m *= ADV;
   var g = genOf(G, u);
   if (g) {
@@ -385,12 +403,13 @@ function terrainMul(G, c, u) {
   return m;
 }
 function canAttack(G, a, d) {
-  if (!d || d.f === a.f || a.acted || a.emb || UT[a.type].tower) return false;
+  if (!d || d.f === a.f || a.acted || UT[a.type].tower) return false;
   var ca = G.cells[a.c], cd = G.cells[d.c], dist = hd(ca, cd);
   if (dist < 1 || dist > unitRange(G, a)) return false;
   var ranged = UT[a.type].rng > 1;
-  // kara yakın dövüş birliği gemiye saldıramaz
+  // kara yakın dövüş birliği gemiye saldıramaz; nakliyedeki birlik sadece karaya çıkarma saldırısı yapar
   if ((isNaval(d) || d.emb) && !isNaval(a) && !ranged) return false;
+  if (a.emb && !cd.t) return false;
   return true;
 }
 function predict(G, a, d) {
@@ -407,7 +426,8 @@ function predict(G, a, d) {
     if (canBack) {
       var dd = Object.assign({}, d, { hp: left });
       var A2 = stat(G, dd, 'atk', a, ca, true);
-      var D2 = stat(G, a, 'def', d, ca, false) * terrainMul(G, ca, a);
+      // nakliyeden saldıran birlik kendi savunmasının %70'iyle karşılık yer
+      var D2 = a.emb ? stat(G, Object.assign({}, a, { emb: 0 }), 'def', d, ca, false) * 0.7 : stat(G, a, 'def', d, ca, false) * terrainMul(G, ca, a);
       back = 24 * 0.6 * Math.pow(A2 / Math.max(1, D2), 0.7);
       var ga = genOf(G, a); if (ga && ga.skill === 'kalkan') back *= 0.75;
       back = Math.max(2, back);
@@ -431,7 +451,7 @@ function attack(G, a, d, R) {
   if (killD) { removeUnit(G, d); a.kills++; if (ga) ga.gained += 15; if (a.kills % 2 === 0 && a.lvl < 3) a.lvl++; if (a.f === G.player) G.stats.kills++; }
   if (killA) removeUnit(G, a);
   // atlı takibi: düşmanı yok eden atlı 1 hücre daha hareket edebilir (saldıramaz)
-  if (killD && !killA && UT[a.type].pursue && !a.emb) { a.mp = 1; a.chase = 1; G.log.push({ t: 'chase', u: a.id, c: a.c }); }
+  if (killD && !killA && UT[a.type].pursue && !a.emb) { a.acted = false; a.mp = Math.max(a.mp, 1); a.chase = (a.chase || 0) + 1; G.log.push({ t: 'chase', u: a.id, c: a.c }); }
   return ev;
 }
 function removeUnit(G, u) {
@@ -486,6 +506,7 @@ function recruitInfo(G, c, type) {
   r.at = spawnCell(G, c, T.naval);
   if (r.at < 0) { r.ok = false; r.why = r.why || (T.naval ? 'Liman dolu' : 'Şehir ve çevresi dolu'); }
   if (f.recruited[c.i]) { r.ok = false; r.why = r.why || 'Bu tur asker alındı'; }
+  if (armySize(G, c.f) >= armyCap(G, c.f)) { r.ok = false; r.why = r.why || 'Ordu sınırı dolu'; }
   if (r.ok && !canPay(f, r.g, r.i)) { r.ok = false; r.why = 'Yetersiz kaynak'; }
   return r;
 }
@@ -622,7 +643,7 @@ function aiEconomy(G, fi) {
   var foodNet = inc.food - inc.up;
   var threatened = function (c) { return G.units.some(function (u) { return u.f !== fi && u.f >= 0 && hd(G.cells[u.c], c) <= 2; }); };
   // asker: yiyecek ve sınır dahilinde
-  var cap = cities.length * 3 + 3;
+  var cap = armyCap(G, fi);
   var order = cities.concat(castles.filter(threatened)).sort(function (a, b) { return threatened(b) - threatened(a) || b.lv - a.lv; });
   order.forEach(function (c) {
     if (myUnits >= cap) return;
@@ -712,6 +733,13 @@ function aiUnit(G, u, DM, DMn, R) {
     if (best.ci !== u.c) moveUnit(G, u, best.ci);
     var e = unitById(G, best.e.id);
     if (e && canAttack(G, u, e)) attack(G, u, e, R);
+    // atlı zinciri: öldürdükçe yeniden saldır
+    for (var z = 0; z < 6 && unitById(G, u.id) && !u.acted; z++) {
+      var nx = null;
+      G.units.forEach(function (e2) { if (canAttack(G, u, e2)) { var p2 = predict(G, u, e2); var v2 = p2.dmg - p2.back * 1.2 + (p2.kill ? 30 : 0) - (p2.die ? 60 : 0); if (!nx || v2 > nx.v) nx = { v: v2, e: e2 }; } });
+      if (!nx || nx.v < 8) break;
+      attack(G, u, nx.e, R);
+    }
     // atlı takibi: boşalan şehre gir
     if (unitById(G, u.id) && u.chase && u.mp > 0) { var g2 = takeEmpty(G, u, reach(G, u)); if (g2 !== null) moveUnit(G, u, g2); }
     return 'attack';
@@ -759,5 +787,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
 };
