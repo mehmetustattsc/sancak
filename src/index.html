@@ -1,0 +1,27 @@
+<title>Sancak</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#12161b">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Alegreya+SC:wght@700;800&family=Alegreya+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Barlow+Condensed:wght@600;700&display=swap">
+<style>/*CSS*/</style>
+<div id="app">
+  <section class="screen" id="scr-home"><div class="wrap"></div></section>
+  <section class="screen" id="scr-era" hidden><div class="wrap"></div></section>
+  <section class="screen" id="scr-gen" hidden><div class="wrap"></div></section>
+  <section class="screen" id="scr-help" hidden><div class="wrap"></div></section>
+  <section class="screen" id="scr-set" hidden><div class="wrap"></div></section>
+  <nav id="tabbar">
+    <button data-go="home" class="on"><svg viewBox="0 0 24 24"><path d="M5 21V3M5 4h11l-2 4 2 4H5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>Sefer</button>
+    <button data-go="gen"><svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M4.5 21c1-4 4-6 7.5-6s6.5 2 7.5 6" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>Generaller</button>
+    <button data-go="help"><svg viewBox="0 0 24 24"><path d="M4 5c3-1.5 5.5-1.5 8 0v15c-2.5-1.5-5-1.5-8 0zM12 5c2.5-1.5 5-1.5 8 0v15c-3-1.5-5.5-1.5-8 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>Rehber</button>
+    <button data-go="set"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>Ayarlar</button>
+  </nav>
+  <section id="scr-battle" hidden><canvas id="cv"></canvas><div id="hud"></div><div id="panel" hidden></div></section>
+  <div id="modal" hidden></div>
+  <div id="toast" hidden></div>
+</div>
+<script>var __MAPS__ = /*MAPS*/;</script>
+<script>/*ENGINE*/</script>
+<script>/*ART*/</script>
+<script>/*UI*/</script>
