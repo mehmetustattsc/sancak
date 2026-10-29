@@ -32,11 +32,12 @@ jobs:
           python -m playwright install --with-deps chromium
           python3 tests/smoke.py
           python3 tests/italy.py
+          python3 tests/features.py
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
   deploy:
-    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request' && !github.event.repository.private
     needs: test
     runs-on: ubuntu-latest
     environment:

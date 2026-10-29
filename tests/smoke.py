@@ -88,8 +88,11 @@ async def main():
             if ph != 'player': break
         print('son tur', await pg.evaluate('()=>__sancak.B()&&__sancak.B().G.turn'), ph)
         await shot('14-later')
-        # menüler
-        if await pg.locator('#hPause').count():
+        # menüler (sefer bittiyse sonuç ekranından çık)
+        await pg.wait_for_timeout(900)
+        if await pg.locator('#rMenu').count():
+            await shot('15-result'); await pg.click('#rMenu'); await pg.wait_for_timeout(300)
+        elif await pg.locator('#hPause').count():
             await pg.click('#hPause'); await pg.wait_for_timeout(200); await shot('15-menu'); await pg.click('#pQuit'); await pg.wait_for_timeout(300)
         await pg.click('#tabbar [data-go="home"]'); await pg.wait_for_timeout(300); await shot('16-home-resume')
         await pg.click('#tabbar [data-go="gen"]'); await pg.wait_for_timeout(200); await shot('17-gen')

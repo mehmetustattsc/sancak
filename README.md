@@ -2,10 +2,10 @@
 
 Avrupa haritasında **sıra tabanlı** strateji oyunu. Şehirlerini büyüt, tarlalarını sula, demirci ve liman kur, ordunu generallerinle yönet, bütün rakipleri yık.
 
-**Oyna:** https://mehmetustattsc.github.io/sancak/
-(Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, ilk açılıştan sonra internetsiz de çalışır.)
+**Oyna:** depo herkese açık olduğunda https://mehmetustattsc.github.io/sancak/ (GitHub Pages ücretsiz planda yalnız açık depolarda çalışır).
+Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, ilk açılıştan sonra internetsiz de çalışır.
 
-## Durum (sürüm 0.2)
+## Durum (sürüm 0.3)
 - **Orta Çağ**, iki sefer: İber Yarımadası (6 ülke, kara savaşı) ve İtalya ve Akdeniz (6 ülke + tarafsız adalar, deniz savaşı)
 - Yakın Çağ ve Modern Çağ menüde "Yakında" olarak duruyor
 - Referanslar: European War 4 (harita, generaller), War Regions (sadelik), Medieval: Total War (arazi, kale, general etkisi)
@@ -14,15 +14,18 @@ Avrupa haritasında **sıra tabanlı** strateji oyunu. Şehirlerini büyüt, tar
 | Konu | Kural |
 |---|---|
 | Tur | Oyuncu hamlelerini yapar, "Devam et" der; rakipler sırayla oynar (izle, hızlandır ya da atla) |
-| Birlik | Her hücrede tek birlik, can çubuğu, seviye (▲). Kılıçlı > Atlı > Okçu > Kılıçlı (×1,5) |
+| Birlik | Her hücrede tek birlik, can çubuğu, seviye (▲). Kılıçlı > Atlı > Okçu > Kılıçlı (×1,5). Kendi birliklerinin içinden geçilir |
+| Saldırı | Saldıran yerinde kalır; boşalan hücreye başka birlik sürülür. Atlı düşmanı yok ederse 1 hücre daha gider |
+| Kule | Her tur bir tane, kendi boş araziye; 2 turda biter, inşaatta yarı savunma; saldırmaz, karşılık verir |
+| Ticaret | Başkentte tur başına 3 takas: 10 gıda→12 altın, 18 altın→10 gıda, 25 altın→2 demir, 2 demir→14 altın |
 | Kaynak | Altın (şehir), Gıda (tarla + şehir; her birlik 1 yer), Demir (demirci) |
 | Şehir | 6 seviye; gelir, savunma (+%8/sv), iyileşme. Ele geçirilen şehir 1 seviye düşer |
 | Kale | 4 seviye; savunma +%30 … +%90 |
 | Demirci | 3 seviye; demir üretir, atlıyı açar, 2–3. seviyede tecrübeli birlik |
 | Tarla | 2 seviye; 2 / 4 gıda |
 | Liman | 2 seviye; kadırga üretir. Kara birliği limandan denize çıkınca nakliyeye biner |
-| General | Birliğe atanır; genel bonus (+%4/rütbe) + uzmanlık (+%6/rütbe) + yetenek. Birlik ölürse 3 tur yaralı |
-| Zafer | Bütün rakip ülkelerin şehirlerini al. Yıldızlar tur sayısına göre |
+| General | Birliğe atanır; güç +%30…+%50, kendi türünde ek +%20…+%40, tur başı +10 iyileşme, yetenek. Birlik ölürse 3 tur yaralı |
+| Zafer | Şehirlerin %60'ını al ya da bütün rakipleri yık. Yıldızlar tur sayısına göre |
 
 ## Proje yapısı
 | Yol | İçerik |

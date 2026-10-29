@@ -85,6 +85,25 @@ var ART = (function () {
         '<path d="M31 8q-12 12-9 28" fill="none" stroke="' + C + '" stroke-width="4"/>' +
         '<path d="M31 6l9 3-9 3z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1"/>';
     },
+    kule: function (C, D, L) {
+      return '<ellipse cx="32" cy="58" rx="18" ry="4.5" fill="rgba(0,0,0,.35)"/>' +
+        '<path d="M18 57l3-34h22l3 34z" fill="#cfc4ad" stroke="' + OUT + '" stroke-width="2"/>' +
+        '<path d="M15 23h34v-8h-5v4h-5v-4h-4v4h-6v-4h-4v4h-5v-4h-5z" fill="#ddd3bd" stroke="' + OUT + '" stroke-width="2" stroke-linejoin="round"/>' +
+        '<path d="M20 33h24M19.5 43h25M24 23v34M32 33v24M40 23v34" stroke="rgba(60,45,30,.35)" stroke-width="1.2"/>' +
+        '<path d="M28 57V48q4-5 8 0v9z" fill="#3a2a1c"/>' +
+        '<path d="M30 31h4v7h-4z" fill="#2b2015"/>' +
+        '<path d="M32 15V2" stroke="#4b2f17" stroke-width="2"/>' +
+        '<path d="M32 3l13 4-13 4z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1"/>';
+    },
+    insaat: function (C, D, L) {
+      return '<ellipse cx="32" cy="58" rx="20" ry="4.5" fill="rgba(0,0,0,.3)"/>' +
+        '<path d="M18 57l2-18h24l2 18z" fill="#cfc4ad" stroke="' + OUT + '" stroke-width="2"/>' +
+        '<path d="M20 47h24" stroke="rgba(60,45,30,.4)" stroke-width="1.2"/>' +
+        '<path d="M14 57V18M50 57V18M14 26h36M14 40h36M14 26l36 14M50 26L14 40" stroke="#9a6b38" stroke-width="2.4" stroke-linecap="round"/>' +
+        '<path d="M14 18h36" stroke="#9a6b38" stroke-width="2.4"/>' +
+        '<path d="M44 18V8h8" stroke="#6b4a2a" stroke-width="2"/><path d="M52 8v8" stroke="#555" stroke-width="1.2"/><rect x="49.5" y="16" width="5" height="4" fill="#9aa0a6"/>' +
+        '<path d="M14 18l-2-6 6 3z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1"/>';
+    },
     nakliye: function (C, D, L) {
       return '<ellipse cx="32" cy="57" rx="22" ry="4" fill="rgba(0,0,0,.3)"/>' +
         '<path d="M10 42h44q-3 12-10 13H20q-7-1-10-13z" fill="#7a4d26" stroke="' + OUT + '" stroke-width="1.8"/>' +

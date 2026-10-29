@@ -199,7 +199,7 @@ function openSetup(e, l) {
         return '<div class="choice' + (un ? ' on' : '') + '"' + (un ? '' : ' style="opacity:.45"') + '><span class="por">' + ART.portrait(g, e) + '</span><div style="min-width:0"><div class="t">' + g.name + '</div>' +
           '<div class="s">' + (un ? ERAS[e].ranks[r - 1] + ' ' + insignia(r) : '★ ' + g.unlock + ' yıldızla açılır') + '</div></div></div>';
       }).join('') + '</div>' +
-      '<div class="goals"><span>Hedef: <b>bütün ülkeleri yık</b> (şehirlerini al)</span><span>★★★ <b>' + L.par + '</b> tur</span><span>★★ <b>' + Math.round(L.par * 1.4) + '</b> tur</span><span>Sınır <b>' + L.limit + '</b> tur</span></div>' +
+      '<div class="goals"><span>Hedef: <b>şehirlerin %60’ını al</b> ya da bütün rakipleri yık</span><span>★★★ <b>' + L.par + '</b> tur</span><span>★★ <b>' + Math.round(L.par * 1.4) + '</b> tur</span><span>Sınır <b>' + L.limit + '</b> tur</span></div>' +
       '<div class="row"><button class="btn ghost" id="sCancel">Vazgeç</button><button class="btn" id="sGo">Sefere çık</button></div>');
     document.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { SFX.tap(); sel = b.dataset.f; draw(); }; });
     $('#sCancel').onclick = closeModal;
@@ -218,10 +218,11 @@ function toast(t) { var el = $('#toast'); el.textContent = t; el.hidden = false;
 /* ---------------- GENERALLER ---------------- */
 var genEra = 0;
 function genBonusText(g, r, era) {
-  var s = 'Saldırı ve savunma +%' + Math.round(4 * r);
-  if (UT[g.spec]) s += '; ' + UT[g.spec].name + ' birliğinde ek +%' + Math.round(6 * r);
-  else if (g.spec === 'kale') s += '; şehir ve kalede ek +%' + Math.round(6 * r);
-  else s += '; kendi birlik türünde ek +%' + Math.round(6 * r);
+  var gg = { rank: r }, a = Math.round((genMul(gg) - 1) * 100), b = Math.round((specMul(gg) - 1) * 100);
+  var s = 'Atandığı birliğin saldırı ve savunması +%' + a + ', her tur +10 iyileşme';
+  if (UT[g.spec]) s += '; ' + UT[g.spec].name + ' birliğinde ek +%' + b;
+  else if (g.spec === 'kale') s += '; şehir ve kalede ek +%' + b;
+  else s += '; kendi birlik türünde ek +%' + b;
   return s;
 }
 function renderGenerals() {
@@ -265,7 +266,7 @@ function renderHelp() {
     '<div class="card"><h3>Tur nasıl oynanır</h3><ol>' +
     '<li><b>Birliğine dokun.</b> Gidebileceği hücreler açık renkle, saldırabileceği düşmanlar kırmızı halkayla görünür.</li>' +
     '<li>Açık hücreye dokun: birlik yürür. Kırmızı halkaya dokun: savaş tahmini çıkar, <b>Saldır</b>’a bas.</li>' +
-    '<li>Her birlik bir turda bir kez yürür ve bir kez saldırır. Önce yürüyüp sonra saldırabilirsin.</li>' +
+    '<li>Her birlik bir turda bir kez yürür ve bir kez saldırır. Önce yürüyüp sonra saldırabilirsin; saldırı hareketi bitirir.</li>' +
     '<li>Şehrine dokun: asker al, şehri, demirciyi ve limanı geliştir. Tarlaya ve kaleye dokunarak onları da geliştirirsin.</li>' +
     '<li>Hamlelerin bitince <b>Devam et</b>. Rakipler sırayla oynar; izleyebilir, hızlandırabilir ya da atlayabilirsin.</li></ol></div>' +
     '<div class="card"><h3>Kaynaklar</h3><ul>' +
@@ -282,15 +283,19 @@ function renderHelp() {
     '<li>Kılıçlı atlıyı, atlı okçuyu, okçu kılıçlıyı yener: avantajlı taraf <b>1,5 kat</b> güçlü.</li>' +
     '<li>Okçu 2 hücre uzaktan atar; uzaktan vurulan karşılık veremez. Yakın dövüşte savunan karşılık verir.</li>' +
     '<li>Dağ +%30, şehir seviye başına +%8, kale +%30–90 savunma verir. Yaralı birlik daha zayıf vurur.</li>' +
-    '<li>Yakın dövüşte düşmanı yok eden birlik onun hücresine ilerler. İki düşman öldüren birlik tecrübe kazanır.</li></ul></div>' +
-    '<div class="card"><h3>Kazanmak</h3><p>Bütün şehirlerini kaybeden ülke yıkılır. Bütün rakipleri yık. Tur sınırını geçersen sefer kaybedilir. Yıldızlar kaç turda bitirdiğine göre verilir.</p></div>';
+    '<li>Saldıran birlik yerinde kalır. Boşalan hücreye başka bir birliğini sürüp oradan saldırmaya devam edebilirsin. İki düşman öldüren birlik tecrübe kazanır.</li>' +
+    '<li><b>Atlı</b> 2 hücre gider ve düşman yanından geçerken durmaz. Saldırıp düşmanı yok ederse 1 hücre daha ilerleyebilir.</li>' +
+    '<li>Kendi birliklerinin içinden geçebilirsin, ama dolu hücrede duramazsın.</li></ul></div>' +
+    '<div class="card"><h3>Kule</h3><p>Her tur kendi boş arazine bir kule kurabilirsin (tarla, şehir ve kaleye olmaz). Kule 2 turda biter; inşaat sırasında savunması yarıdır ve karşılık veremez. Hasar alan inşaat bitince kule o canla başlar. Kule saldırmaz ama saldırana karşılık verir. Yıkılırsa arazi boşalır.</p></div>' +
+    '<div class="card"><h3>Ticaret</h3><p>Başkentinde her tur en fazla 3 takas: 10 gıda → 12 altın, 18 altın → 10 gıda, 25 altın → 2 demir, 2 demir → 14 altın.</p></div>' +
+    '<div class="card"><h3>Kazanmak</h3><p>Haritadaki şehirlerin %60’ını ele geçir (üstteki şehir sayacı) ya da bütün rakipleri yık. Bütün şehirlerini kaybeden ülke yıkılır. Tur sınırını geçersen sefer kaybedilir. Yıldızlar kaç turda bitirdiğine göre verilir.</p></div>';
 }
 function renderSettings() {
   $('#scr-set .wrap').innerHTML = '<div class="topbar"><h2>Ayarlar</h2></div>' +
     '<div class="card"><div class="setrow"><div><h3>Ses</h3><p class="muted">Savaş sesleri ve melodiler</p></div><button class="switch' + (save.sound ? ' on' : '') + '" id="swSound" aria-label="Ses"></button></div></div>' +
     '<div class="card"><div class="setrow"><div><h3>Eğitim ipuçları</h3><p class="muted">İlk seferdeki ipuçlarını yeniden göster</p></div><button class="btn small ghost" id="tutAgain">Sıfırla</button></div></div>' +
     '<div class="card"><h3>İlerlemeyi sil</h3><p class="muted">Yıldızlar, madalyalar, general rütbeleri ve yarım kalan sefer silinir.</p><div class="row" id="resetRow"><button class="btn small ghost" id="resetBtn">İlerlemeyi sil</button></div></div>' +
-    '<p class="muted" style="text-align:center">Sancak · sürüm 0.2 (sıra tabanlı) · Harita verisi: Natural Earth (kamu malı)</p>';
+    '<p class="muted" style="text-align:center">Sancak · sürüm 0.3 · Harita verisi: Natural Earth (kamu malı)</p>';
   $('#swSound').onclick = function () { save.sound = !save.sound; persist(); renderSettings(); SFX.tap(); };
   $('#tutAgain').onclick = function () { save.tut = false; persist(); toast('İpuçları bir sonraki seferde görünecek.'); };
   $('#resetBtn').onclick = function () {
@@ -377,7 +382,7 @@ function buildHud() {
   $('#hud').innerHTML =
     '<div class="hud-top"><div class="hud-row"><button class="hbtn" id="hPause" aria-label="Menü">' + I.pause + '</button>' +
     '<div class="who">' + ART.flag(f.id, 'f') + '<span class="nm">' + factionName(G, G.player) + '</span></div>' +
-    '<span class="pill turn" id="hTurn"></span></div>' +
+    '<span class="pill turn" id="hCity"></span><span class="pill turn" id="hTurn"></span></div>' +
     '<div class="hud-row res"><span class="pill" id="rG">' + I.coin + '<b></b><i></i></span><span class="pill" id="rF">' + I.food + '<b></b><i></i></span><span class="pill" id="rI">' + I.iron + '<b></b><i></i></span>' +
     '<button class="hbtn" id="hFit" aria-label="Haritayı sığdır">' + I.fit + '</button></div></div>' +
     '<div id="aiBar" class="aibar" hidden><span id="aiWho"></span><button class="btn small ghost" id="aiFast">Hızlı ⏩</button><button class="btn small ghost" id="aiSkip">Atla ⏭</button></div>' +
@@ -392,6 +397,8 @@ function buildHud() {
 function updateHud() {
   var G = B.G, f = G.factions[G.player], inc = income(G, G.player);
   $('#hTurn').innerHTML = 'Tur <b>' + G.turn + '</b><span>/' + G.limit + '</span>';
+  var cs = cityShare(G, G.player);
+  $('#hCity').innerHTML = I.city + '<b>' + cs.mine + '</b><span>/' + cs.need + '</span>';
   var set = function (id, v, d, warn) { var e = $(id); e.querySelector('b').textContent = Math.floor(v); var i = e.querySelector('i'); i.textContent = (d >= 0 ? '+' : '') + d; i.className = d < 0 ? 'neg' : ''; e.classList.toggle('warn', !!warn); };
   set('#rG', f.gold, inc.g);
   set('#rF', f.food, inc.food - inc.up, f.food + inc.food - inc.up < 0);
@@ -425,11 +432,12 @@ function panelHTML() {
   else if (B.sel) body = unitHTML(unitById(G, B.sel));
   else if (B.view !== null && B.view !== undefined) body = cellHTML(G.cells[B.view]);
   else {
-    var left = G.units.filter(function (u) { return u.f === G.player && !u.acted && (u.mp > 0 || hasTarget(u)); }).length;
+    var left = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
     body = '<div class="pinfo"><b>' + (left ? left + ' birliğin hamle bekliyor' : 'Bütün birlikler hazır') + '</b><span class="muted">Birliğe ya da şehre dokun. Bitince Devam et.</span></div>';
   }
   return '<div class="pbody">' + body + '</div><div class="pfoot">' + nxt + end + '</div>';
 }
+function hasMoves(u) { return !UT[u.type].tower && (u.mp > 0 || (!u.acted && hasTarget(u))); }
 function hasTarget(u) { var G = B.G; return G.units.some(function (e) { return canAttack(G, u, e); }); }
 function statChips(G, u) {
   var T = UT[u.type];
@@ -437,18 +445,20 @@ function statChips(G, u) {
     '<span>' + I.shield + Math.round(stat(G, Object.assign({}, u, { hp: 100 }), 'def', null, G.cells[u.c], false) * terrainMul(G, G.cells[u.c], u)) + '</span>' +
     '<span>' + I.boot + unitMv(G, u) + '</span>' + (unitRange(G, u) > 1 ? '<span>↗ ' + unitRange(G, u) + '</span>' : '');
 }
-function unitName(u) { return u.emb ? UT[u.type].name + ' (nakliyede)' : UT[u.type].name; }
+function unitName(u) { return u.emb ? UT[u.type].name + ' (nakliyede)' : u.build ? 'Kule inşaatı' : UT[u.type].name; }
+function figType(u) { return u.emb ? 'nakliye' : u.type === 'kule' ? (u.build ? 'insaat' : 'kule') : u.type; }
 function unitHTML(u) {
   var G = B.G; if (!u) return '';
   var mine = u.f === G.player, g = genOf(G, u), col = u.f < 0 ? NEUTRAL_COL : FACTIONS[G.factions[u.f].id].col;
-  var s = '<div class="ucard"><div class="ufig">' + ART.figInline(u.emb ? 'nakliye' : u.type, col) + '</div><div class="umain">' +
+  var s = '<div class="ucard"><div class="ufig">' + ART.figInline(figType(u), col) + '</div><div class="umain">' +
     '<div class="uh"><b>' + unitName(u) + '</b><span class="ulv">' + '▲'.repeat(u.lvl) + '</span><span class="muted">' + esc(factionName(G, u.f)) + '</span></div>' +
     '<div class="hpb"><i style="width:' + Math.max(0, u.hp) + '%;background:' + (u.hp > 60 ? '#6dbb6f' : u.hp > 30 ? '#e0b322' : '#d0453a') + '"></i><span>' + Math.max(0, Math.round(u.hp)) + ' / 100</span></div>' +
     '<div class="ust">' + statChips(G, u) + '</div>';
   if (g) {
+    var gb = Math.round((genMul(g) - 1) * 100), sb = Math.round((specMul(g) - 1) * 100), isSpec = g.spec === u.type || (g.spec === 'kale' && G.cells[u.c].t >= 3);
     s += '<div class="ugen"><span class="gp">' + ART.portrait(g, G.era) + '</span><span><b>' + esc(g.name) + '</b> · ' + ERAS[G.era].ranks[g.rank - 1] + ' ' + insignia(g.rank) +
-      (g.skill ? '<br><span class="muted">' + SKILLS[g.skill].name + '</span>' : '') + '</span>' + (mine ? '<button class="btn small ghost" id="uRecall">Geri çağır</button>' : '') + '</div>';
-  } else if (mine) {
+      '<br><span class="good">Güç +%' + gb + (isSpec ? ', uzman +%' + sb : '') + '</span>' + (g.skill ? ' <span class="muted">· ' + SKILLS[g.skill].name + '</span>' : '') + '</span>' + (mine ? '<button class="btn small ghost" id="uRecall">Geri çağır</button>' : '') + '</div>';
+  } else if (mine && !UT[u.type].tower) {
     var free = freeGenerals(G, G.player), resting = G.factions[G.player].generals.filter(function (x) { return x.rest; });
     if (free.length) s += '<div class="ugen"><button class="btn small" id="uAssign">General ata (' + free.length + ')</button></div>';
     else if (resting.length) s += '<div class="ugen muted">' + resting.map(function (x) { return esc(x.name) + ' ' + Math.max(1, x.rest - G.turn) + ' tur dinleniyor'; }).join(' · ') + '</div>';
@@ -456,12 +466,14 @@ function unitHTML(u) {
   s += '</div></div>';
   if (mine) {
     var acts = [];
-    if (!u.acted && B.targets.length) acts.push('<span class="muted">' + B.targets.length + ' hedef menzilde</span>');
-    if (u.acted) acts.push('<span class="muted">Bu tur hamlesini yaptı</span>');
-    else if (u.mp <= 0 && !B.targets.length) acts.push('<span class="muted">Hareketi bitti</span>');
+    if (UT[u.type].tower) acts.push('<span class="muted">' + (u.build ? 'İnşaat: ' + u.build + ' tur sonra kule olur. Saldırıya uğrarsa karşılık veremez.' : 'Kule saldırmaz; saldırana karşılık verir.') + '</span>');
+    else if (u.chase && u.mp > 0) acts.push('<span class="good">Takip: 1 hücre daha ilerleyebilir</span>');
+    else if (!u.acted && B.targets.length) acts.push('<span class="muted">' + B.targets.length + ' hedef menzilde</span>');
+    else if (!hasMoves(u)) acts.push('<span class="muted">Bu tur hamlesini yaptı</span>');
+    else if (u.mp <= 0) acts.push('<span class="muted">Hareketi bitti</span>');
     var c = G.cells[u.c];
     if (c.f === G.player && c.t >= 2) acts.push('<button class="btn small ghost" id="uCell">' + (c.t === 3 ? I.city : c.t === 4 ? I.castle : I.wheat) + ' ' + (c.t === 3 ? 'Şehir' : c.t === 4 ? 'Kale' : 'Tarla') + '</button>');
-    if (!u.acted) acts.push('<button class="btn small ghost" id="uWait">Beklet</button>');
+    if (hasMoves(u)) acts.push('<button class="btn small ghost" id="uWait">Beklet</button>');
     s += '<div class="uacts">' + acts.join('') + '</div>';
   }
   return s;
@@ -473,17 +485,18 @@ function previewHTML() {
   var colA = FACTIONS[G.factions[a.f].id].col, colD = d.f < 0 ? NEUTRAL_COL : FACTIONS[G.factions[d.f].id].col;
   var adv = UT[a.type].beats === d.type ? '<span class="good">Avantajlı</span>' : UT[d.type].beats === a.type && !d.emb ? '<span class="bad">Dezavantajlı</span>' : '';
   var cd = G.cells[d.c], ter = terrainMul(G, cd, d);
-  return '<div class="pv"><div class="pvs"><div class="ufig sm">' + ART.figInline(a.emb ? 'nakliye' : a.type, colA) + '</div><div><b>' + unitName(a) + '</b><div class="hpb"><i style="width:' + a.hp + '%"></i><span>' + Math.round(a.hp) + ' → ' + Math.max(0, Math.round(a.hp - p.back)) + '</span></div></div></div>' +
+  return '<div class="pv"><div class="pvs"><div class="ufig sm">' + ART.figInline(figType(a), colA) + '</div><div><b>' + unitName(a) + '</b><div class="hpb"><i style="width:' + a.hp + '%"></i><span>' + Math.round(a.hp) + ' → ' + Math.max(0, Math.round(a.hp - p.back)) + '</span></div></div></div>' +
     '<div class="vs">' + I.sword + '</div>' +
-    '<div class="pvs"><div class="ufig sm">' + ART.figInline(d.emb ? 'nakliye' : d.type, colD) + '</div><div><b>' + unitName(d) + '</b><div class="hpb"><i style="width:' + d.hp + '%"></i><span>' + Math.round(d.hp) + ' → ' + Math.max(0, Math.round(d.hp - p.dmg)) + '</span></div></div></div></div>' +
+    '<div class="pvs"><div class="ufig sm">' + ART.figInline(figType(d), colD) + '</div><div><b>' + unitName(d) + '</b><div class="hpb"><i style="width:' + d.hp + '%"></i><span>' + Math.round(d.hp) + ' → ' + Math.max(0, Math.round(d.hp - p.dmg)) + '</span></div></div></div></div>' +
     '<div class="pvnote">' + adv + (ter > 1.01 ? '<span>Arazi savunması ×' + ter.toFixed(2) + '</span>' : '') + (p.kill ? '<span class="good">Düşman yok olur</span>' : '') + (p.back === 0 && !p.kill ? '<span class="good">Karşılık yok</span>' : '') + (p.die ? '<span class="bad">Birliğin ölebilir</span>' : '') + '<span class="muted">±%10 şans</span></div>' +
     '<div class="row"><button class="btn small ghost" id="pvNo">Vazgeç</button><button class="btn small" id="pvGo">' + I.sword + ' Saldır</button></div>';
 }
+function resTag(o) { return (o.gold ? I.coin + o.gold : '') + (o.food ? I.food + o.food : '') + (o.iron ? I.iron + o.iron : ''); }
 function costTag(g, i) { return '<span class="cost">' + I.coin + g + (i ? ' ' + I.iron + i : '') + '</span>'; }
 function cellHTML(c) {
   var G = B.G, f = c.f, mine = f === G.player && c.t;
   if (!c.t) return '<div class="pinfo"><b>Deniz</b><span class="muted">' + (G.navy ? 'Limandan çıkan birlikler nakliye ile geçer. Kadırgalar denizi korur.' : 'Bu haritada deniz yolu yok.') + '</span></div>';
-  var kind = c.t === 3 ? (c.cap ? 'Başkent' : 'Şehir') : c.t === 4 ? 'Kale' : c.t === 2 ? 'Tarla' : (c.mt ? 'Dağlık arazi' : 'Arazi');
+  var kind = c.t === 3 ? (c.cap ? 'Başkent' : 'Şehir') : c.t === 4 ? 'Kale' : c.t === 2 ? 'Tarla' : (c.mt ? 'Dağlık arazi' : 'Boş arazi');
   var s = '<div class="chd">' + (f >= 0 ? ART.flag(G.factions[f].id) : '') + '<div style="min-width:0"><b>' + (c.nm ? esc(c.nm) + ' · ' : '') + kind + (c.t >= 2 ? ' <span class="lvtag">Sv ' + c.lv + '</span>' : '') + '</b><br><span class="muted">' + esc(factionName(G, f)) + (c.mt ? ' · dağ +%30 savunma' : '') + '</span></div></div>';
   if (c.t === 3) {
     s += '<div class="facts"><span class="fact">' + I.coin + '+' + Math.round((CITY_INCOME[c.lv] + c.port * 2) * (G.factions[f] ? G.factions[f].eco : 1)) + '</span><span class="fact">' + I.food + '+1</span>' +
@@ -507,6 +520,16 @@ function cellHTML(c) {
       return '<button class="recb" data-rec="' + t + '"' + (r.ok ? '' : ' disabled') + '><span class="rf">' + ART.figInline(t, FACTIONS[G.factions[f].id].col) + '</span><span class="rn">' + UT[t].name + '</span>' + costTag(r.g, r.i) + (r.ok ? '' : '<span class="why">' + r.why + '</span>') + '</button>';
     }).join('') + '</div>';
   }
+  if (c.t === 3 && c.cap) {
+    s += '<div class="eyebrow" style="margin-top:2px">Ticaret · bu tur ' + (TRADE_MAX - (G.factions[f].trades || 0)) + '/' + TRADE_MAX + ' hak</div><div class="trades">' + TRADES.map(function (t) {
+      var r = tradeInfo(G, f, t.id);
+      return '<button class="trb" data-tr="' + t.id + '"' + (r.ok ? '' : ' disabled') + '><span class="un">' + t.name + '</span><span class="tx">' + resTag(t.give) + ' → ' + resTag(t.get) + '</span></button>';
+    }).join('') + '</div>';
+  }
+  if (c.t === 1 && !unitAt(G, c.i)) {
+    var ti = towerInfo(G, c, f);
+    ups.push('<button class="upb" data-tower="1"' + (ti.ok ? '' : ' disabled') + '><span class="un">' + I.castle + ' Kule inşa et</span><span class="ue">2 turda biter · savunma ' + UT.kule.def + ' · her tur bir kule</span>' + costTag(ti.g, ti.i) + (ti.ok ? '' : '<span class="why">' + ti.why + '</span>') + '</button>');
+  }
   if (c.t === 4) { var ki = upgradeInfo(G, c, 'castle'); if (ki) up('castle', 'Kale', ki, 'Savunma +%' + Math.round(CASTLE_DEF[ki.next] * 100)); }
   if (c.t === 2) { var fi2 = upgradeInfo(G, c, 'farm'); if (fi2) up('farm', 'Sulama', fi2, '+2 gıda'); }
   if (ups.length) s += '<div class="ups">' + ups.join('') + '</div>';
@@ -528,6 +551,13 @@ function renderPanel() {
   if ($('#uRecall')) $('#uRecall').onclick = function () { var u = unitById(G, B.sel); if (recallGeneral(G, G.player, u.id)) { toast('General geri çağrıldı. Sonraki tur yeniden atanabilir.'); selectUnit(u); } };
   el.querySelectorAll('[data-up]').forEach(function (b) { b.onclick = function () {
     if (upgrade(G, B.view, b.dataset.up)) { SFX.build(); fx({ k: 'text', c: B.view, txt: 'Geliştirildi', col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; }
+  }; });
+  el.querySelectorAll('[data-tr]').forEach(function (b) { b.onclick = function () {
+    if (trade(G, G.player, b.dataset.tr)) { SFX.coin(); G.log.length = 0; updateHud(); renderPanel(); }
+  }; });
+  el.querySelectorAll('[data-tower]').forEach(function (b) { b.onclick = function () {
+    var u = buildTower(G, B.view, G.player);
+    if (u) { SFX.build(); G.log.length = 0; fx({ k: 'ring', c: u.c, col: '#e8c977' }); fx({ k: 'text', c: u.c, txt: 'İnşaat başladı', col: '#fff' }); updateHud(); renderPanel(); dirty = true; }
   }; });
   el.querySelectorAll('[data-rec]').forEach(function (b) { b.onclick = function () {
     var u = recruit(G, B.view, b.dataset.rec);
@@ -552,7 +582,7 @@ function assignMenu() {
 function selectUnit(u) {
   var G = B.G;
   B.sel = u.id; B.view = null; B.preview = null;
-  B.reach = (u.f === G.player && !u.acted) ? reach(G, u) : null;
+  B.reach = (u.f === G.player && u.mp > 0) ? reach(G, u) : null;
   B.targets = (u.f === G.player && !u.acted) ? G.units.filter(function (e) { return canAttack(G, u, e); }).map(function (e) { return e.id; }) : [];
   renderPanel(); dirty = true;
   if (B.tut === 1 && u.f === G.player) { B.tut = 2; showTip(); }
@@ -560,7 +590,7 @@ function selectUnit(u) {
 function deselect() { B.sel = 0; B.view = null; B.reach = null; B.targets = []; B.preview = null; renderPanel(); dirty = true; }
 function nextUnit(silentIfNone) {
   var G = B.G;
-  var list = G.units.filter(function (u) { return u.f === G.player && !u.acted && (u.mp > 0 || hasTarget(u)); });
+  var list = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); });
   if (!list.length) { if (!silentIfNone) toast('Hamle bekleyen birlik yok. Devam et’e basabilirsin.'); deselect(); return; }
   var i = list.findIndex(function (u) { return u.id === B.sel; });
   var u = list[(i + 1) % list.length];
@@ -655,6 +685,12 @@ function animEvent(e, sp) {
     if (B.phase === 'ai') { fx({ k: 'ring', c: e.c, col: '#fff' }); d = 120 / sp; }
   } else if (e.t === 'build') {
     if (B.phase === 'ai' && e.f !== G.player) d = 40;
+  } else if (e.t === 'chase') {
+    fx({ k: 'text', c: e.c, txt: 'Takip!', col: '#ffe9a8' }); d = 250 / sp;
+  } else if (e.t === 'tower') {
+    fx({ k: 'ring', c: e.c, col: '#e8c977' }); if (e.f === G.player) { fx({ k: 'text', c: e.c, txt: 'Kule tamam', col: '#e8c977' }); SFX.build(); }
+  } else if (e.t === 'towerDown') {
+    if (e.f === G.player) toast('Bir kulen yıkıldı.');
   } else if (e.t === 'elim') {
     toast(factionName(G, e.f) + ' yıkıldı!'); d = 700 / sp;
   } else if (e.t === 'wounded') {
@@ -974,11 +1010,11 @@ function drawUnit(u, now) {
     if ((a.e.a === u.id || -a.e.a === u.id) && !a.e.ranged && !a.e.naval) { var A = G.cells[a.e.ac], D = G.cells[a.e.dc]; var lunge = Math.sin(Math.min(1, k / 0.6) * Math.PI) * 0.35; pos = { x: A.x + (D.x - A.x) * lunge, y: A.y + (D.y - A.y) * lunge }; p = w2s(pos.x, pos.y); cy = p.y + (onBuild ? s * 0.2 : 0); }
     if ((a.e.d === u.id || -a.e.d === u.id) && k > 0.5 && k < 0.8) dx = Math.sin(k * 60) * s * 0.06;
   });
-  var mine = u.f === G.player, done = mine && u.acted && B.phase === 'player';
+  var mine = u.f === G.player, done = mine && !u.ghost && B.phase === 'player' && !UT[u.type].tower && !hasMoves(u);
   ctx.globalAlpha = alpha;
   if (B.sel === u.id) { ctx.beginPath(); ctx.ellipse(p.x, cy + size * 0.38, size * 0.42, size * 0.13, 0, 0, 7); ctx.fillStyle = 'rgba(255,223,107,.55)'; ctx.fill(); ctx.strokeStyle = '#ffdf6b'; ctx.lineWidth = 2; ctx.stroke(); }
   else if (mine && !done && B.phase === 'player') { ctx.beginPath(); ctx.ellipse(p.x, cy + size * 0.38, size * 0.38, size * 0.11, 0, 0, 7); ctx.strokeStyle = 'rgba(255,240,190,.9)'; ctx.lineWidth = 2; ctx.stroke(); }
-  var type = u.emb ? 'nakliye' : u.type, im = ART.fig(type, col);
+  var type = figType(u), im = ART.fig(type, col);
   if (done) ctx.filter = 'saturate(.35) brightness(.85)';
   if (im.complete) ctx.drawImage(im, p.x - size / 2 + dx, cy - size * 0.58, size, size);
   ctx.filter = 'none';
@@ -990,8 +1026,9 @@ function drawUnit(u, now) {
     rr(bx, by, bw * hp, bh, bh / 2); ctx.fillStyle = hp > 0.6 ? '#6dcf6a' : hp > 0.3 ? '#e8c03a' : '#e2503f'; ctx.fill();
     // renk şeridi (sahiplik)
     rr(bx - 1, by + bh + 1.5, bw + 2, Math.max(2.5, s * 0.06), 2); ctx.fillStyle = col; ctx.fill();
+    if (u.build) { ctx.fillStyle = '#ffe9a8'; ctx.font = '700 ' + Math.max(10, s * 0.3) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.strokeText(u.build + ' tur', p.x, cy - size * 0.5); ctx.fillText(u.build + ' tur', p.x, cy - size * 0.5); }
     // seviye
-    if (u.lvl > 1) { ctx.fillStyle = '#e8c977'; ctx.font = '700 ' + Math.max(9, s * 0.24) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('▲'.repeat(u.lvl - 1), bx + bw + 3, by + bh / 2); }
+    if (u.lvl > 1 && !UT[u.type].tower) { ctx.fillStyle = '#e8c977'; ctx.font = '700 ' + Math.max(9, s * 0.24) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('▲'.repeat(u.lvl - 1), bx + bw + 3, by + bh / 2); }
     // general
     var g = genOf(G, u);
     if (g) {
@@ -1015,7 +1052,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 // figürler yüklenince yeniden çiz
-['kilic', 'okcu', 'atli', 'kadirga', 'nakliye'].forEach(function (t) { Object.keys(FACTIONS).concat(['n']).forEach(function (f) { var im = ART.fig(t, f === 'n' ? NEUTRAL_COL : FACTIONS[f].col); im.onload = function () { dirty = true; }; }); });
+['kilic', 'okcu', 'atli', 'kadirga', 'nakliye', 'kule', 'insaat'].forEach(function (t) { Object.keys(FACTIONS).concat(['n']).forEach(function (f) { var im = ART.fig(t, f === 'n' ? NEUTRAL_COL : FACTIONS[f].col); im.onload = function () { dirty = true; }; }); });
 for (var lv = 1; lv <= 6; lv++) { ART.bImg('city', lv).onload = function () { dirty = true; }; if (lv <= 4) ART.bImg('castle', lv).onload = function () { dirty = true; }; }
 
 /* ---------- açılış ---------- */

@@ -339,3 +339,11 @@ p { margin: 0; line-height: 1.45; }
 
 .btn svg { width: 18px; height: 18px; flex: none; }
 .ugen .btn { white-space: nowrap; }
+.trades { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
+.trb { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 7px 10px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); text-align: left; min-width: 0; }
+.trb[disabled] { opacity: .45; }
+.trb .un { font-family: var(--f-display); font-weight: 700; font-size: 14px; }
+.trb .tx { display: inline-flex; align-items: center; gap: 3px; font-family: var(--f-num); font-weight: 700; font-size: 15px; color: var(--brass2); flex-wrap: wrap; }
+.trb svg, .upb .un svg { width: 15px; height: 15px; }
+.pill.turn svg { width: 15px; height: 15px; color: var(--brass); }
+.hud-row .who { min-width: 0; }
