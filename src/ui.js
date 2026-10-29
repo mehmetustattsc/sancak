@@ -22,44 +22,21 @@ function fname(fid, e) { return FACTIONS[fid].name + ' ' + ERAS[e].suffix; }
 function insignia(r) { var s = ''; for (var i = 0; i < 5; i++) s += i < r ? '★' : '☆'; return s; }
 
 /* ---------------- ses ---------------- */
-var AC = null;
-function tone(f, d, type, vol, slide, delay) {
-  if (!save.sound) return;
-  try {
-    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
-    var t = AC.currentTime + (delay || 0), o = AC.createOscillator(), g = AC.createGain();
-    o.type = type || 'triangle'; o.frequency.setValueAtTime(f, t);
-    if (slide) o.frequency.exponentialRampToValueAtTime(slide, t + d);
-    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(vol || 0.1, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-    o.connect(g); g.connect(AC.destination); o.start(t); o.stop(t + d + 0.02);
-  } catch (e) {}
-}
-function noise(d, vol, delay) {
-  if (!save.sound) return;
-  try {
-    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
-    var len = Math.floor(AC.sampleRate * d), b = AC.createBuffer(1, len, AC.sampleRate), x = b.getChannelData(0);
-    for (var i = 0; i < len; i++) x[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2);
-    var s = AC.createBufferSource(), g = AC.createGain(), f = AC.createBiquadFilter();
-    f.type = 'lowpass'; f.frequency.value = 1400; s.buffer = b; g.gain.value = vol || 0.15;
-    s.connect(f); f.connect(g); g.connect(AC.destination); s.start(AC.currentTime + (delay || 0));
-  } catch (e) {}
-}
 var SFX = {
-  tap: function () { tone(520, 0.05, 'triangle', 0.05); },
-  sel: function () { tone(660, 0.06, 'triangle', 0.06); },
-  step: function () { tone(180, 0.05, 'square', 0.03); },
-  hit: function () { noise(0.18, 0.2); tone(140, 0.12, 'sawtooth', 0.05, 90); },
-  arrow: function () { tone(1200, 0.12, 'sine', 0.04, 500); noise(0.08, 0.06, 0.1); },
-  kill: function () { noise(0.35, 0.22); tone(110, 0.3, 'sawtooth', 0.06, 60); },
-  coin: function () { tone(880, 0.07, 'square', 0.04); tone(1320, 0.1, 'square', 0.04, 0, 0.06); },
-  build: function () { tone(300, 0.08, 'square', 0.05); tone(300, 0.08, 'square', 0.05, 0, 0.12); tone(450, 0.15, 'triangle', 0.07, 0, 0.24); },
-  city: function () { [392, 494, 587].forEach(function (f, i) { tone(f, 0.18, 'triangle', 0.09, 0, i * 0.1); }); },
-  lost: function () { tone(220, 0.35, 'sawtooth', 0.06, 110); },
-  turn: function () { tone(440, 0.12, 'triangle', 0.07); tone(660, 0.18, 'triangle', 0.07, 0, 0.1); },
-  win: function () { [523, 659, 784, 1046].forEach(function (f, i) { tone(f, 0.3, 'triangle', 0.11, 0, i * 0.14); }); },
-  lose: function () { [392, 330, 262, 196].forEach(function (f, i) { tone(f, 0.35, 'sawtooth', 0.05, 0, i * 0.18); }); }
+  tap: function () { AUDIO.play('tap'); }, sel: function () { AUDIO.play('sel'); },
+  step: function () { AUDIO.play('step'); }, hit: function () { AUDIO.play('clash'); }, arrow: function () { AUDIO.play('arrow'); },
+  kill: function () { AUDIO.play('kill'); }, coin: function () { AUDIO.play('coin'); }, build: function () { AUDIO.play('build'); },
+  city: function () { AUDIO.play('fanfare'); }, lost: function () { AUDIO.play('lost'); }, turn: function () { AUDIO.play('horn'); },
+  win: function () { AUDIO.play('win'); }, lose: function () { AUDIO.play('lose'); }
 };
+if (save.music === undefined) save.music = true;
+AUDIO.setSfx(!!save.sound); AUDIO.setMusic(!!save.music);
+/* birliğe göre hareket sesi */
+function moveSound(G, uid) {
+  var u = unitById(G, uid); if (!u) return 'step';
+  if (isNaval(u) || u.emb) return 'row';
+  return u.type === 'atli' ? 'gallop' : 'step';
+}
 
 /* ---------------- ekranlar ---------------- */
 var cur = 'home';
@@ -67,6 +44,7 @@ function show(id) {
   ['home', 'era', 'hq', 'gen', 'help', 'set'].forEach(function (s) { $('#scr-' + s).hidden = s !== id; });
   $('#tabbar').hidden = false; $('#scr-battle').hidden = true;
   cur = id;
+  AUDIO.playTheme('menu');
   document.querySelectorAll('#tabbar button').forEach(function (b) { b.classList.toggle('on', b.dataset.go === id || (id === 'era' && b.dataset.go === 'home')); });
   if (id === 'home') renderHome();
   if (id === 'gen') renderGenerals();
@@ -340,11 +318,13 @@ function renderHelp() {
 }
 function renderSettings() {
   $('#scr-set .wrap').innerHTML = '<div class="topbar"><h2>Ayarlar</h2></div>' +
-    '<div class="card"><div class="setrow"><div><h3>Ses</h3><p class="muted">Savaş sesleri ve melodiler</p></div><button class="switch' + (save.sound ? ' on' : '') + '" id="swSound" aria-label="Ses"></button></div></div>' +
+    '<div class="card"><div class="setrow"><div><h3>Ses efektleri</h3><p class="muted">Yürüyüş, nal, kılıç, ok, top, boru</p></div><button class="switch' + (save.sound ? ' on' : '') + '" id="swSound" aria-label="Ses efektleri"></button></div>' +
+    '<div class="setrow"><div><h3>Müzik</h3><p class="muted">Menüde ud ve ney, savaşta davullu hicaz</p></div><button class="switch' + (save.music ? ' on' : '') + '" id="swMusic" aria-label="Müzik"></button></div></div>' +
     '<div class="card"><div class="setrow"><div><h3>Eğitim ipuçları</h3><p class="muted">İlk seferdeki ipuçlarını yeniden göster</p></div><button class="btn small ghost" id="tutAgain">Sıfırla</button></div></div>' +
     '<div class="card"><h3>İlerlemeyi sil</h3><p class="muted">Yıldızlar, madalyalar, general rütbeleri ve yarım kalan sefer silinir.</p><div class="row" id="resetRow"><button class="btn small ghost" id="resetBtn">İlerlemeyi sil</button></div></div>' +
     '<p class="muted" style="text-align:center">Sancak · sürüm 0.7 · Harita verisi: Natural Earth (kamu malı)</p>';
-  $('#swSound').onclick = function () { save.sound = !save.sound; persist(); renderSettings(); SFX.tap(); };
+  $('#swSound').onclick = function () { save.sound = !save.sound; AUDIO.setSfx(save.sound); persist(); renderSettings(); SFX.tap(); };
+  $('#swMusic').onclick = function () { save.music = !save.music; AUDIO.setMusic(save.music); persist(); renderSettings(); };
   $('#tutAgain').onclick = function () { save.tut = false; persist(); toast('İpuçları bir sonraki seferde görünecek.'); };
   $('#resetBtn').onclick = function () {
     $('#resetRow').innerHTML = '<span class="muted" style="align-self:center">Emin misin?</span><button class="btn small ghost" id="rNo">Hayır</button><button class="btn small" id="rYes">Evet, sil</button>';
@@ -380,6 +360,7 @@ function enterBattle(G) {
   $('#tabbar').hidden = true;
   ['home', 'era', 'hq', 'gen', 'help', 'set'].forEach(function (s) { $('#scr-' + s).hidden = true; });
   $('#scr-battle').hidden = false;
+  AUDIO.playTheme('battle');
   G.log.length = 0;
   buildHud();
   resize();
@@ -812,7 +793,7 @@ function tapCell(ci) {
     var path = act(function () { return moveUnit(G, sel, ci); });
     if (path) B.lastAct = ci;
     if (path) {
-      SFX.step();
+      SFX.tap();
       playLog(function () { selectUnit(unitById(G, sel.id)); updateHud(); checkOver(); });
       B.reach = null; B.targets = []; B.preview = null; renderPanel();
       if (B.tut === 2) { B.tut = 3; showTip(); }
@@ -868,12 +849,14 @@ function animEvent(e, sp) {
     B.anim.push({ k: 'move', u: e.u, path: e.path, t0: performance.now(), dur: per * (e.path.length - 1) });
     if (B.phase === 'ai') ensureVisible(e.path[e.path.length - 1]);
     d = per * (e.path.length - 1) + 40;
-    for (var s = 1; s < e.path.length; s++) setTimeout(SFX.step, per * s);
+    var ms = moveSound(G, e.u);
+    if (ms === 'step') { for (var s = 1; s < e.path.length; s++) AUDIO.play('step', per * (s - 1) / 1000); }
+    else AUDIO.play(ms);
   } else if (e.t === 'attack') {
     if (B.phase === 'ai') ensureVisible(e.dc);
     var dur = 650 / sp;
     B.anim.push({ k: 'atk', e: e, t0: performance.now(), dur: dur });
-    if (e.ranged) SFX.arrow(); else SFX.hit();
+    if (e.naval) AUDIO.play('cannon'); else if (e.ranged) AUDIO.play('arrow'); else AUDIO.play('clash');
     setTimeout(function () {
       fx({ k: 'text', c: e.dc, txt: '−' + e.dmg, col: '#ff8a6a' });
       if (e.back) fx({ k: 'text', c: e.ac, txt: '−' + e.back, col: '#ff8a6a' });

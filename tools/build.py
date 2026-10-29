@@ -3,7 +3,7 @@ import os, sys
 R = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..')
 rd = lambda p: open(os.path.join(R, p), encoding='utf-8').read()
 t = rd('src/index.html')
-for k, v in [('/*CSS*/', rd('src/style.css')), ('/*MAPS*/', rd('src/maps.json')), ('/*ENGINE*/', rd('src/engine.js')), ('/*ART*/', rd('src/art.js')), ('/*UI*/', rd('src/ui.js'))]:
+for k, v in [('/*CSS*/', rd('src/style.css')), ('/*MAPS*/', rd('src/maps.json')), ('/*ENGINE*/', rd('src/engine.js')), ('/*ART*/', rd('src/art.js')), ('/*AUDIO*/', rd('src/audio.js')), ('/*UI*/', rd('src/ui.js'))]:
     assert t.count(k) == 1, k
     t = t.replace(k, v)
 os.makedirs(os.path.join(R, 'dist'), exist_ok=True)
