@@ -69,6 +69,9 @@ def build(spec):
         box = (box[0] - spec['pad_w'] * math.sqrt(3) * s / K,) + tuple(box[1:])
     cells, cols, rows = grid(box, s, allowed, spec.get('foreign_void'))
     land = {k for k, c in cells.items() if c['land']}
+    if os.environ.get('DUMP') == spec['name']:   # hata ayıklama: DUMP='Harita adı' ile hücre koordinatları
+        for k, c in sorted(cells.items()):
+            if -6 < c['lon'] < 4 and 48.5 < c['lat'] < 50.3: print('  dump', k, round(c['lon'], 2), round(c['lat'], 2), c['land'], c.get('c'), file=sys.stderr)
     # drop tiny land components that are not wanted (or all islands on land-only maps)
     comp = {}; cid = 0
     for k in land:
@@ -151,6 +154,14 @@ def build(spec):
     if spec.get('titles'): out['titles'] = spec['titles']
     if spec.get('story'): out['story'] = spec['story']
     if spec.get('styles'): out['styles'] = spec['styles']
+    # geçitler: açılan boğazın iki kıyısındaki kara hücreleri (aralarında 2 hücre mesafe olmalı)
+    links = []
+    for A, Bp in spec.get('links', []):
+        ka = min(land, key=lambda k: ((cells[k]['lon'] - A[0]) * K) ** 2 + (cells[k]['lat'] - A[1]) ** 2)
+        kb = min(land, key=lambda k: ((cells[k]['lon'] - Bp[0]) * K) ** 2 + (cells[k]['lat'] - Bp[1]) ** 2)
+        assert hdist(ka, kb) == 2, ('geçit 2 hücre olmalı', spec['name'], ka, kb, hdist(ka, kb))
+        links.append([ka[0], ka[1], kb[0], kb[1]])
+    if links: out['links'] = links
     idx = {}
     for i, (k, c) in enumerate(sorted(cells.items(), key=lambda kv: (kv[0][1], kv[0][0]))):
         idx[k] = i
@@ -281,6 +292,7 @@ def west_owner(c, lon, lat):
     return 'n'                     # İsviçre tarafsız
 WEST = {
   'name': 'Batı Avrupa', 'navy': True, 'box': (-5.9, 44.0, 17.6, 55.4), 'target': 165, 'seed': 4, 'island_min': 2, 'foreign_void': True,
+  'sea_at': [(1.59, 51.02)], 'links': [((0.23, 51.02), (2.28, 50.14))],          # Manş: su yolu ve geçit
   'countries': ['FRA', 'GBR', 'NLD', 'BEL', 'LUX', 'DEU', 'POL', 'AUT', 'CZE', 'SVN', 'HRV', 'ITA', 'CHE'],
   'owner': west_owner,
   'factions': ['mavi', 'buz', 'turuncu', 'kahve', 'siyah', 'sari', 'bordo', 'yesil'],
@@ -346,7 +358,8 @@ def europe_owner(c, lon, lat):
             'GRC': 'turkuaz', 'ROU': 'kahve', 'BGR': 'kahve', 'TUR': 'kirmizi'}.get(c, 'n')
 EUROPE = {
   'name': 'Avrupa', 'navy': True, 'box': (-10.6, 34.8, 36.4, 56.2), 'target': 255, 'seed': 6, 'island_min': 2, 'foreign_void': True,
-  'straits': ['İstanbul'], 'sea_at': [(28.0, 40.7), (26.2, 39.9), (25.4, 38.9), (25.6, 37.6)],
+  'links': [((-1.89, 51.72), (-0.15, 49.47))],                                       # Manş geçidi
+  'straits': ['İstanbul'], 'sea_at': [(-1.02, 50.6), (28.0, 40.7), (26.2, 39.9), (25.4, 38.9), (25.6, 37.6)],
   'styles': {'kirmizi': 'turk'},
   'countries': ['ESP', 'PRT', 'FRA', 'GBR', 'IRL', 'DEU', 'POL', 'AUT', 'CZE', 'SVK', 'HUN', 'SVN', 'ITA', 'HRV', 'BIH', 'SRB', 'MNE', 'KOS', 'MKD', 'ALB',
                 'GRC', 'ROU', 'BGR', 'TUR', 'BEL', 'NLD', 'LUX', 'CHE', 'DNK'],

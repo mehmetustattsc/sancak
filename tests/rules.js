@@ -203,4 +203,16 @@ console.log('✓ senaryo seçenekleri');
   const own = ist.f; g.units.push({ id: g.nextId++, f: own, type: 'kilic', c: ist.i, hp: 100, lvl: 1, mp: 1, acted: false, kills: 0, gen: 0, emb: 0 });
   R = E.reach(g, ship); assert(!R[south.i] || R[south.i].cost > 3 || !R[ist.i], 'düşman garnizonu boğazı kapatır');
   console.log('✓ boğaz'); }
+// 16) geçit: Manş açık, gemi geçer; kara birliği yeşil oktan karşıya geçer ve saldırabilir
+{ const g = E.newGame({ era: 1, level: 0, player: 'buz', generals: [], seed: 3 });
+  const a = g.cells.find(c => c.link), b = g.cells[a.link[0]];
+  const mid = g.cells.find(c => c.t === 0 && a.nb.includes(c.i) && b.nb.includes(c.i)); assert(mid, 'geçidin ortası deniz');
+  g.units = g.units.filter(u => u.c !== a.i && u.c !== b.i);
+  const P = g.player, u = { id: g.nextId++, f: P, type: 'kilic', c: a.i, hp: 100, lvl: 1, mp: 1, acted: false, kills: 0, gen: 0, emb: 0 };
+  g.units.push(u);
+  assert(E.reach(g, u)[b.i], 'kara birliği geçitten karşıya geçmeli');
+  const en = g.factions.findIndex((f, i) => i !== P && i !== b.f); const e = { id: g.nextId++, f: b.f >= 0 ? b.f : en, type: 'kilic', c: b.i, hp: 100, lvl: 1, mp: 1, acted: false, kills: 0, gen: 0, emb: 0 };
+  g.units.push(e); assert(E.canAttack(g, u, e), 'geçit üzerinden saldırı');
+  E.setEra(0);
+  console.log('✓ geçit'); }
 console.log('KURAL TESTLERİ TAMAM');

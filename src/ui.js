@@ -1283,6 +1283,24 @@ function render(now) {
     ctx.strokeStyle = 'rgba(180,220,245,.55)'; ctx.lineWidth = Math.max(1, s * 0.05); ctx.setLineDash([s * 0.12, s * 0.1]); ctx.stroke();
     ctx.restore();
   });
+  // geçitler: boğazın iki kıyısı arasında yeşil çift ok (kara birlikleri karşıya geçer)
+  vis.forEach(function (v) {
+    var c = v[0]; if (!c.link) return;
+    c.link.forEach(function (j) {
+      if (j < c.i) return;
+      var o = G.cells[j], p1 = w2s(c.x, c.y), p2 = w2s(o.x, o.y);
+      var dx = p2.x - p1.x, dy = p2.y - p1.y, L = Math.hypot(dx, dy), ux = dx / L, uy = dy / L;
+      var a1 = { x: p1.x + ux * s * 0.45, y: p1.y + uy * s * 0.45 }, a2 = { x: p2.x - ux * s * 0.45, y: p2.y - uy * s * 0.45 };
+      var hw = Math.max(6, s * 0.3), hl = Math.max(8, s * 0.4);
+      function head(px, py, dirx, diry) { ctx.moveTo(px, py); ctx.lineTo(px - dirx * hl - diry * hw, py - diry * hl + dirx * hw); ctx.lineTo(px - dirx * hl + diry * hw, py - diry * hl - dirx * hw); ctx.closePath(); }
+      ctx.save(); ctx.lineCap = 'round';
+      ctx.strokeStyle = 'rgba(10,30,10,.7)'; ctx.lineWidth = Math.max(6, s * 0.26); ctx.beginPath(); ctx.moveTo(a1.x, a1.y); ctx.lineTo(a2.x, a2.y); ctx.stroke();
+      ctx.strokeStyle = '#5fd06a'; ctx.lineWidth = Math.max(3.5, s * 0.15); ctx.beginPath(); ctx.moveTo(a1.x + ux * hl * 0.8, a1.y + uy * hl * 0.8); ctx.lineTo(a2.x - ux * hl * 0.8, a2.y - uy * hl * 0.8); ctx.stroke();
+      ctx.beginPath(); head(a2.x, a2.y, ux, uy); head(a1.x, a1.y, -ux, -uy);
+      ctx.fillStyle = '#5fd06a'; ctx.fill(); ctx.strokeStyle = 'rgba(10,30,10,.7)'; ctx.lineWidth = 1.2; ctx.stroke();
+      ctx.restore();
+    });
+  });
   // vurgular
   if (B.reach && B.phase === 'player') {
     Object.keys(B.reach).forEach(function (k) {

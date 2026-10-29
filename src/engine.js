@@ -225,6 +225,7 @@ function rng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13;
 function hexXY(q, r) { return { x: SQ3 * (q + 0.5 * (r & 1)), y: 1.5 * r }; }
 function neighOff(q, r) { return (r & 1) ? [[1, 0], [-1, 0], [0, -1], [1, -1], [0, 1], [1, 1]] : [[1, 0], [-1, 0], [-1, -1], [0, -1], [-1, 1], [0, 1]]; }
 function cubeOf(q, r) { var x = q - (r - (r & 1)) / 2; return [x, -x - r, r]; }
+function linkDist(a, b) { return a.link && a.link.indexOf(b.i) >= 0 ? 1 : hd(a, b); }   // geçit üzerinden mesafe 1
 function hd(a, b) { var A = cubeOf(a.q, a.r), B = cubeOf(b.q, b.r); return Math.max(Math.abs(A[0] - B[0]), Math.abs(A[1] - B[1]), Math.abs(A[2] - B[2])); }
 
 /* ============================ Oyun ============================ */
@@ -253,6 +254,12 @@ function newGame(o) {
   var byQR = {}; G.cells.forEach(function (c) { byQR[c.q + ',' + c.r] = c.i; });
   G.cells.forEach(function (c) {
     neighOff(c.q, c.r).forEach(function (d) { var j = byQR[(c.q + d[0]) + ',' + (c.r + d[1])]; if (j !== undefined) c.nb.push(j); });
+  });
+  // geçitler: kaba ızgarada açılan boğazın iki kıyısı; kara birlikleri karşıya geçebilir (yeşil çift ok)
+  (M.links || []).forEach(function (l) {
+    var a = byQR[l[0] + ',' + l[1]], b = byQR[l[2] + ',' + l[3]]; if (a === undefined || b === undefined) return;
+    G.cells[a].nb.push(b); G.cells[b].nb.push(a);
+    (G.cells[a].link = G.cells[a].link || []).push(b); (G.cells[b].link = G.cells[b].link || []).push(a);
   });
   G.cells.forEach(function (c) { if (c.t) c.coast = c.nb.some(function (j) { return G.cells[j].t === 0; }) ? 1 : 0; });
   // başlangıç binaları: başkentte demirci 1; denizli haritada kıyı başkentinde liman 1
@@ -734,7 +741,7 @@ function terrainMul(G, c, u) {
 }
 function canAttack(G, a, d) {
   if (!d || d.f === a.f || a.acted || UT[a.type].tower || isAlly(G, a.f, d.f)) return false;
-  var ca = G.cells[a.c], cd = G.cells[d.c], dist = hd(ca, cd);
+  var ca = G.cells[a.c], cd = G.cells[d.c], dist = linkDist(ca, cd);
   if (dist < 1 || dist > unitRange(G, a)) return false;
   var ranged = UT[a.type].rng > 1;
   // kara yakın dövüş birliği gemiye saldıramaz; nakliyedeki birlik sadece karaya çıkarma saldırısı yapar
@@ -743,7 +750,7 @@ function canAttack(G, a, d) {
   return true;
 }
 function predict(G, a, d) {
-  var ca = G.cells[a.c], cd = G.cells[d.c], dist = hd(ca, cd);
+  var ca = G.cells[a.c], cd = G.cells[d.c], dist = linkDist(ca, cd);
   var A = stat(G, a, 'atk', d, cd, true);
   var gA = genOf(G, a), feth = gA && gA.skill === 'feth' && (cd.t === 3 || cd.t === 4);
   var D = stat(G, d, 'def', a, cd, false) * (feth ? (cd.mt ? 1.3 : 1) : terrainMul(G, cd, d));
@@ -778,14 +785,14 @@ function attack(G, a, d, R) {
   a.acted = true; a.mp = 0;
   var ga = genOf(G, a), gdd = genOf(G, d);
   if (ga) ga.gained += 5;
-  var ev = { t: 'attack', a: a.id, d: d.id, ac: a.c, dc: d.c, dmg: dmg, back: back, killD: killD, killA: killA, af: a.f, df: d.f, ranged: hd(ca, cd) > 1, naval: isNaval(a), atype: a.type, dtype: d.type, aemb: a.emb, demb: d.emb, ahp: a.hp, dhp: d.hp };
+  var ev = { t: 'attack', a: a.id, d: d.id, ac: a.c, dc: d.c, dmg: dmg, back: back, killD: killD, killA: killA, af: a.f, df: d.f, ranged: linkDist(ca, cd) > 1, naval: isNaval(a), atype: a.type, dtype: d.type, aemb: a.emb, demb: d.emb, ahp: a.hp, dhp: d.hp };
   G.log.push(ev);
   if (killD) {
     var mdD = morale(G, d);
     if (a.f === G.player) {
       var S = G.stats;
       if (a.type === 'atli' || UT[a.type].pursue) S.cavK = (S.cavK || 0) + 1;
-      if (hd(ca, cd) > 1) S.rngK = (S.rngK || 0) + 1;
+      if (linkDist(ca, cd) > 1) S.rngK = (S.rngK || 0) + 1;
       if (isNaval(a) || a.emb || isNaval(d) || d.emb) S.navK = (S.navK || 0) + 1;
       if (mdD) S.pinK = (S.pinK || 0) + 1;
     }
