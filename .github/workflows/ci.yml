@@ -34,6 +34,7 @@ jobs:
           python3 tests/italy.py
           python3 tests/features.py
           python3 tests/landscape.py
+          python3 tests/endless.py
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web

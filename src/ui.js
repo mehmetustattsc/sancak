@@ -328,7 +328,7 @@ function renderHelp() {
     '<li>Kendi birliklerinin içinden geçebilirsin, ama dolu hücrede duramazsın.</li></ul></div>' +
     '<div class="card"><h3>Kule</h3><p>Her tur kendi boş arazine bir kule kurabilirsin (tarla, şehir ve kaleye olmaz). Kule 2 turda biter; inşaat sırasında savunması yarıdır ve karşılık veremez. Hasar alan inşaat bitince kule o canla başlar. Kule saldırmaz ama saldırana karşılık verir. Yıkılırsa arazi boşalır.</p></div>' +
     '<div class="card"><h3>Ticaret</h3><p>Başkentinde her tur en fazla 3 takas: 10 gıda → 12 altın, 18 altın → 10 gıda, 25 altın → 2 demir, 2 demir → 14 altın.</p></div>' +
-    '<div class="card"><h3>Kazanmak</h3><p>Haritadaki şehirlerin %60’ını ele geçir (üstteki şehir sayacı) ya da bütün rakipleri yık. Bütün şehirlerini kaybeden ülke yıkılır. Tur sınırını geçersen sefer kaybedilir. Yıldızlar kaç turda bitirdiğine göre verilir.</p></div>';
+    '<div class="card"><h3>Kazanmak</h3><p>Haritadaki şehirlerin %60’ını ele geçir (üstteki şehir sayacı) ya da bütün rakipleri yık. Zaferden sonra istersen tur sınırı olmadan bütün haritayı fethetmeye devam edebilirsin; tam fetih ek madalya getirir. Bütün şehirlerini kaybeden ülke yıkılır. Tur sınırını geçersen sefer kaybedilir. Yıldızlar kaç turda bitirdiğine göre verilir.</p></div>';
 }
 function renderSettings() {
   $('#scr-set .wrap').innerHTML = '<div class="topbar"><h2>Ayarlar</h2></div>' +
@@ -459,8 +459,8 @@ function updateHud() {
   set('#rF', Math.floor(f.food), f.food + inc.food - inc.up < 0);
   set('#rI', Math.floor(f.iron));
   set('#rA', armySize(G, G.player) + '/' + armyCap(G, G.player));
-  set('#rC', cs.mine + '/' + cs.need);
-  set('#rT', G.turn, G.limit - G.turn < 5);
+  set('#rC', cs.mine + '/' + (G.endless ? cs.all : cs.need));
+  set('#rT', G.turn, !G.endless && G.limit - G.turn < 5);
   updateActbar();
 }
 function updateActbar() {
@@ -484,8 +484,8 @@ function resInfo() {
     '<div>' + I.food + '<span>Gıda</span><b>' + Math.floor(f.food) + '</b><i class="' + (inc.food - inc.up < 0 ? 'bad' : '') + '">' + sg(inc.food - inc.up) + ' / tur</i></div>' +
     '<div>' + I.iron + '<span>Demir</span><b>' + Math.floor(f.iron) + '</b><i>' + sg(inc.iron) + ' / tur</i></div>' +
     '<div>' + I.sword + '<span>Ordu</span><b>' + armySize(G, G.player) + '</b><i>sınır ' + armyCap(G, G.player) + '</i></div>' +
-    '<div>' + I.city + '<span>Şehir</span><b>' + cs.mine + '</b><i>zafer için ' + cs.need + '</i></div>' +
-    '<div>' + I.hourglass + '<span>Tur</span><b>' + G.turn + '</b><i>sınır ' + G.limit + ' · ★★★ ' + G.par + '</i></div></div>' +
+    '<div>' + I.city + '<span>Şehir</span><b>' + cs.mine + '</b><i>' + (G.endless ? 'fetih: bütün rakipleri yık' : 'zafer için ' + cs.need) + '</i></div>' +
+    '<div>' + I.hourglass + '<span>Tur</span><b>' + G.turn + '</b><i>' + (G.endless ? 'sınır yok' : 'sınır ' + G.limit + ' · ★★★ ' + G.par) + '</i></div></div>' +
     '<div class="row"><button class="btn" id="rOk">Tamam</button></div>');
   $('#rOk').onclick = closeModal;
 }
@@ -698,7 +698,7 @@ function tapCell(ci) {
     if (path) B.lastAct = ci;
     if (path) {
       SFX.step();
-      playLog(function () { selectUnit(unitById(G, sel.id)); updateHud(); });
+      playLog(function () { selectUnit(unitById(G, sel.id)); updateHud(); checkOver(); });
       B.reach = null; B.targets = []; B.preview = null; renderPanel();
       if (B.tut === 2) { B.tut = 3; showTip(); }
     }
@@ -883,13 +883,16 @@ function pauseMenu() {
 }
 function finish(win, timeout) {
   var G = B.G, key = G.era + '-' + G.level, prev = save.stars[key] || 0;
-  var st = win ? starsFor(G) : 0;
-  var medals = win ? 20 + 10 * st + 10 * G.level : 10;
-  if (win && st > prev) { medals += 10 * (st - prev); save.stars[key] = st; }
+  var full = win && !!G.endless; // %60 zaferinden sonra bütün haritayı fethetti
+  var st = win ? (full ? G.stars0 : starsFor(G)) : 0;
+  var medals = full ? 30 + 10 * G.level : win ? 20 + 10 * st + 10 * G.level : (G.endless ? 0 : 10);
+  if (win && !full && st > prev) { medals += 10 * (st - prev); save.stars[key] = st; }
+  var canGoOn = win && !full && G.factions.some(function (f, i) { return i !== G.player && f.alive; });
   var before = eraStars(G.era) - (win && st > prev ? st - prev : 0);
   var gens = G.factions[G.player].generals, ups = [];
   gens.forEach(function (g) {
     var add = g.gained + (win && g.gained > 0 ? 40 : 0);
+    g.gained = 0;
     var r0 = rankOf(genXP(g.id)); save.gx[g.id] = genXP(g.id) + add; var r1 = rankOf(save.gx[g.id]);
     g.add = add; if (r1 > r0) ups.push(g.name + ' terfi etti: ' + ERAS[G.era].ranks[r1 - 1] + ' ' + insignia(r1));
   });
@@ -899,7 +902,8 @@ function finish(win, timeout) {
   var hasNext = G.level + 1 < LEVELS.length;
   modal('<div class="result">' +
     '<div class="eyebrow">' + MAPS[G.mapIdx].name + ' · ' + G.turn + '. tur</div>' +
-    '<h2 class="' + (win ? 'w' : 'l') + '">' + (win ? 'ZAFER' : 'YENİLGİ') + '</h2>' +
+    '<h2 class="' + (win ? 'w' : 'l') + '">' + (full ? 'TAM FETİH' : win ? 'ZAFER' : 'YENİLGİ') + '</h2>' +
+    (full ? '<p class="muted">Haritadaki bütün ülkeler senin sancağın altında.</p>' : '') +
     (win ? '<div class="big">' + [1, 2, 3].map(function (k) { return k <= st ? '<b>★</b>' : '★'; }).join('') + '</div>' :
       '<p class="muted">' + (timeout ? 'Tur sınırı doldu. Daha hızlı ilerlemek için asker üretimini artır ve zayıf komşuya yüklen.' : 'Bütün şehirlerini kaybettin. Şehirlerini boş bırakma, kaleleri ve dağları savunmada kullan.') + '</p>') +
     '<div class="rewards"><span class="pill">' + I.medal + '+' + medals + ' madalya</span></div>' +
@@ -907,11 +911,20 @@ function finish(win, timeout) {
     '<p class="muted">Yok edilen düşman: ' + G.stats.kills + ' · alınan şehir: ' + G.stats.cities + ' · kaybedilen birlik: ' + G.stats.lost + '</p>' +
     ups.map(function (t) { return '<div class="rankup">' + t + '</div>'; }).join('') +
     newGens.map(function (x) { return '<div class="rankup">Yeni general açıldı: ' + x.name + '</div>'; }).join('') +
-    '<div class="row">' + (win && hasNext ? '<button class="btn" id="rNext">Sonraki sefer</button>' : '<button class="btn" id="rAgain">' + (win ? 'Tekrar oyna' : 'Tekrar dene') + '</button>') + '</div>' +
+    (canGoOn ? '<div class="row"><button class="btn" id="rCont">Haritayı fethetmeye devam et</button></div>' : '') +
+    '<div class="row">' + (win && hasNext ? '<button class="btn' + (canGoOn ? ' ghost' : '') + '" id="rNext">Sonraki sefer</button>' : '<button class="btn" id="rAgain">' + (win ? 'Tekrar oyna' : 'Tekrar dene') + '</button>') + '</div>' +
     '<div class="row"><button class="btn ghost" id="rMenu">Seferler</button>' + (win && hasNext ? '<button class="btn ghost" id="rAgain">Tekrar</button>' : '') + '</div></div>');
   var x = { e: G.era, l: G.level, f: G.factions[G.player].id };
   if ($('#rNext')) $('#rNext').onclick = function () { closeModal(); B = null; $('#scr-battle').hidden = true; openEra(x.e); openSetup(x.e, x.l + 1); };
   $('#rAgain').onclick = function () { closeModal(); B = null; startGame(x.e, x.l, x.f); };
+  if ($('#rCont')) $('#rCont').onclick = function () {
+    // ödüller verildi; tur sınırı kalkar, bütün rakipler yıkılınca sefer biter
+    closeModal(); G.endless = true; G.stars0 = st; G.over = 0;
+    B.phase = G.cur === G.player ? 'player' : 'ai';
+    updateHud(); renderPanel(); dirty = true; persistGame();
+    banner('Fetih sürüyor: bütün rakipleri yık', 1800);
+    if (B.phase === 'ai') runAI();
+  };
   $('#rMenu').onclick = function () { closeModal(); B = null; $('#scr-battle').hidden = true; openEra(x.e); };
 }
 

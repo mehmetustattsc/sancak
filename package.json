@@ -6,7 +6,7 @@
   "scripts": {
     "build": "python3 tools/build.py",
     "test": "node tests/rules.js && CI_CHECK=1 node tests/sim.js 2",
-    "test:smoke": "python3 tools/build.py && python3 tests/smoke.py && python3 tests/italy.py && python3 tests/features.py && python3 tests/landscape.py",
+    "test:smoke": "python3 tools/build.py && python3 tests/smoke.py && python3 tests/italy.py && python3 tests/features.py && python3 tests/landscape.py && python3 tests/endless.py",
     "serve": "python3 -m http.server 8080 -d web"
   }
 }

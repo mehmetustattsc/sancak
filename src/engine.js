@@ -260,7 +260,7 @@ function endTurn(G) {
     if (G.factions[i].alive) break;
   }
   G.cur = i;
-  if (G.player >= 0 && G.turn > G.limit && !G.over) { G.over = -2; return; }
+  if (G.player >= 0 && G.turn > G.limit && !G.over && !G.endless) { G.over = -2; return; }
   startTurn(G, i);
 }
 
@@ -356,7 +356,7 @@ function cityShare(G, fi) {
   return { all: all, mine: mine, need: Math.ceil(all * WIN_SHARE) };
 }
 function checkWin(G) {
-  if (G.over || G.player < 0) return;
+  if (G.over || G.player < 0 || G.endless) return; // fetih modunda %60 yetmez, herkes yıkılmalı
   var s = cityShare(G, G.player);
   if (s.mine >= s.need) G.over = 1;
 }

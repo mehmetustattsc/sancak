@@ -27,7 +27,7 @@ Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, i
 | Tarla | 2 seviye; 2 / 5 gıda (sulama 20 altın) |
 | Liman | 2 seviye; kadırga üretir. Kara birliği limandan denize çıkınca nakliyeye biner |
 | General | Birliğe atanır; güç +%30…+%50, kendi türünde ek +%20…+%40, tur başı +10 iyileşme, yetenek. Birlik ölürse 3 tur yaralı |
-| Zafer | Şehirlerin %60'ını al ya da bütün rakipleri yık. Yıldızlar tur sayısına göre |
+| Zafer | Şehirlerin %60'ını al ya da bütün rakipleri yık. Yıldızlar tur sayısına göre. Zaferden sonra istersen tur sınırı olmadan tam fethe devam (ek madalya) |
 
 ## Proje yapısı
 | Yol | İçerik |
