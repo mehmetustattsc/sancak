@@ -13,7 +13,7 @@ function load(k) { try { var r = localStorage.getItem(k); return r ? JSON.parse(
 function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
 (function () { var o = load(SAVE_KEY); if (o) for (var k in o) save[k] = o[k]; })();
 function persist() { store(SAVE_KEY, save); }
-function eraStars(e) { var n = 0; for (var l = 0; l < LEVELS.length; l++) n += save.stars[e + '-' + l] || 0; return n; }
+function eraStars(e) { var n = 0; for (var l = 0; l < levelsOf(e).length; l++) n += save.stars[e + '-' + l] || 0; return n; }
 function genXP(id) { return save.gx[id] || 0; }
 function genUnlocked(g) { return eraStars(g.era) >= g.unlock; }
 /* efsaneler: ömür boyu sayaçlar save.ls, açılanlar save.leg */
@@ -105,9 +105,9 @@ function renderHome() {
     (g && !g.over ? '<button class="resume" id="resume"><span>' + ART.flag(g.factions[g.player].id) + '</span><span style="min-width:0;flex:1"><b>Kaldığın yerden devam et</b><br><span class="muted">' + MAPS[g.mapIdx].name + ' · Tur ' + g.turn + ' · ' + fname(g.factions[g.player].id, g.era, g.mapIdx) + '</span></span><span class="go">▶</span></button>' : '') +
     '<div class="eyebrow">Çağ seç</div>' +
     '<div class="eras">' + ERAS.map(function (E, i) {
-      var st = eraStars(i), max = LEVELS.length * 3;
+      var st = eraStars(i), max = Math.max(1, levelsOf(i).length * 3);
       return '<button class="era' + (E.ready ? '' : ' soon') + '" data-era="' + i + '"><div><div class="nm">' + E.name + '</div><div class="yr">' + E.years + '</div></div>' +
-        '<div class="units">' + E.land.map(function (u) { return '<span class="uchip">' + (UT[u] ? ART.figInline(u, '#8a7c63') : '<span class="q">?</span>') + '</span>'; }).join('') + '</div>' +
+        '<div class="units">' + E.land.map(function (u) { return '<span class="uchip">' + (E.ready ? ART.figInline(u, '#8a7c63', i) : '<span class="q">?</span>') + '</span>'; }).join('') + '</div>' +
         '<p class="bl">' + E.blurb + '</p>' +
         (E.ready ? '<div class="prog"><div class="bar"><i style="width:' + Math.round(st / max * 100) + '%"></i></div><span class="stars">★ ' + st + ' / ' + max + '</span></div>' : '<div class="prog"><span class="soonb">Yakında</span></div>') + '</button>';
     }).join('') + '</div>';
@@ -144,27 +144,27 @@ function startHero() {
 /* ---------------- ÇAĞ / SEFERLER ---------------- */
 var curEra = 0;
 function openEra(e) {
-  curEra = e; var E = ERAS[e];
+  curEra = e; var E = ERAS[e]; setEra(e);
   show('era');
   var el = $('#scr-era .wrap');
   el.innerHTML = '<div class="topbar"><button class="back" id="eraBack" aria-label="Geri">' + I.back + '</button>' +
     '<div style="flex:1;min-width:0"><div class="eyebrow">' + E.years + '</div><h2>' + E.name + '</h2></div>' + medalsPill() + '</div>' +
     '<div class="tri3">' + E.land.map(function (t) {
       var T = UT[t];
-      return '<div class="tcard"><div class="tfig">' + ART.figInline(t, '#3c6fb4') + '</div><div class="tn">' + T.name + '</div><div class="tb">→ ' + UT[T.beats].name + '’yı yener</div>' +
+      return '<div class="tcard"><div class="tfig">' + ART.figInline(t, '#3c6fb4', e) + '</div><div class="tn">' + T.name + '</div><div class="tb">→ ' + UT[T.beats].name + '’yı yener</div>' +
         '<div class="tst"><span>' + I.sword + T.atk + '</span><span>' + I.shield + T.def + '</span><span>' + I.boot + T.mv + '</span></div></div>';
     }).join('') + '</div>' +
-    '<div class="eyebrow">Seferler</div><div class="levels">' + LEVELS.map(function (L, l) {
+    '<div class="eyebrow">Seferler</div><div class="levels">' + levelsOf(e).map(function (L, l) {
       var M = MAPS[L.map], st = save.stars[e + '-' + l] || 0, un = levelUnlocked(e, l);
       var nc = M.cells.filter(function (c) { return c[2] === 3; }).length, nk = M.cells.filter(function (c) { return c[2] === 4; }).length;
       return '<button class="lvl' + (un ? '' : ' locked') + '" data-l="' + l + '"><canvas></canvas><div><div class="nm">' + M.name + '</div>' +
         '<div class="meta">' + M.factions.length + ' ülke · ' + nc + ' şehir · ' + nk + ' kale' + (M.navy ? ' · deniz' : '') + '</div>' +
         '<div class="meta">★★★ ' + L.par + ' turda · sınır ' + L.limit + ' tur</div></div>' +
         (un ? '<div class="st">' + [1, 2, 3].map(function (k) { return k <= st ? '<b>★</b>' : '★'; }).join('') + '</div>' : I.lock) + '</button>';
-    }).join('') + '<div class="lvl soon"><div class="ph">?</div><div><div class="nm">Batı Avrupa, Doğu Cephesi, Kuzey Denizleri…</div><div class="meta">Denge oturunca eklenecek</div></div></div></div>';
+    }).join('') + '<div class="lvl soon"><div class="ph">?</div><div><div class="nm">' + (e === 0 ? 'Britanya Adaları, Kuzey Denizleri…' : 'Doğu Cephesi, Balkanlar, Kafkasya…') + '</div><div class="meta">Yeni seferler geliyor</div></div></div></div>';
   $('#eraBack').onclick = function () { SFX.tap(); show('home'); };
   el.querySelectorAll('.lvl[data-l]').forEach(function (b) {
-    drawMini(b.querySelector('canvas'), LEVELS[+b.dataset.l].map);
+    drawMini(b.querySelector('canvas'), levelsOf(e)[+b.dataset.l].map);
     b.onclick = function () {
       if (b.classList.contains('locked')) { toast('Önce bir önceki seferi kazan.'); return; }
       SFX.tap(); openSetup(e, +b.dataset.l);
@@ -174,7 +174,7 @@ function openEra(e) {
 
 /* ---------------- KURULUM ---------------- */
 function openSetup(e, l) {
-  var L = LEVELS[l], M = MAPS[L.map];
+  var L = levelsOf(e)[l], M = MAPS[L.map];
   var land = M.cells.filter(function (c) { return c[2]; });
   var sel = M.factions.slice().sort(function (a, b) { return cnt(b) - cnt(a); })[0];
   function cnt(f) { return land.filter(function (c) { return c[3] === f; }).length; }
@@ -411,7 +411,7 @@ function startGame(e, l, fid) {
   var G = newGame({ era: e, level: l, player: fid, generals: gens, diff: save.diff == null ? 1 : save.diff, noDip: !!save.noDip, upgrades: Object.assign({}, save.upg || {}), seed: (Date.now() & 0x7fffffff) | 1 });
   enterBattle(G);
 }
-function resumeGame(G) { enterBattle(G); }
+function resumeGame(G) { setEra(G.era); enterBattle(G); }
 function enterBattle(G) {
   B = { G: G, undo: [], sel: 0, view: null, reach: null, targets: [], preview: null, anim: [], phase: 'player', fast: 1, skip: false, tut: (!save.tut && G.level === 0 && G.turn === 1) ? 1 : 0 };
   $('#tabbar').hidden = true;
@@ -1087,7 +1087,7 @@ function finish(win, timeout, stopped) {
   var newGens = GENERALS.filter(function (x) { return x.era === G.era && x.unlock > before && x.unlock <= eraStars(G.era); });
   save.medals += medals; persist(); store(GAME_KEY, null);
   (win ? SFX.win : SFX.lose)();
-  var hasNext = G.level + 1 < LEVELS.length;
+  var hasNext = G.level + 1 < levelsOf(G.era).length;
   modal('<div class="result">' +
     '<div class="eyebrow">' + MAPS[G.mapIdx].name + ' · ' + G.turn + '. tur</div>' +
     '<h2 class="' + (win ? 'w' : 'l') + '">' + (full ? 'TAM FETİH' : stopped ? 'SEFER TAMAM' : win ? 'ZAFER' : 'YENİLGİ') + '</h2>' +
@@ -1367,6 +1367,7 @@ function drawUnit(u, now) {
   var type = figType(u), im = ART.fig(type, col);
   if (done) ctx.filter = 'saturate(.35) brightness(.85)';
   if (im.complete) ctx.drawImage(im, p.x - size / 2 + dx, cy - size * 0.58, size, size);
+  else if (!im.onload) im.onload = function () { dirty = true; };   // başka çağın figürü ilk kez yükleniyor
   ctx.filter = 'none';
   if (!u.ghost) {
     // can çubuğu
@@ -1390,7 +1391,7 @@ function drawUnit(u, now) {
     var g = genOf(G, u);
     if (g) {
       var gr = Math.max(8, s * 0.27), gx = p.x - size * 0.36, gy = cy - size * 0.42, pim = ART.portraitImg(g, G.era);
-      ctx.save(); ctx.beginPath(); ctx.arc(gx, gy, gr, 0, 7); ctx.clip(); if (pim.complete) ctx.drawImage(pim, gx - gr, gy - gr, gr * 2, gr * 2); ctx.restore();
+      ctx.save(); ctx.beginPath(); ctx.arc(gx, gy, gr, 0, 7); ctx.clip(); if (pim.complete) ctx.drawImage(pim, gx - gr, gy - gr, gr * 2, gr * 2); else if (!pim.onload) pim.onload = function () { dirty = true; }; ctx.restore();
       ctx.beginPath(); ctx.arc(gx, gy, gr, 0, 7); ctx.strokeStyle = '#e8c977'; ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = '#e8c977'; ctx.font = '700 ' + Math.max(8, gr * 0.75) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
       ctx.fillText('★'.repeat(g.rank), gx, gy + gr + 1);

@@ -22,13 +22,13 @@ var ERAS = [
     blurb: 'Kale duvarları, şövalye hücumları ve ok yağmurları.',
     land: ['kilic', 'okcu', 'atli'],
     ranks: ['Yiğit', 'Sancaktar', 'Komutan', 'Beylerbeyi', 'Serdar'] },
-  { id: 'yakin', name: 'Yakın Çağ', years: '1850 – 1920', suffix: 'İmparatorluk', ready: false,
-    blurb: 'Siperler, makineli tüfekler ve ilk zırhlı araçlar.',
-    land: ['piyade', 'makineli', 'zirhli'],
+  { id: 'yakin', name: 'Yakın Çağ', years: '1850 – 1920', suffix: 'İmparatorluk', ready: true,
+    blurb: 'Tüfekli piyade, sahra topları ve süvari. Ordular ikmal hattına bağlı.',
+    land: ['kilic', 'okcu', 'atli'],
     ranks: ['Albay', 'Tuğgeneral', 'Tümgeneral', 'Korgeneral', 'Mareşal'] },
   { id: 'modern', name: 'Modern Çağ', years: '1990 – bugün', suffix: 'Cumhuriyet', ready: false,
     blurb: 'Tank tümenleri, taarruz helikopterleri ve hava gücü.',
-    land: ['mpiyade', 'tank', 'heli'],
+    land: ['kilic', 'okcu', 'atli'],
     ranks: ['Albay', 'Tuğgeneral', 'Tümgeneral', 'Korgeneral', 'Orgeneral'] }
 ];
 
@@ -40,6 +40,25 @@ var UT = {
   kule:    { name: 'Kule',     atk: 24, def: 40, mv: 0, rng: 1, cost: { g: 40, i: 1 }, tower: true, desc: 'Boş araziye kurulur, 2 turda biter. Saldırmaz ama saldırana karşılık verir.' },
   kadirga: { name: 'Kadırga',  atk: 32, def: 26, mv: 3, rng: 2, cost: { g: 60, i: 2 }, naval: true, req: 'port', desc: 'Savaş gemisi. 2 hücre uzağa atış yapar; uzaktan vurunca karşılık almaz. Nakliyeleri batırır, kıyıyı vurur. Liman ister.' }
 };
+/* Çağlar aynı rol iskeletini kullanır (yaya, menzilli, atlı, kule, gemi); her çağ isim, değer ve çizimi değiştirir.
+   Birlik kimlikleri (kilic, okcu, ...) iç anahtardır; oyuncu çağın adını görür. */
+var UT_BASE = JSON.parse(JSON.stringify(UT));
+var TRANSPORT_BASE = null;
+var UT_ERA = [{}, {
+  kilic:   { name: 'Piyade', atk: 30, def: 34, desc: 'Tüfekli ve süngülü piyade. Süvari hücumunu durdurur, siperde sağlam savunur.' },
+  okcu:    { name: 'Topçu', atk: 33, def: 16, rng: 3, cost: { g: 40, i: 1 }, desc: '3 hücre uzağa top atar; uzaktan vurunca karşılık almaz. Yakın dövüşte zayıftır.' },
+  atli:    { name: 'Süvari', atk: 36, def: 28, mv: 3, desc: '3 hücre gider. Düşmanı yok ederse 1 hücre daha ilerler. Topçuya karşı üstün. Demirci ister.' },
+  kule:    { name: 'Tabya', atk: 26, def: 46, desc: 'Toprak tabya. Boş araziye kurulur, 2 turda biter. Saldırmaz ama karşılık verir.' },
+  kadirga: { name: 'Zırhlı', atk: 36, def: 32, mv: 4, rng: 2, cost: { g: 70, i: 3 }, desc: 'Buharlı zırhlı gemi. 4 hücre gider, 2 hücre uzağa top atar. Liman ister.' }
+}, {}];
+var TRANSPORT_ERA = [{}, { name: 'Vapur', mv: 3, def: 10 }, {}];
+var ERA_CUR = 0;
+function setEra(e) {
+  e = e || 0; ERA_CUR = e;
+  for (var k in UT) { var base = JSON.parse(JSON.stringify(UT_BASE[k])); for (var f in UT[k]) delete UT[k][f]; Object.assign(UT[k], base, UT_ERA[e] && UT_ERA[e][k] || {}); }
+  if (!TRANSPORT_BASE) TRANSPORT_BASE = JSON.parse(JSON.stringify(TRANSPORT));
+  Object.assign(TRANSPORT, TRANSPORT_BASE, TRANSPORT_ERA[e] || {});
+}
 var ADV = 1.5;
 var TRANSPORT = { name: 'Nakliye', def: 8, mv: 2 };
 
@@ -58,11 +77,11 @@ var PORT_IRON = [0, 0, 2];
 var TOWER_TURNS = 2;
 /* Karargâh: madalyayla kalıcı geliştirmeler (sadece oyuncuya) */
 var UPGRADES = [
-  { id: 'kilic', kind: 'unit', name: 'Kılıçlı eğitimi', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
-  { id: 'okcu', kind: 'unit', name: 'Okçu eğitimi', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
-  { id: 'atli', kind: 'unit', name: 'Atlı eğitimi', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
+  { id: 'kilic', kind: 'unit', name: 'Kılıçlı ve piyade eğitimi', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
+  { id: 'okcu', kind: 'unit', name: 'Okçu ve topçu eğitimi', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
+  { id: 'atli', kind: 'unit', name: 'Atlı ve süvari eğitimi', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
   { id: 'kadirga', kind: 'unit', name: 'Donanma', max: 5, cost: [30, 50, 80, 120, 170], per: 0.06 },
-  { id: 'kule', kind: 'unit', name: 'Kule ustaları', max: 5, cost: [25, 40, 60, 90, 130], per: 0.08 },
+  { id: 'kule', kind: 'unit', name: 'Kule ve tabya ustaları', max: 5, cost: [25, 40, 60, 90, 130], per: 0.08 },
   { id: 'hazine', kind: 'eco', name: 'Hazine', max: 3, cost: [40, 80, 140], per: 0.10 },
   { id: 'tarim', kind: 'eco', name: 'Tarım', max: 2, cost: [40, 90], per: 1 },
   { id: 'baslangic', kind: 'eco', name: 'Savaş sandığı', max: 3, cost: [30, 60, 100], per: 40 }
@@ -92,13 +111,13 @@ var GENERALS = [
     look: { skin: '#d8a77c', hair: '#5a3b22', beard: 3, hat: 'kalpak' } },
   { id: 'kalebaba', era: 0, name: 'Kale Baba', epithet: 'Hiçbir sur düşmedi', spec: 'kale', skill: 'kusatma', unlock: 6,
     look: { skin: '#e9c19e', hair: '#bdbdbd', beard: 3, hat: 'crown' } },
-  { id: 'celikbiyik', era: 1, name: 'Çelik Bıyık', epithet: 'Siperlerin babası', spec: 'piyade', skill: 'kalkan', unlock: 0, look: { skin: '#e4b893', hair: '#2b2118', beard: 1, hat: 'kepi' } },
-  { id: 'topcukurt', era: 1, name: 'Topçu Kurt', epithet: 'Ateş hattının sesi', spec: 'makineli', skill: 'isabet', unlock: 3, look: { skin: '#cf9c76', hair: '#45362a', beard: 2, hat: 'pickel' } },
-  { id: 'gok', era: 1, name: 'Gök Süvari', epithet: 'Zırhlı kolun öncüsü', spec: 'zirhli', skill: 'akinci', unlock: 5, look: { skin: '#dcae88', hair: '#6b4a2c', beard: 0, hat: 'cap' } },
+  { id: 'celikbiyik', era: 1, name: 'Çelik Bıyık', epithet: 'Siperlerin babası', spec: 'kilic', skill: 'kalkan', unlock: 0, look: { skin: '#e4b893', hair: '#2b2118', beard: 1, hat: 'kepi' } },
+  { id: 'topcukurt', era: 1, name: 'Topçu Kurt', epithet: 'Ateş hattının sesi', spec: 'okcu', skill: 'isabet', unlock: 3, look: { skin: '#cf9c76', hair: '#45362a', beard: 2, hat: 'pickel' } },
+  { id: 'gok', era: 1, name: 'Gök Süvari', epithet: 'Zırhlı kolun öncüsü', spec: 'atli', skill: 'akinci', unlock: 5, look: { skin: '#dcae88', hair: '#6b4a2c', beard: 0, hat: 'cap' } },
   { id: 'sistilkisi', era: 1, name: 'Sis Tilkisi', epithet: 'Haberi önce o alır', spec: 'kale', skill: 'kusatma', unlock: 6, look: { skin: '#efc9a6', hair: '#a8a8a8', beard: 1, hat: 'bicorne' } },
-  { id: 'demirduvar', era: 2, name: 'Demir Duvar', epithet: 'Paletlerin komutanı', spec: 'tank', skill: 'kalkan', unlock: 0, look: { skin: '#d9a982', hair: '#2a2420', beard: 0, hat: 'beret' } },
-  { id: 'gecesahini', era: 2, name: 'Gece Şahini', epithet: 'Rotorların sesi', spec: 'heli', skill: 'akinci', unlock: 3, look: { skin: '#b9875f', hair: '#16120f', beard: 1, hat: 'pilot' } },
-  { id: 'sessizkurt', era: 2, name: 'Sessiz Kurt', epithet: 'Görünmeyen birlik', spec: 'mpiyade', skill: 'isabet', unlock: 5, look: { skin: '#e6bb95', hair: '#4a3626', beard: 2, hat: 'helmetm' } },
+  { id: 'demirduvar', era: 2, name: 'Demir Duvar', epithet: 'Paletlerin komutanı', spec: 'atli', skill: 'kalkan', unlock: 0, look: { skin: '#d9a982', hair: '#2a2420', beard: 0, hat: 'beret' } },
+  { id: 'gecesahini', era: 2, name: 'Gece Şahini', epithet: 'Rotorların sesi', spec: 'okcu', skill: 'akinci', unlock: 3, look: { skin: '#b9875f', hair: '#16120f', beard: 1, hat: 'pilot' } },
+  { id: 'sessizkurt', era: 2, name: 'Sessiz Kurt', epithet: 'Görünmeyen birlik', spec: 'kilic', skill: 'isabet', unlock: 5, look: { skin: '#e6bb95', hair: '#4a3626', beard: 2, hat: 'helmetm' } },
   { id: 'firtina', era: 2, name: 'Fırtına', epithet: 'Lojistiğin ustası', spec: 'kale', skill: 'kusatma', unlock: 6, look: { skin: '#d2a07a', hair: '#9a9a9a', beard: 1, hat: 'peaked' } }
 ];
 var SKILLS = {
@@ -146,7 +165,7 @@ var LEGENDS = [
 ];
 var LEGEND_REST = 5, GEN_REST = 3, MAX_GENS = 4;
 // rol → çağın birlik türü (uzmanlık)
-var ROLE_TYPE = { yaya: ['kilic', 'piyade', 'mpiyade'], atli: ['atli', 'zirhli', 'tank'], menzil: ['okcu', 'makineli', 'heli'], deniz: ['kadirga', 'kadirga', 'kadirga'] };
+var ROLE_TYPE = { yaya: ['kilic', 'kilic', 'kilic'], atli: ['atli', 'atli', 'atli'], menzil: ['okcu', 'okcu', 'okcu'], deniz: ['kadirga', 'kadirga', 'kadirga'] };
 var ENEMY_GENS = [
   { name: 'Kızıl Baron', spec: 'atli', look: { skin: '#e3b28a', hair: '#7a2e1a', beard: 2, hat: 'helm' } },
   { name: 'Yaşlı Kont', spec: 'kilic', look: { skin: '#ecc7a3', hair: '#cfcfcf', beard: 3, hat: 'crown' } },
@@ -155,6 +174,14 @@ var ENEMY_GENS = [
   { name: 'Gri Kurt', spec: 'okcu', look: { skin: '#cf9e78', hair: '#7a7a7a', beard: 2, hat: 'hood' } },
   { name: 'Aslan Yürek', spec: 'kilic', look: { skin: '#e8bd96', hair: '#b5732e', beard: 2, hat: 'helm' } }
 ];
+var ENEMY_GENS_ERA = [null, [
+  { name: 'Demir Mareşal', spec: 'kilic', look: { skin: '#e8c19c', hair: '#cfcfcf', beard: 1, hat: 'pickel' } },
+  { name: 'Kara Albay', spec: 'okcu', look: { skin: '#d6a57c', hair: '#1f1813', beard: 1, hat: 'kepi' } },
+  { name: 'Kızıl Hüsar', spec: 'atli', look: { skin: '#e3b28a', hair: '#7a2e1a', beard: 1, hat: 'kalpak' } },
+  { name: 'Yaşlı Kurmay', spec: 'kilic', look: { skin: '#ecc7a3', hair: '#bdbdbd', beard: 2, hat: 'peaked' } },
+  { name: 'Tilki Paşa', spec: 'okcu', look: { skin: '#c99872', hair: '#3b2a1e', beard: 2, hat: 'cap' } },
+  { name: 'Çelik Dük', spec: 'atli', look: { skin: '#dcae88', hair: '#3e2b1f', beard: 0, hat: 'bicorne' } }
+], null];
 var RANK_XP = [0, 120, 320, 650, 1100];
 function rankOf(xp) { var r = 1; for (var i = 1; i < RANK_XP.length; i++) if (xp >= RANK_XP[i]) r = i + 1; return r; }
 
@@ -162,14 +189,19 @@ function rankOf(xp) { var r = 1; for (var i = 1; i < RANK_XP.length; i++) if (xp
 var DIFF_ECO = [0.88, 1, 1.15];          // zorluk: bot ekonomisi
 var DIFF_MEDAL = [0.75, 1, 1.5];        // zorluk: madalya çarpanı
 var ANNEX_STEP = 1.25;                  // her ilhak bir sonrakini %25 pahalı yapar
-var LEVELS = [
+var ERA_LEVELS = [[
   { map: 0, par: 30, limit: 60, aiEco: 0.8, grace: 3,
     story: 'Yarımada altı sancağa bölünmüş. Kuzeyde dağlar, güneyde verimli ovalar. Tahtı, yarımadayı ilk birleştiren alır.' },
   { map: 1, par: 38, limit: 70, aiEco: 0.85, grace: 3,
     story: 'Zengin şehirler, karlı Alpler ve Akdeniz. Denizi tutan kıyıları, dağları tutan geçitleri tutar.' },
   { map: 2, par: 45, limit: 100, aiEco: 0.85, grace: 3,
     story: 'Doğu ile Batı’nın kavşağı. Sekiz sancak, iki deniz ve bir Boğaz. İstanbul’u tutan iki denizin geçidini tutar; ama her sancak aynı şansla başlar.' }
-];
+], [
+  { map: 3, par: 35, limit: 80, aiEco: 0.85, grace: 3,
+    story: 'Demiryolları, fabrikalar ve büyük ordular. Kanal’ın iki yakasında sekiz devlet. Ordun ikmal hattından kopmasın: şehirden ve kaleden 3 hücreden uzaklaşan birlik zayıflar ve iyileşmez.' }
+], []];
+var LEVELS = ERA_LEVELS[0];
+function levelsOf(e) { return ERA_LEVELS[e || 0] || []; }
 
 function rng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
 function hexXY(q, r) { return { x: SQ3 * (q + 0.5 * (r & 1)), y: 1.5 * r }; }
@@ -180,7 +212,8 @@ function hd(a, b) { var A = cubeOf(a.q, a.r), B = cubeOf(b.q, b.r); return Math.
 /* ============================ Oyun ============================ */
 function newGame(o) {
   // o: { era, level, player (faction id), generals: [{id, xp}], seed }
-  var L = LEVELS[o.level], M = MAPS[L.map], R = rng(o.seed || 7);
+  setEra(o.era || 0);
+  var L = levelsOf(o.era)[o.level], M = MAPS[L.map], R = rng(o.seed || 7);
   var diff = o.diff == null ? 1 : o.diff;   // 0 kolay, 1 normal, 2 zor
   var G = { v: 2, era: o.era, level: o.level, mapIdx: L.map, turn: 1, cur: 0, over: 0, seed: (o.seed || 7) | 0, nextId: 1,
     diff: diff, noDip: o.noDip ? 1 : 0, par: L.par, limit: L.limit, grace: L.grace, navy: M.navy, cells: [], units: [], factions: [], log: [], stats: { kills: 0, lost: 0, cities: 0 } };
@@ -225,7 +258,7 @@ function newGame(o) {
         else f.generals.push({ id: g.id, name: g.name, spec: g.spec, skill: g.skill, xp: g.xp || 0, rank: rankOf(g.xp || 0), unit: 0, rest: 0, look: g.look, gained: 0 });
       });
     } else {
-      var eg = ENEMY_GENS[(fi + G.seed) % ENEMY_GENS.length];
+      var EG = ENEMY_GENS_ERA[G.era] || ENEMY_GENS, eg = EG[(fi + G.seed) % EG.length];
       var rank = Math.max(1, Math.min(RANK_XP.length, 1 + o.level + (R() < 0.4 ? 1 : 0) + diff - 1));
       f.generals.push({ id: 'ai' + fi, name: eg.name, spec: eg.spec, skill: null, xp: RANK_XP[rank - 1], rank: rank, unit: 0, rest: 0, look: eg.look, gained: 0 });
     }
@@ -298,7 +331,7 @@ function startTurn(G, fi, first) {
       if (!u.build) G.log.push({ t: 'tower', u: u.id, c: u.c, f: fi });
     } else if (!first && genOf(G, u) && genOf(G, u).skill === 'sifa') {
       u.hp = Math.min(100, u.hp + 25);
-    } else if (!first && !u.emb && c.f === fi) {
+    } else if (!first && !u.emb && c.f === fi && supplied(G, u)) {
       var heal = c.t === 3 ? 15 + 3 * c.lv : c.t === 4 ? 18 : 6;
       if (genOf(G, u)) heal += 10;
       u.hp = Math.min(100, u.hp + heal);
@@ -610,7 +643,18 @@ function aiOffer(G, R) {
    olduğunda tamamen çevrilidir. Moral saldırı ve savunmayı birlikte düşürür. */
 var MORALE = { kiskac: { m: 0.8, name: 'Kıskaç' }, agir: { m: 0.7, name: 'Ağır kıskaç' }, cevrili: { m: 0.55, name: 'Çevrili' } };
 // moral yükselişi: yanında en az iki dost birlik (destek), son turda düşman yok etti (zafer coşkusu)
-var MORALE_UP = { destek: { m: 1.1, name: 'Destek' }, zafer: { m: 1.1, name: 'Zafer coşkusu' }, korku: { m: 0.85, name: 'Korku' } };
+/* Yakın Çağ ve sonrası: ikmal. Kendi (ya da müttefik) şehir veya kalesinden 3 hücreden uzak kara birliği zayıflar ve iyileşmez. */
+var SUPPLY_RANGE = 3;
+function supplied(G, u) {
+  if (!G.era || u.emb || UT[u.type].naval || UT[u.type].tower || u.f < 0) return true;
+  var c = G.cells[u.c];
+  for (var i = 0; i < G.cells.length; i++) {
+    var o = G.cells[i];
+    if ((o.t === 3 || o.t === 4) && (o.f === u.f || isAlly(G, o.f, u.f)) && hd(o, c) <= SUPPLY_RANGE) return true;
+  }
+  return false;
+}
+var MORALE_UP = { destek: { m: 1.1, name: 'Destek' }, zafer: { m: 1.1, name: 'Zafer coşkusu' }, korku: { m: 0.85, name: 'Korku' }, ikmal: { m: 0.85, name: 'İkmalsiz' } };
 /* birliğin bütün moral durumu: m çarpanı, düşüş türü, yükselişler ve düşüş derecesi (0, 1 ya da 2 ok) */
 function moraleInfo(G, u) {
   if (!u || UT[u.type].tower || u.c === undefined) return { m: 1, down: null, ups: [], lvl: 0 };
@@ -623,6 +667,7 @@ function moraleInfo(G, u) {
     else if (foe(G, o.f, u.f)) { foes++; var go = genOf(G, o); if (go && go.skill === 'korku') fear = true; }
   }
   if (fear && !firm) { m *= MORALE_UP.korku.m; ups.push('korku'); }
+  if (G.era && !firm && !supplied(G, u)) { m *= MORALE_UP.ikmal.m; ups.push('ikmal'); }
   if (friends >= 2) { m *= MORALE_UP.destek.m; ups.push('destek'); }
   if (firm || (u.won && G.turn - u.won <= 1)) { m *= MORALE_UP.zafer.m; ups.push('zafer'); }
   var lvl = m > 1.001 ? 1 : m < 0.999 ? ((down === 'cevrili' || foes >= 4) ? -2 : -1) : 0;
@@ -1077,5 +1122,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
 };

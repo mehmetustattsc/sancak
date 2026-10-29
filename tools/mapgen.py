@@ -259,7 +259,42 @@ BALKAN = {
     ('Jajce', 17.27, 44.34, 1, 'castle'), ('Mistra', 22.37, 37.07, 1, 'castle'), ('Akrokorint', 22.87, 37.89, 1, 'castle'), ('Kruja', 19.79, 41.51, 1, 'castle'),
     ('Çimenlik', 26.40, 40.15, 1, 'castle'), ('Silistre', 27.26, 44.12, 1, 'castle'),
   ]}
-maps = [build(IBER), build(ITALY), build(BALKAN)]
+def west_owner(c, lon, lat):
+    if c in ('FRA',): return 'n' if (lon < -0.9 and lat > 46.8) else 'mavi'      # Bretanya tarafsız
+    if c == 'GBR': return 'buz'
+    if c in ('NLD', 'BEL', 'LUX'): return 'turuncu'
+    if c == 'DEU':
+        if lat >= 50.3: return 'siyah' if lon >= 10.6 else 'kahve'
+        return 'sari'
+    if c == 'POL': return 'siyah' if lat > 50.6 else 'bordo'
+    if c in ('AUT', 'CZE', 'SVN', 'HUN', 'SVK', 'HRV'): return 'bordo'
+    if c == 'ITA': return 'yesil'
+    return 'n'                     # İsviçre tarafsız
+WEST = {
+  'name': 'Batı Avrupa', 'navy': True, 'box': (-5.9, 44.0, 17.6, 55.4), 'target': 165, 'seed': 4, 'island_min': 2, 'foreign_void': True,
+  'countries': ['FRA', 'GBR', 'NLD', 'BEL', 'LUX', 'DEU', 'POL', 'AUT', 'CZE', 'SVN', 'HRV', 'ITA', 'CHE'],
+  'owner': west_owner,
+  'factions': ['mavi', 'buz', 'turuncu', 'kahve', 'siyah', 'sari', 'bordo', 'yesil'],
+  'titles': {'mavi': 'Cumhuriyet', 'buz': 'Krallık', 'turuncu': 'Krallık', 'kahve': 'Konfederasyon', 'siyah': 'Krallık', 'sari': 'Krallık', 'bordo': 'İmparatorluk', 'yesil': 'Krallık'},
+  'caps': {'mavi': 'Paris', 'buz': 'Londra', 'turuncu': 'Brüksel', 'kahve': 'Köln', 'siyah': 'Berlin', 'sari': 'Münih', 'bordo': 'Viyana', 'yesil': 'Torino'},
+  'places': [
+    ('Paris', 2.35, 48.86, 3, 'city'), ('Londra', -0.13, 51.51, 3, 'city'), ('Brüksel', 4.35, 50.85, 3, 'city'), ('Köln', 6.96, 50.94, 3, 'city'),
+    ('Berlin', 13.40, 52.52, 3, 'city'), ('Münih', 11.58, 48.14, 3, 'city'), ('Viyana', 16.37, 48.21, 3, 'city'), ('Torino', 7.69, 45.07, 3, 'city'),
+    ('Lyon', 4.84, 45.76, 2, 'city'), ('Nantes', -1.55, 47.22, 1, 'city'), ('Lille', 3.06, 50.63, 1, 'city'), ('Strazburg', 7.75, 48.58, 2, 'city'), ('Bordeaux', -0.58, 44.84, 1, 'city'),
+    ('Manchester', -2.24, 53.48, 2, 'city'), ('Bristol', -2.59, 51.45, 1, 'city'), ('Birmingham', -1.90, 52.48, 1, 'city'),
+    ('Amsterdam', 4.90, 52.37, 2, 'city'), ('Rotterdam', 4.48, 51.92, 1, 'castle', 'turuncu'),
+    ('Hamburg', 9.99, 53.55, 2, 'city'), ('Hannover', 9.73, 52.37, 1, 'city'), ('Frankfurt', 8.68, 50.11, 2, 'city'),
+    ('Dresden', 13.74, 51.05, 2, 'city'), ('Breslau', 17.04, 51.11, 1, 'city'), ('Stettin', 14.55, 53.43, 1, 'city'),
+    ('Nürnberg', 11.08, 49.45, 1, 'city'), ('Stuttgart', 9.18, 48.78, 2, 'city', 'sari'),
+    ('Prag', 14.42, 50.08, 2, 'city'), ('Graz', 15.44, 47.07, 1, 'city'), ('Trieste', 13.78, 45.65, 1, 'city'),
+    ('Milano', 9.19, 45.46, 2, 'city'), ('Venedik', 12.33, 45.44, 1, 'city'), ('Cenova', 8.93, 44.41, 1, 'city'),
+    ('Zürih', 8.54, 47.37, 2, 'city'), ('Cenevre', 6.14, 46.20, 1, 'city', 'n'),
+    ('Verdun', 5.39, 49.16, 2, 'castle'), ('Belfort', 6.86, 47.64, 1, 'castle'), ('Brest', -4.49, 48.39, 1, 'castle'),
+    ('Dover', 1.31, 51.13, 1, 'castle', 'buz'), ('York', -1.08, 53.96, 1, 'castle'), ('Namur', 4.87, 50.47, 1, 'castle'), ('Lüksemburg', 6.13, 49.61, 1, 'castle', 'turuncu'),
+    ('Koblenz', 7.59, 50.36, 1, 'castle', 'kahve'), ('Magdeburg', 11.63, 52.12, 1, 'castle'), ('Kiel', 10.13, 54.32, 1, 'castle'),
+    ('Ulm', 9.99, 48.40, 1, 'castle'), ('Linz', 14.29, 48.31, 1, 'castle'), ('Olomouc', 17.25, 49.59, 1, 'castle'), ('Verona', 10.99, 45.44, 1, 'castle'),
+  ]}
+maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST)]
 out = os.path.join(os.path.dirname(__file__), '..', 'src', 'maps.json')
 json.dump(maps, open(out, 'w'), ensure_ascii=False, separators=(',', ':'))
 print('wrote', out, os.path.getsize(out), file=sys.stderr)

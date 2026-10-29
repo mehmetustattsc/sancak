@@ -38,6 +38,7 @@ jobs:
           python3 tests/diplomacy.py
           python3 tests/legends.py
           python3 tests/balkan.py
+          python3 tests/yakin.py
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
