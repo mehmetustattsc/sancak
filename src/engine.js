@@ -501,6 +501,36 @@ function applyDeal(G, p, t, deal) {
   G.log.push({ t: 'deal', a: p, b: t });
   checkWin(G);
 }
+/* bağlı krallık (ilhak): çok zayıf ülke bedel karşılığında bütünüyle katılır */
+function annexInfo(G, p, t) {
+  var ft = G.factions[t], fp = G.factions[p];
+  var cities = G.cells.filter(function (c) { return c.f === t && (c.t === 3 || c.t === 4); });
+  var units = G.units.filter(function (u) { return u.f === t; });
+  var ratio = power(G, t) / power(G, p), lost = G.recentLoss && G.recentLoss[t] >= G.turn - 3;
+  var cityN = cities.filter(function (c) { return c.t === 3; }).length;
+  var desperation = Math.max(0.5, Math.min(1, ratio * 1.6)) * (lost ? 0.85 : 1);
+  var cost = Math.round((cities.reduce(function (a, c) { return a + cellValue(G, c); }, 0) * 0.6 + units.length * 12 + ft.gold * 0.5) * desperation / 5) * 5;
+  var r = { cost: cost, ok: true, why: '', cities: cityN, units: units.length };
+  if (!ft.alive || p === t) { r.ok = false; r.why = 'Olmaz'; }
+  else if (ratio >= 0.4) { r.ok = false; r.why = 'Henüz güçlü (gücü seninkinin %' + Math.round(ratio * 100) + '’i)'; }
+  else if (cityN > 2 && !lost) { r.ok = false; r.why = 'Elinde hâlâ ' + cityN + ' şehir var'; }
+  else if (fp.gold < cost) { r.ok = false; r.why = 'Bedel ' + cost + ' altın'; }
+  return r;
+}
+function annex(G, p, t) {
+  var r = annexInfo(G, p, t); if (!r.ok) return false;
+  var fp = G.factions[p], ft = G.factions[t];
+  fp.gold -= r.cost;
+  fp.food += ft.food; fp.iron += ft.iron;
+  G.cells.forEach(function (c) { if (c.f === t) c.f = p; });
+  G.units.forEach(function (u) { if (u.f === t) { u.f = p; u.gen = 0; u.acted = true; u.mp = 0; } });
+  ft.alive = false; ft.generals.forEach(function (g) { g.unit = 0; });
+  for (var k = 0; k < G.factions.length; k++) { G.ally[t][k] = G.ally[k][t] = 0; }
+  G.log.push({ t: 'annex', a: p, b: t });
+  if (G.player >= 0 && G.factions.every(function (x, i) { return i === G.player || !x.alive; })) G.over = 1;
+  checkWin(G);
+  return true;
+}
 /* botun oyuncuya teklifi (tur başında en fazla bir) */
 function aiOffer(G, R) {
   var P = G.player; if (P < 0 || allyCount(G, P) >= MAX_ALLIES) return null;
@@ -946,5 +976,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, MORALE: MORALE, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, MORALE: MORALE, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
 };

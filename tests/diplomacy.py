@@ -51,6 +51,12 @@ async def main():
             await pg.click('#bYes'); await pg.wait_for_timeout(900)
             st = await pg.evaluate(f'()=>{{const G=__sancak.B().G;return [G.cells[{r}].f===G.player, G.ally[G.player][{fi}]>=G.turn]}}')
             print('ihanet', st); assert st == [True, False]
+        # bağlı krallık: bir ülkeyi zayıflat, ilhak et
+        w = await pg.evaluate(f'''()=>{{const B=__sancak.B(),G=B.G,P=G.player;const t=G.factions.findIndex((f,i)=>i!==P&&f.alive&&i!=={fi}&&i!=={f2});
+          G.cells.forEach(c=>{{if(c.f===t&&c.t===3&&!c.cap)c.f=P}});G.units=G.units.filter(u=>u.f!==t||G.cells[u.c].cap);G.recentLoss=G.recentLoss||[];G.recentLoss[t]=G.turn;G.factions[P].gold=999;return t}}''')
+        await pg.click('#hDip'); await pg.wait_for_timeout(200); await pg.click(f'[data-fi="{w}"]'); await pg.wait_for_timeout(200); await shot('D6-annex')
+        await pg.click('#tAnnex'); await pg.wait_for_timeout(1000)
+        gone = await pg.evaluate(f'()=>!__sancak.B().G.factions[{w}].alive'); print('ilhak', gone); assert gone
         print('HATALAR', errs); assert not errs
         await br.close()
 asyncio.run(main())

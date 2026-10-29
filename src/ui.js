@@ -332,6 +332,7 @@ function renderHelp() {
     '<li>Müttefike saldırılamaz, onun birliklerinin ve topraklarının içinden geçilir, seni kıskaca almaz.</li>' +
     '<li>Müttefikin boş şehrine ya da kalesine girersen orayı alırsın ama ittifak bozulur ve ' + DISTRUST_TURNS + ' tur kimse seninle ittifak kurmaz.</li>' +
     '<li>Üstteki el sıkışma simgesinden pazarlık masasını aç: altın, gıda, demir, şehir ve kale takası; ittifak karşılığında bir şey ver ya da iste. Başkent verilemez; şehir çevresindeki arazisiyle devredilir.</li>' +
+    '<li><b>Bağlı krallık:</b> gücü seninkinin %40’ından az, en fazla 2 şehri kalmış ya da yeni şehir kaybetmiş ülkeyi altın karşılığında bütünüyle krallığına katabilirsin. Listede taç işaretiyle görünür.</li>' +
     '<li>Şehirlerin %35’ini geçersen rakipler sana karşı birleşmeye başlar. Müttefik şehirleri zafer için sayılmaz.</li></ul></div>' +
     '<div class="card"><h3>Kule</h3><p>Her tur kendi boş arazine bir kule kurabilirsin (tarla, şehir ve kaleye olmaz). Kule 2 turda biter; inşaat sırasında savunması yarıdır ve karşılık veremez. Hasar alan inşaat bitince kule o canla başlar. Kule saldırmaz ama saldırana karşılık verir. Yıkılırsa arazi boşalır.</p></div>' +
     '<div class="card"><h3>Ticaret</h3><p>Başkentinde her tur en fazla 3 takas: 10 gıda → 12 altın, 18 altın → 10 gıda, 25 altın → 2 demir, 2 demir → 14 altın.</p></div>' +
@@ -665,7 +666,7 @@ function dipMenu() {
     var cities = G.cells.filter(function (c) { return c.t === 3 && c.f === fi; }).length, rel = power(G, fi) / pp;
     return '<button class="drow" data-fi="' + fi + '">' + ART.flag(f.id) + '<span class="dn">' + factionName(G, fi) + '</span>' +
       '<span class="dm"><span>' + I.city + cities + '</span><span class="pw"><i style="width:' + Math.min(100, Math.round(rel * 50)) + '%"></i></span></span>' + relTag(G, fi) +
-      (G.distrust[fi] > G.turn ? '<span class="tag bad" title="İhanet etti">!</span>' : '') + '</button>';
+      (G.distrust[fi] > G.turn ? '<span class="tag bad" title="İhanet etti">!</span>' : '') + (annexInfo(G, P, fi).ok || /altın/.test(annexInfo(G, P, fi).why) ? '<span class="tag gold">' + I.crown + '</span>' : '') + '</button>';
   }).join('');
   modal('<div class="topbar"><h2>Diplomasi</h2><span class="tag ' + (allyCount(G, P) >= MAX_ALLIES ? 'bad' : '') + '">' + I.handshake + allyCount(G, P) + '/' + MAX_ALLIES + '</span></div>' +
     (G.distrust[P] > G.turn ? '<p class="bad">İhanetin yüzünden ' + (G.distrust[P] - G.turn) + ' tur kimse ittifak kurmaz.</p>' : '') +
@@ -694,12 +695,19 @@ function dealTable(fi, preset) {
     var r = proposeDeal(G, P, fi, deal), ally = isAlly(G, P, fi);
     modal('<div class="topbar"><button class="back" id="tBack" aria-label="Geri">' + I.back + '</button><div class="dh">' + ART.flag(G.factions[fi].id) + '<b>' + factionName(G, fi) + '</b></div>' + relTag(G, fi) + '</div>' +
       '<label class="atog' + (deal.ally ? ' on' : '') + '" id="tAlly">' + I.handshake + '<span>' + (ally ? 'İttifakı uzat (' + ALLY_TURNS + ' tur)' : 'İttifak kur (' + ALLY_TURNS + ' tur)') + '</span><i></i></label>' +
+      annexHTML(fi) +
       '<div class="dcols"><div class="dcol"><div class="eyebrow">Sen verirsin</div>' + side('give', P) + '</div>' +
       '<div class="dcol"><div class="eyebrow">O verir</div>' + side('get', fi) + '</div></div>' +
       '<div class="verdict ' + (r.ok ? 'good' : 'bad') + '">' + (r.ok ? '✓ Kabul eder' : '✕ ' + esc(r.why || 'Kabul etmez')) + '</div>' +
       '<div class="row"><button class="btn ghost" id="tClear">Temizle</button><button class="btn" id="tGo"' + (r.ok ? '' : ' disabled') + '>Teklif et</button></div>', 'deal');
     $('#tBack').onclick = function () { dipMenu(); };
     $('#tAlly').onclick = function () { deal.ally = !deal.ally; draw(); };
+    if ($('#tAnnex')) $('#tAnnex').onclick = function () {
+      if (!annexInfo(G, P, fi).ok) return;
+      act(function () { return annex(G, P, fi); }); B.undo = [];
+      closeModal(); SFX.win();
+      playLog(function () { updateHud(); renderPanel(); checkOver(); }); dirty = true;
+    };
     $('#tClear').onclick = function () { dealTable(fi); };
     document.querySelectorAll('.stp button').forEach(function (b) { b.onclick = function () {
       var k = b.dataset.k, rr2 = b.dataset.r, owner = k === 'give' ? P : fi, max = Math.floor(G.factions[owner][rr2]);
@@ -720,6 +728,11 @@ function dealTable(fi, preset) {
     };
   }
   draw();
+}
+function annexHTML(fi) {
+  var G = B.G, a = annexInfo(G, G.player, fi);
+  return '<button class="annex' + (a.ok ? '' : ' off') + '" id="tAnnex"' + (a.ok ? '' : ' disabled') + '>' + I.crown +
+    '<span><b>Bağlı krallık yap</b><i>' + (a.ok ? a.cities + ' şehir ve ' + a.units + ' birlik krallığına katılır' : esc(a.why)) + '</i></span>' + costTag(a.cost) + '</button>';
 }
 function offerPopup() {
   var G = B.G, o = aiOffer(G, Math.random);
@@ -891,6 +904,11 @@ function animEvent(e, sp) {
     SFX.lost(); toast(e.a === G.player ? 'İttifakı bozdun: ' + factionName(G, e.b) + ' artık düşman' : factionName(G, e.a) + ' ihanet etti!'); d = 700 / sp;
   } else if (e.t === 'allyEnd') {
     if (e.a === G.player || e.b === G.player) toast(factionName(G, e.a === G.player ? e.b : e.a) + ' ile ittifak süresi doldu');
+  } else if (e.t === 'annex') {
+    var capA = G.cells.filter(function (c) { return c.cap && c.f === e.a; });
+    capA.forEach(function (c) { fx({ k: 'ring', c: c.i, col: '#e8c977' }); });
+    toast(e.a === G.player ? FACTIONS[G.factions[e.b].id].name + ' artık senin bağlı krallığın' : factionName(G, e.b) + ' ' + factionName(G, e.a) + '’a katıldı');
+    d = 700 / sp;
   } else if (e.t === 'cede') {
     fx({ k: 'ring', c: e.c, col: e.to >= 0 ? FACTIONS[G.factions[e.to].id].col : '#ccc' });
     if (G.cells[e.c].nm) fx({ k: 'text', c: e.c, txt: G.cells[e.c].nm, col: '#fff' });

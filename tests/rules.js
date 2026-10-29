@@ -162,4 +162,18 @@ assert.strictEqual(buy.f, P, 'şehir devredilmeli'); assert(!G.units.some(u => u
 const capE = G.cells.find(x => x.cap && x.f === enemyF);
 assert(!E.proposeDeal(G, P, enemyF, { give: { gold: 999 }, get: { cells: [capE.i] } }).ok, 'başkent satılmaz');
 console.log('✓ diplomasi');
+// 13) bağlı krallık
+G = fresh(); G.factions[P].gold = 2000;
+const weak = enemyF;
+assert(!E.annexInfo(G, P, weak).ok, 'güçlü ülke katılmaz');
+G.cells.forEach(c => { if (c.f === weak && c.t === 3 && !c.cap) c.f = P; });
+G.units = G.units.filter(u => u.f !== weak || G.cells[u.c].cap);
+G.recentLoss = []; G.recentLoss[weak] = G.turn;
+const ai = E.annexInfo(G, P, weak);
+console.log('  ilhak bedeli', ai.cost, ai.why);
+assert(ai.ok, 'zayıf ülke katılmalı: ' + ai.why);
+const capW = G.cells.find(c => c.cap && c.f === weak);
+assert(E.annex(G, P, weak), 'ilhak olmalı');
+assert(capW.f === P && !G.factions[weak].alive && !G.units.some(u => u.f === weak), 'her şey oyuncuya geçmeli');
+console.log('✓ bağlı krallık');
 console.log('KURAL TESTLERİ TAMAM');
