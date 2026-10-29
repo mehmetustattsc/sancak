@@ -320,7 +320,7 @@ function renderHelp() {
     '<li><b>Liman (2 seviye, denizli haritalar):</b> kadırga yapar. Kara birliği limandan denize çıkınca nakliyeye biner; nakliye savunmasızdır.</li></ul></div>' +
     '<div class="card"><h3>Savaş</h3><ul>' +
     '<li>Kılıçlı atlıyı, atlı okçuyu, okçu kılıçlıyı yener: avantajlı taraf <b>1,5 kat</b> güçlü.</li>' +
-    '<li>Okçu 2 hücre uzaktan atar; uzaktan vurulan karşılık veremez. Yakın dövüşte savunan karşılık verir.</li>' +
+    '<li>Okçu ve kadırga 2 hücre uzaktan atar; uzaktan vurulan karşılık veremez (okçu ve kadırga hariç). Yakın dövüşte savunan karşılık verir.</li>' +
     '<li>Dağ +%30, şehir seviye başına +%8, kale +%30–90 savunma verir. Yaralı birlik daha zayıf vurur.</li>' +
     '<li>Saldıran birlik yerinde kalır. Boşalan hücreye başka bir birliğini sürüp oradan saldırmaya devam edebilirsin. İki düşman öldüren birlik tecrübe kazanır.</li>' +
     '<li><b>Atlı</b> 2 hücre gider ve düşman yanından geçerken durmaz. Saldırıp düşmanı yok ederse yeniden saldırabilir ve 1 hücre daha ilerleyebilir; gücü yettikçe zincirleme devam eder.</li>' +

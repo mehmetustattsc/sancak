@@ -100,4 +100,15 @@ const cap = E.armyCap(G, P); let made = 0;
 for (let t = 0; t < 30 && made < cap + 3; t++) { for (const c of G.cells.filter(x => x.t === 3 && x.f === P)) { G.factions[P].recruited = {}; if (E.recruit(G, c.i, 'kilic')) made++; } }
 assert(E.armySize(G, P) <= cap, 'ordu sınırı aşılmamalı');
 console.log('✓ ordu sınırı', cap);
+// 10) kadırga uzaktan atış
+G = fresh();
+let shipCell = null, tgtCell = null;
+for (const sc of G.cells.filter(x => x.t === 0)) {
+  const t2 = G.cells.find(x => x.t && !sc.nb.includes(x.i) && sc.nb.some(j => G.cells[j].nb.includes(x.i)) );
+  if (t2) { shipCell = sc; tgtCell = t2; break; }
+}
+const ship = add(G, P, 'kadirga', shipCell.i), archerT = add(G, enemyF, 'kilic', tgtCell.i);
+assert(E.canAttack(G, ship, archerT), 'kadırga 2 hücre uzağa atabilmeli');
+assert.strictEqual(E.predict(G, ship, archerT).back, 0, 'kılıçlı uzaktaki gemiye karşılık veremez');
+console.log('✓ kadırga uzaktan atış');
 console.log('KURAL TESTLERİ TAMAM');

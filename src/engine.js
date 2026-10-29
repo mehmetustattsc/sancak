@@ -38,7 +38,7 @@ var UT = {
   okcu:    { name: 'Okçu',     atk: 30, def: 20, mv: 1, rng: 2, cost: { g: 30, i: 0 }, beats: 'kilic', desc: '2 hücre uzağa ok atar. Uzaktan vurunca karşılık almaz.' },
   atli:    { name: 'Atlı',     atk: 36, def: 30, mv: 2, rng: 1, cost: { g: 50, i: 2 }, beats: 'okcu', req: 'smith', pursue: true, desc: '2 hücre gider, düşman hattında durmaz. Düşmanı yok ederse 1 hücre daha ilerler. Demirci ister.' },
   kule:    { name: 'Kule',     atk: 24, def: 40, mv: 0, rng: 1, cost: { g: 40, i: 1 }, tower: true, desc: 'Boş araziye kurulur, 2 turda biter. Saldırmaz ama saldırana karşılık verir.' },
-  kadirga: { name: 'Kadırga',  atk: 32, def: 26, mv: 3, rng: 1, cost: { g: 60, i: 2 }, naval: true, req: 'port', desc: 'Savaş gemisi. Nakliyeleri batırır, kıyıyı vurur. Liman ister.' }
+  kadirga: { name: 'Kadırga',  atk: 32, def: 26, mv: 3, rng: 2, cost: { g: 60, i: 2 }, naval: true, req: 'port', desc: 'Savaş gemisi. 2 hücre uzağa atış yapar; uzaktan vurunca karşılık almaz. Nakliyeleri batırır, kıyıyı vurur. Liman ister.' }
 };
 var ADV = 1.5;
 var TRANSPORT = { name: 'Nakliye', def: 8, mv: 2 };
