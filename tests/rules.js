@@ -127,4 +127,39 @@ const dmgC = E.predict(G, G.units.find(u => u.c === byDir[0]), me).dmg;
 console.log('  kıskaçta alınan hasar', dmgK.toFixed(1), '· çevriliyken', dmgC.toFixed(1));
 assert(dmgC > dmgK, 'çevrili birlik daha çok hasar almalı');
 console.log('✓ moral');
+// 12) diplomasi
+G = fresh();
+E.makeAlly(G, P, enemyF);
+assert(E.isAlly(G, P, enemyF), 'ittifak kurulmalı');
+[a, b, c] = line(G);
+const mineU = add(G, P, 'kilic', a.i), allyU = add(G, enemyF, 'kilic', b.i);
+assert(!E.canAttack(G, mineU, allyU), 'müttefike saldırılamaz');
+assert(E.reach(G, mineU)[b.i] && E.reach(G, mineU)[b.i].pass, 'müttefik birliğinin içinden geçilir');
+assert.strictEqual(E.morale(G, mineU), null, 'müttefik kıskaç yapmaz');
+// ihanet: müttefikin boş şehrine girmek
+const allyCity = G.cells.find(x => x.t === 3 && x.f === enemyF && !x.cap);
+G.units = G.units.filter(u => u.c !== allyCity.i);
+const nbC = allyCity.nb.find(j => G.cells[j].t); G.units = G.units.filter(u => u.c !== nbC);
+const trait = add(G, P, 'kilic', nbC);
+assert(E.moveUnit(G, trait, allyCity.i), 'müttefik şehrine girilebilmeli');
+assert.strictEqual(allyCity.f, P, 'şehir alınmalı');
+assert(!E.isAlly(G, P, enemyF), 'ittifak bozulmalı');
+assert(G.distrust[P] > G.turn, 'ihanet eden güvenilmez olmalı');
+// süre: 10 tur sonra biter
+G = fresh(); E.makeAlly(G, P, enemyF); G.turn += 10; assert(E.isAlly(G, P, enemyF), '10. turda hâlâ müttefik'); G.turn += 1; assert(!E.isAlly(G, P, enemyF), '11. turda bitmeli');
+// en fazla 2 müttefik
+G = fresh(); const others = G.factions.map((f, i) => i).filter(i => i !== P);
+E.makeAlly(G, P, others[0]); E.makeAlly(G, P, others[1]);
+assert(!E.proposeDeal(G, P, others[2], { give: { gold: 50 }, get: {}, ally: true }).ok, 'üçüncü ittifak olmaz');
+// şehir satın alma
+G = fresh(); G.factions[P].gold = 999;
+const buy = G.cells.find(x => x.t === 3 && x.f === enemyF && !x.cap);
+const low = E.proposeDeal(G, P, enemyF, { give: { gold: 10 }, get: { cells: [buy.i] } });
+const high = E.proposeDeal(G, P, enemyF, { give: { gold: 400 }, get: { cells: [buy.i] } });
+assert(!low.ok && high.ok, 'ucuza şehir verilmez, iyi fiyata verilir');
+E.applyDeal(G, P, enemyF, { give: { gold: 400 }, get: { cells: [buy.i] } });
+assert.strictEqual(buy.f, P, 'şehir devredilmeli'); assert(!G.units.some(u => u.c === buy.i && u.f === enemyF), 'eski sahibin askeri çekilmeli');
+const capE = G.cells.find(x => x.cap && x.f === enemyF);
+assert(!E.proposeDeal(G, P, enemyF, { give: { gold: 999 }, get: { cells: [capE.i] } }).ok, 'başkent satılmaz');
+console.log('✓ diplomasi');
 console.log('KURAL TESTLERİ TAMAM');

@@ -5,7 +5,7 @@ Avrupa haritasında **sıra tabanlı** strateji oyunu. Şehirlerini büyüt, tar
 **Oyna:** depo herkese açık olduğunda https://mehmetustattsc.github.io/sancak/ (GitHub Pages ücretsiz planda yalnız açık depolarda çalışır).
 Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, ilk açılıştan sonra internetsiz de çalışır.
 
-## Durum (sürüm 0.6)
+## Durum (sürüm 0.7)
 - **Orta Çağ**, iki sefer: İber Yarımadası (6 ülke + tarafsız Mayorka, deniz yolları) ve İtalya ve Akdeniz (6 ülke + tarafsız adalar, deniz savaşı)
 - Yakın Çağ ve Modern Çağ menüde "Yakında" olarak duruyor
 - Referanslar: European War 4 (harita, generaller), War Regions (sadelik), Medieval: Total War (arazi, kale, general etkisi)
@@ -15,6 +15,7 @@ Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, i
 |---|---|
 | Tur | Oyuncu hamlelerini yapar, "Devam et" der; rakipler sırayla oynar (izle, hızlandır ya da atla) |
 | Birlik | Her hücrede tek birlik, can çubuğu, seviye (▲). Kılıçlı > Atlı > Okçu > Kılıçlı (×1,5). Kendi birliklerinin içinden geçilir |
+| Diplomasi | Savaş ya da ittifak (10 tur, en fazla 2 müttefik). Müttefike saldırılmaz, içinden geçilir; boş şehrine girmek ihanettir (8 tur güvensizlik). Pazarlık masası: altın, gıda, demir, şehir/kale takası (başkent hariç). Şehirlerin %35'ini geçen oyuncuya karşı botlar birleşir |
 | Moral | Karşılıklı iki yanda düşman: kıskaç −%20; iki kıskaç ya da 4 düşman: −%30; her yan kapalı: çevrili −%45 (saldırı ve savunma) |
 | Saldırı | Saldıran yerinde kalır; boşalan hücreye başka birlik sürülür. Atlı düşmanı yok ettikçe yeniden saldırır ve 1 hücre daha gider. Nakliyedeki birlik karaya %60 güçle çıkarma saldırısı yapar |
 | Ordu sınırı | 2 + şehir başına 2 + kale başına 1 (kuleler hariç) |

@@ -1,12 +1,12 @@
 {
   "name": "sancak",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "description": "Avrupa haritasında sıra tabanlı strateji oyunu",
   "scripts": {
     "build": "python3 tools/build.py",
     "test": "node tests/rules.js && CI_CHECK=1 node tests/sim.js 2",
-    "test:smoke": "python3 tools/build.py && python3 tests/smoke.py && python3 tests/italy.py && python3 tests/features.py && python3 tests/landscape.py && python3 tests/endless.py",
+    "test:smoke": "python3 tools/build.py && python3 tests/smoke.py && python3 tests/italy.py && python3 tests/features.py && python3 tests/landscape.py && python3 tests/endless.py && python3 tests/diplomacy.py",
     "serve": "python3 -m http.server 8080 -d web"
   }
 }

@@ -327,6 +327,12 @@ function renderHelp() {
     '<li><b>Nakliyedeki birlik</b> kıyıdaki düşmana çıkarma saldırısı yapabilir: gücünün %60’ıyla vurur, karşılığı kendi savunmasının %70’iyle yer, gemide kalır.</li>' +
     '<li>Kendi birliklerinin içinden geçebilirsin, ama dolu hücrede duramazsın.</li>' +
     '<li><b>Moral:</b> karşılıklı iki yanında düşman olan birlik kıskaçtadır (−%20). İki kıskaç ya da 4 düşman ağır kıskaç (−%30). Her yanı düşman ya da geçilmez olan birlik çevrilidir (−%45). Kayıp hem saldırıya hem savunmaya işler; haritada kırmızı işaretle görünür.</li></ul></div>' +
+    '<div class="card"><h3>Diplomasi</h3><ul>' +
+    '<li>İki durum var: <b>savaş</b> ya da <b>ittifak</b>. İttifak ' + ALLY_TURNS + ' tur sürer; aynı anda en fazla ' + MAX_ALLIES + ' müttefik olur.</li>' +
+    '<li>Müttefike saldırılamaz, onun birliklerinin ve topraklarının içinden geçilir, seni kıskaca almaz.</li>' +
+    '<li>Müttefikin boş şehrine ya da kalesine girersen orayı alırsın ama ittifak bozulur ve ' + DISTRUST_TURNS + ' tur kimse seninle ittifak kurmaz.</li>' +
+    '<li>Üstteki el sıkışma simgesinden pazarlık masasını aç: altın, gıda, demir, şehir ve kale takası; ittifak karşılığında bir şey ver ya da iste. Başkent verilemez; şehir çevresindeki arazisiyle devredilir.</li>' +
+    '<li>Şehirlerin %35’ini geçersen rakipler sana karşı birleşmeye başlar. Müttefik şehirleri zafer için sayılmaz.</li></ul></div>' +
     '<div class="card"><h3>Kule</h3><p>Her tur kendi boş arazine bir kule kurabilirsin (tarla, şehir ve kaleye olmaz). Kule 2 turda biter; inşaat sırasında savunması yarıdır ve karşılık veremez. Hasar alan inşaat bitince kule o canla başlar. Kule saldırmaz ama saldırana karşılık verir. Yıkılırsa arazi boşalır.</p></div>' +
     '<div class="card"><h3>Ticaret</h3><p>Başkentinde her tur en fazla 3 takas: 10 gıda → 12 altın, 18 altın → 10 gıda, 25 altın → 2 demir, 2 demir → 14 altın.</p></div>' +
     '<div class="card"><h3>Kazanmak</h3><p>Haritadaki şehirlerin %60’ını ele geçir (üstteki şehir sayacı) ya da bütün rakipleri yık. Zaferden sonra istersen tur sınırı olmadan bütün haritayı fethetmeye devam edebilirsin; tam fetih ek madalya getirir. Bütün şehirlerini kaybeden ülke yıkılır. Tur sınırını geçersen sefer kaybedilir. Yıldızlar kaç turda bitirdiğine göre verilir.</p></div>';
@@ -336,7 +342,7 @@ function renderSettings() {
     '<div class="card"><div class="setrow"><div><h3>Ses</h3><p class="muted">Savaş sesleri ve melodiler</p></div><button class="switch' + (save.sound ? ' on' : '') + '" id="swSound" aria-label="Ses"></button></div></div>' +
     '<div class="card"><div class="setrow"><div><h3>Eğitim ipuçları</h3><p class="muted">İlk seferdeki ipuçlarını yeniden göster</p></div><button class="btn small ghost" id="tutAgain">Sıfırla</button></div></div>' +
     '<div class="card"><h3>İlerlemeyi sil</h3><p class="muted">Yıldızlar, madalyalar, general rütbeleri ve yarım kalan sefer silinir.</p><div class="row" id="resetRow"><button class="btn small ghost" id="resetBtn">İlerlemeyi sil</button></div></div>' +
-    '<p class="muted" style="text-align:center">Sancak · sürüm 0.6 · Harita verisi: Natural Earth (kamu malı)</p>';
+    '<p class="muted" style="text-align:center">Sancak · sürüm 0.7 · Harita verisi: Natural Earth (kamu malı)</p>';
   $('#swSound').onclick = function () { save.sound = !save.sound; persist(); renderSettings(); SFX.tap(); };
   $('#tutAgain').onclick = function () { save.tut = false; persist(); toast('İpuçları bir sonraki seferde görünecek.'); };
   $('#resetBtn').onclick = function () {
@@ -428,7 +434,7 @@ function ensureVisible(ci) {
 function buildHud() {
   var G = B.G, f = G.factions[G.player];
   $('#hud').innerHTML =
-    '<div class="hud-top"><button class="hbtn sm" id="hPause" aria-label="Menü">' + I.pause + '</button>' +
+    '<div class="hud-top"><button class="hbtn sm" id="hPause" aria-label="Menü">' + I.pause + '</button><button class="hbtn sm" id="hDip" aria-label="Diplomasi">' + I.handshake + '</button>' +
     '<button class="res" id="hRes" aria-label="Kaynaklar">' + ART.flag(f.id, 'f') +
     '<span id="rG">' + I.coin + '<b></b></span><span id="rF">' + I.food + '<b></b></span><span id="rI">' + I.iron + '<b></b></span>' +
     '<span id="rA">' + I.sword + '<b></b></span><span id="rC">' + I.city + '<b></b></span><span id="rT">' + I.hourglass + '<b></b></span></button></div>' +
@@ -439,6 +445,7 @@ function buildHud() {
     '<button class="btn endturn" id="pEnd"></button></div>' +
     '<div id="hBanner" class="banner" hidden></div><div id="hTip" class="tip" hidden></div>';
   $('#hPause').onclick = pauseMenu;
+  $('#hDip').onclick = function () { if (B.phase === 'player') { SFX.tap(); dipMenu(); } };
   $('#hRes').onclick = resInfo;
   $('#hFit').onclick = function () { SFX.tap(); if (B.cam.s > B.fit * 1.1) { B.cam.s = B.fit; B.cam.x = (B.bounds.minx + B.bounds.maxx) / 2; B.cam.y = (B.bounds.miny + B.bounds.maxy) / 2; } else focusHome(B); clampCam(B); dirty = true; };
   $('#aiFast').onclick = function () { B.fast = B.fast === 1 ? 3 : 1; this.classList.toggle('on', B.fast > 1); };
@@ -646,6 +653,87 @@ function renderPanel() {
   }; });
   fitBounds(B); clampCam(B); dirty = true;
 }
+/* ---------- diplomasi ---------- */
+function relTag(G, fi) {
+  if (isAlly(G, G.player, fi)) return '<span class="tag good">' + I.handshake + allyLeft(G, G.player, fi) + '</span>';
+  return '<span class="tag bad">' + I.sword + '</span>';
+}
+function dipMenu() {
+  var G = B.G, P = G.player, pp = power(G, P);
+  var rows = G.factions.map(function (f, fi) {
+    if (fi === P || !f.alive) return '';
+    var cities = G.cells.filter(function (c) { return c.t === 3 && c.f === fi; }).length, rel = power(G, fi) / pp;
+    return '<button class="drow" data-fi="' + fi + '">' + ART.flag(f.id) + '<span class="dn">' + factionName(G, fi) + '</span>' +
+      '<span class="dm"><span>' + I.city + cities + '</span><span class="pw"><i style="width:' + Math.min(100, Math.round(rel * 50)) + '%"></i></span></span>' + relTag(G, fi) +
+      (G.distrust[fi] > G.turn ? '<span class="tag bad" title="İhanet etti">!</span>' : '') + '</button>';
+  }).join('');
+  modal('<div class="topbar"><h2>Diplomasi</h2><span class="tag ' + (allyCount(G, P) >= MAX_ALLIES ? 'bad' : '') + '">' + I.handshake + allyCount(G, P) + '/' + MAX_ALLIES + '</span></div>' +
+    (G.distrust[P] > G.turn ? '<p class="bad">İhanetin yüzünden ' + (G.distrust[P] - G.turn) + ' tur kimse ittifak kurmaz.</p>' : '') +
+    '<div class="drows">' + rows + '</div><p class="muted small">Çubuk, ülkenin gücünün seninkine oranı. Bir ülkeye dokun: pazarlık masası açılır.</p>' +
+    '<div class="row"><button class="btn ghost" id="dClose">Kapat</button></div>');
+  $('#dClose').onclick = closeModal;
+  document.querySelectorAll('[data-fi]').forEach(function (b) { b.onclick = function () { SFX.tap(); dealTable(+b.dataset.fi); }; });
+}
+function dealTable(fi, preset) {
+  var G = B.G, P = G.player;
+  var deal = preset || { give: { gold: 0, food: 0, iron: 0, cells: [] }, get: { gold: 0, food: 0, iron: 0, cells: [] }, ally: !isAlly(G, P, fi) };
+  var STEP = { gold: 10, food: 10, iron: 1 };
+  function side(key, owner) {
+    var b = deal[key], f = G.factions[owner];
+    var res = ['gold', 'food', 'iron'].map(function (r) {
+      var icon = r === 'gold' ? I.coin : r === 'food' ? I.food : I.iron;
+      return '<div class="stp">' + icon + '<button data-k="' + key + '" data-r="' + r + '" data-d="-1">−</button><b>' + (b[r] || 0) + '</b><button data-k="' + key + '" data-r="' + r + '" data-d="1">+</button><i>/' + Math.floor(f[r]) + '</i></div>';
+    }).join('');
+    var cells = G.cells.filter(function (c) { return tradable(G, c, owner); }).map(function (c) {
+      var on = b.cells.indexOf(c.i) >= 0;
+      return '<button class="cchip' + (on ? ' on' : '') + '" data-k="' + key + '" data-c="' + c.i + '">' + (c.t === 3 ? I.city : I.castle) + esc(c.nm || (c.t === 3 ? 'Şehir' : 'Kale')) + '<em>' + c.lv + '</em></button>';
+    }).join('');
+    return res + (cells ? '<div class="cchips">' + cells + '</div>' : '<p class="muted small">Verilebilecek şehir yok</p>');
+  }
+  function draw() {
+    var r = proposeDeal(G, P, fi, deal), ally = isAlly(G, P, fi);
+    modal('<div class="topbar"><button class="back" id="tBack" aria-label="Geri">' + I.back + '</button><div class="dh">' + ART.flag(G.factions[fi].id) + '<b>' + factionName(G, fi) + '</b></div>' + relTag(G, fi) + '</div>' +
+      '<label class="atog' + (deal.ally ? ' on' : '') + '" id="tAlly">' + I.handshake + '<span>' + (ally ? 'İttifakı uzat (' + ALLY_TURNS + ' tur)' : 'İttifak kur (' + ALLY_TURNS + ' tur)') + '</span><i></i></label>' +
+      '<div class="dcols"><div class="dcol"><div class="eyebrow">Sen verirsin</div>' + side('give', P) + '</div>' +
+      '<div class="dcol"><div class="eyebrow">O verir</div>' + side('get', fi) + '</div></div>' +
+      '<div class="verdict ' + (r.ok ? 'good' : 'bad') + '">' + (r.ok ? '✓ Kabul eder' : '✕ ' + esc(r.why || 'Kabul etmez')) + '</div>' +
+      '<div class="row"><button class="btn ghost" id="tClear">Temizle</button><button class="btn" id="tGo"' + (r.ok ? '' : ' disabled') + '>Teklif et</button></div>', 'deal');
+    $('#tBack').onclick = function () { dipMenu(); };
+    $('#tAlly').onclick = function () { deal.ally = !deal.ally; draw(); };
+    $('#tClear').onclick = function () { dealTable(fi); };
+    document.querySelectorAll('.stp button').forEach(function (b) { b.onclick = function () {
+      var k = b.dataset.k, rr2 = b.dataset.r, owner = k === 'give' ? P : fi, max = Math.floor(G.factions[owner][rr2]);
+      deal[k][rr2] = Math.max(0, Math.min(max, (deal[k][rr2] || 0) + STEP[rr2] * (+b.dataset.d)));
+      SFX.tap(); draw();
+    }; });
+    document.querySelectorAll('.cchip').forEach(function (b) { b.onclick = function () {
+      var arr = deal[b.dataset.k].cells, ci = +b.dataset.c, i = arr.indexOf(ci);
+      if (i >= 0) arr.splice(i, 1); else arr.push(ci); SFX.tap(); draw();
+    }; });
+    $('#tGo').onclick = function () {
+      var r2 = proposeDeal(G, P, fi, deal); if (!r2.ok) return;
+      act(function () { applyDeal(G, P, fi, deal); return true; });
+      B.undo = []; // anlaşmalar geri alınmaz
+      closeModal(); SFX.city();
+      playLog(function () { updateHud(); renderPanel(); checkOver(); });
+      dirty = true;
+    };
+  }
+  draw();
+}
+function offerPopup() {
+  var G = B.G, o = aiOffer(G, Math.random);
+  if (!o) return;
+  var g = o.deal.give;
+  modal('<div class="dh">' + ART.flag(G.factions[o.from].id) + '<b>' + factionName(G, o.from) + '</b></div>' +
+    '<p>İttifak teklif ediyor (' + ALLY_TURNS + ' tur)' + (g.gold ? ' ve karşılığında <b>' + I.coin + g.gold + ' altın</b> veriyor.' : '.') + '</p>' +
+    '<div class="row"><button class="btn ghost" id="oNo">Reddet</button><button class="btn" id="oYes">' + I.handshake + ' Kabul et</button></div>');
+  $('#oNo').onclick = closeModal;
+  $('#oYes').onclick = function () {
+    closeModal(); applyDeal(G, o.from, G.player, o.deal); B.undo = [];
+    playLog(function () { updateHud(); renderPanel(); }); dirty = true;
+  };
+}
 function genMenu() {
   var G = B.G, u = unitById(G, B.sel), g = genOf(G, u); if (!g) return;
   var mine = u.f === G.player, si = ART.specInfo(g.spec), isSpec = g.spec === u.type || (g.spec === 'kale' && G.cells[u.c].t >= 3);
@@ -700,6 +788,13 @@ function tapCell(ci) {
   }
   // hareket
   if (sel && B.reach && B.reach[ci] && ci !== sel.c && !u) {
+    if (!B.betrayOk && (c.t === 3 || c.t === 4) && isAlly(G, G.player, c.f)) {
+      modal('<h3>İttifak bozulacak</h3><p class="muted">' + esc(c.nm || 'Bu yer') + ' müttefikin ' + factionName(G, c.f) + '’a ait. Girersen şehri alırsın ama ittifak biter ve diğer ülkeler ' + DISTRUST_TURNS + ' tur sana güvenmez.</p>' +
+        '<div class="row"><button class="btn ghost" id="bNo">Vazgeç</button><button class="btn warnb" id="bYes">İhanet et</button></div>');
+      $('#bNo').onclick = closeModal;
+      $('#bYes').onclick = function () { closeModal(); B.betrayOk = true; tapCell(ci); B.betrayOk = false; };
+      return;
+    }
     var path = act(function () { return moveUnit(G, sel, ci); });
     if (path) B.lastAct = ci;
     if (path) {
@@ -788,6 +883,18 @@ function animEvent(e, sp) {
     fx({ k: 'ring', c: e.c, col: '#e8c977' }); if (e.f === G.player) { fx({ k: 'text', c: e.c, txt: 'Kule tamam', col: '#e8c977' }); SFX.build(); }
   } else if (e.t === 'towerDown') {
     if (e.f === G.player) toast('Bir kulen yıkıldı.');
+  } else if (e.t === 'ally') {
+    if (e.a === G.player || e.b === G.player) { SFX.city(); toast(factionName(G, e.a === G.player ? e.b : e.a) + ' ile ittifak kuruldu (' + ALLY_TURNS + ' tur)'); }
+    else toast(factionName(G, e.a) + ' ve ' + factionName(G, e.b) + ' ittifak kurdu');
+    d = 500 / sp;
+  } else if (e.t === 'betray') {
+    SFX.lost(); toast(e.a === G.player ? 'İttifakı bozdun: ' + factionName(G, e.b) + ' artık düşman' : factionName(G, e.a) + ' ihanet etti!'); d = 700 / sp;
+  } else if (e.t === 'allyEnd') {
+    if (e.a === G.player || e.b === G.player) toast(factionName(G, e.a === G.player ? e.b : e.a) + ' ile ittifak süresi doldu');
+  } else if (e.t === 'cede') {
+    fx({ k: 'ring', c: e.c, col: e.to >= 0 ? FACTIONS[G.factions[e.to].id].col : '#ccc' });
+    if (G.cells[e.c].nm) fx({ k: 'text', c: e.c, txt: G.cells[e.c].nm, col: '#fff' });
+    d = 300 / sp;
   } else if (e.t === 'elim') {
     toast(factionName(G, e.f) + ' yıkıldı!'); d = 700 / sp;
   } else if (e.t === 'wounded') {
@@ -847,6 +954,7 @@ function runAI() {
       if (lc) B.camT = { x: lc.x, y: lc.y }; else if (B.camMem) B.camT = { x: B.camMem.x, y: B.camMem.y };
       G.log.length = 0;
       SFX.turn(); banner('Tur ' + G.turn + ' · Senin sıran', 1300);
+      setTimeout(function () { if (B && B.phase === 'player') offerPopup(); }, 900);
       updateHud(); persistGame(); renderPanel(); dirty = true;
       return;
     }
@@ -1169,6 +1277,7 @@ function drawUnit(u, now) {
     }
     // renk şeridi (sahiplik)
     rr(bx - 1, by + bh + 1.5, bw + 2, Math.max(2.5, s * 0.06), 2); ctx.fillStyle = col; ctx.fill();
+    if (isAlly(G, G.player, u.f)) { ctx.strokeStyle = '#7ee08a'; ctx.lineWidth = 1.5; ctx.stroke(); var hx = bx + bw + 4, hy = by + bh / 2, hr = Math.max(6, s * 0.16); ctx.beginPath(); ctx.arc(hx + hr, hy, hr, 0, 7); ctx.fillStyle = '#2f7a3a'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.2; ctx.stroke(); ctx.fillStyle = '#fff'; ctx.font = '700 ' + (hr * 1.3) + 'px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('✓', hx + hr, hy + 0.5); }
     if (u.build) { ctx.fillStyle = '#ffe9a8'; ctx.font = '700 ' + Math.max(10, s * 0.3) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.strokeText(u.build + ' tur', p.x, cy - size * 0.5); ctx.fillText(u.build + ' tur', p.x, cy - size * 0.5); }
     // seviye
     if (u.lvl > 1 && !UT[u.type].tower) { ctx.fillStyle = '#e8c977'; ctx.font = '700 ' + Math.max(9, s * 0.24) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle'; ctx.fillText('▲'.repeat(u.lvl - 1), bx + bw + 3, by + bh / 2); }

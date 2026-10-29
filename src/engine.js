@@ -179,6 +179,8 @@ function newGame(o) {
     }
   });
   G.player = pi;
+  G.ally = G.factions.map(function () { return G.factions.map(function () { return 0; }); });
+  G.distrust = G.factions.map(function () { return 0; });
   // yapay zekâ generalleri başkentteki birliğe
   G.factions.forEach(function (f, fi) {
     if (f.isPlayer) return;
@@ -260,6 +262,10 @@ function endTurn(G) {
     if (G.factions[i].alive) break;
   }
   G.cur = i;
+  if (i === (G.player >= 0 ? G.player : 0) && G.ally) {
+    for (var a = 0; a < G.factions.length; a++) for (var b = a + 1; b < G.factions.length; b++)
+      if (G.ally[a][b] && G.ally[a][b] === G.turn - 1) G.log.push({ t: 'allyEnd', a: a, b: b });
+  }
   if (G.player >= 0 && G.turn > G.limit && !G.over && !G.endless) { G.over = -2; return; }
   startTurn(G, i);
 }
@@ -267,7 +273,7 @@ function endTurn(G) {
 /* ---------- hareket ---------- */
 function enemyAdj(G, ci, fi) {
   var c = G.cells[ci];
-  for (var k = 0; k < c.nb.length; k++) { var u = unitAt(G, c.nb[k]); if (u && u.f !== fi) return true; }
+  for (var k = 0; k < c.nb.length; k++) { var u = unitAt(G, c.nb[k]); if (u && foe(G, u.f, fi)) return true; }
   return false;
 }
 /* ulaşılabilir hücreler: {ci: {cost, prev}} */
@@ -284,8 +290,8 @@ function reach(G, u) {
       var j = c.nb[k], n = G.cells[j];
       var other = unitAt(G, j), pass = false;
       if (other && other.id !== u.id) {
-        if (other.f !== fi) continue;
-        pass = true; // kendi birliğinin içinden geçilebilir ama orada durulamaz
+        if (foe(G, other.f, fi)) continue;
+        pass = true; // kendi ve müttefik birliğinin içinden geçilebilir ama orada durulamaz
       }
       var cost, emb = cur.emb, stop = false;
       if (naval) {
@@ -327,7 +333,13 @@ function moveUnit(G, u, ci) {
   // yol üzerindeki ele geçirmeler
   for (var k = 1; k < path.length; k++) {
     var c = G.cells[path[k]];
-    if (c.t && c.f !== u.f && !isNaval(u) && !(res[path[k]].emb) && !res[path[k]].pass) capture(G, c, u.f);
+    if (!c.t || c.f === u.f || isNaval(u) || res[path[k]].emb || res[path[k]].pass) continue;
+    if (isAlly(G, u.f, c.f)) {
+      // müttefik toprağından geçilir; yalnız boş şehrine/kalesine girmek ihanettir
+      if (k === path.length - 1 && (c.t === 3 || c.t === 4)) { breakAlly(G, u.f, c.f); capture(G, c, u.f); }
+      continue;
+    }
+    capture(G, c, u.f);
   }
   u.c = ci;
   u.emb = r.emb ? 1 : 0;
@@ -345,6 +357,7 @@ function capture(G, c, fi) {
   if (c.t === 2 && c.lv > 1) c.lv = 1;
   if (c.t === 4 && c.lv > 1) c.lv--;
   if (fi === G.player && c.t === 3) G.stats.cities++;
+  if (from >= 0 && c.t === 3) { G.recentLoss = G.recentLoss || []; G.recentLoss[from] = G.turn; }
   G.log.push({ t: 'capture', c: c.i, from: from, to: fi });
   checkElim(G, from);
   checkWin(G);
@@ -393,6 +406,116 @@ function stat(G, u, kind, vs, cell, attacking) {
   m *= moraleMul(G, u);
   return base * m;
 }
+/* ---------- diplomasi: savaş ya da ittifak ----------
+   İttifak 10 tur sürer; aynı anda en fazla 2 müttefik. Müttefike saldırılamaz, içinden geçilir.
+   Müttefikin boş şehrine/kalesine girmek ihanettir: şehir alınır, ittifak bozulur, ihanet eden 8 tur güvenilmez olur. */
+var ALLY_TURNS = 10, MAX_ALLIES = 2, DISTRUST_TURNS = 8;
+function isAlly(G, a, b) { return a >= 0 && b >= 0 && a !== b && !!G.ally && G.ally[a][b] >= G.turn; }
+function foe(G, a, b) { return a !== b && !isAlly(G, a, b); }
+function allyCount(G, a) { var n = 0; for (var b = 0; b < G.factions.length; b++) if (G.factions[b].alive && isAlly(G, a, b)) n++; return n; }
+function allyLeft(G, a, b) { return isAlly(G, a, b) ? G.ally[a][b] - G.turn + 1 : 0; }
+function makeAlly(G, a, b) { G.ally[a][b] = G.ally[b][a] = G.turn + ALLY_TURNS; G.log.push({ t: 'ally', a: a, b: b }); }
+function breakAlly(G, betrayer, other) {
+  G.ally[betrayer][other] = G.ally[other][betrayer] = 0;
+  G.distrust[betrayer] = G.turn + DISTRUST_TURNS;
+  G.log.push({ t: 'betray', a: betrayer, b: other });
+}
+function power(G, fi) {
+  var n = 0;
+  G.cells.forEach(function (c) { if (c.f === fi) n += c.t === 3 ? 4 : c.t === 4 ? 2 : 0.2; });
+  G.units.forEach(function (u) { if (u.f === fi && !UT[u.type].tower) n += u.hp / 100; });
+  return Math.max(1, n);
+}
+function cellValue(G, c) {
+  if (c.t === 3) return 60 + 25 * c.lv + 20 * c.smith + 15 * c.port;
+  if (c.t === 4) return 45 + 15 * c.lv;
+  return 0;
+}
+function tradable(G, c, fi) { return c.f === fi && (c.t === 3 || c.t === 4) && !c.cap; }
+/* şehir/kale ve ona bağlı arazi devri; içerideki eski sahibin birlikleri en yakın kendi hücresine çekilir */
+function cedeCell(G, ci, to) {
+  var c = G.cells[ci], from = c.f;
+  var group = [c].concat(c.nb.map(function (j) { return G.cells[j]; }).filter(function (n) {
+    return (n.t === 1 || n.t === 2) && n.f === from && !n.nb.some(function (k) { var m = G.cells[k]; return k !== ci && m.f === from && (m.t === 3 || m.t === 4); });
+  }));
+  group.forEach(function (x) { x.f = to; });
+  group.forEach(function (x) { var u = unitAt(G, x.i); if (u && u.f === from) relocate(G, u); });
+  G.log.push({ t: 'cede', c: ci, from: from, to: to });
+  checkElim(G, from);
+}
+function relocate(G, u) {
+  var seen = {}, q = [u.c]; seen[u.c] = 1;
+  while (q.length) {
+    var ci = q.shift(), c = G.cells[ci];
+    if (ci !== u.c && c.t && c.f === u.f && !unitAt(G, ci)) { u.c = ci; u.emb = 0; return; }
+    c.nb.forEach(function (j) { if (!seen[j] && G.cells[j].t) { seen[j] = 1; q.push(j); } });
+  }
+  removeUnit(G, u);
+}
+/* pazarlık: deal = { give:{gold,food,iron,cells:[]}, get:{...}, ally:bool } — p teklif eder, t değerlendirir */
+function bundleValue(G, b) {
+  return (b.gold || 0) + 1.2 * (b.food || 0) + 6 * (b.iron || 0) + (b.cells || []).reduce(function (s2, ci) { return s2 + cellValue(G, G.cells[ci]); }, 0);
+}
+function dealCheck(G, p, t, deal) {
+  var fp = G.factions[p], ft = G.factions[t];
+  function enough(f, b, fi) {
+    if ((b.gold || 0) > f.gold || (b.food || 0) > f.food || (b.iron || 0) > f.iron) return 'Yetersiz kaynak';
+    for (var i = 0; i < (b.cells || []).length; i++) if (!tradable(G, G.cells[b.cells[i]], fi)) return 'Bu şehir verilemez';
+    return '';
+  }
+  var w = enough(fp, deal.give, p) || enough(ft, deal.get, t);
+  if (w) return w;
+  if (deal.ally && !isAlly(G, p, t)) {
+    if (allyCount(G, p) >= MAX_ALLIES) return 'En fazla ' + MAX_ALLIES + ' müttefik';
+    if (allyCount(G, t) >= MAX_ALLIES) return 'Onun müttefiki yeterli';
+  }
+  var left = G.cells.filter(function (c) { return c.t === 3 && c.f === t; }).length - (deal.get.cells || []).filter(function (ci) { return G.cells[ci].t === 3; }).length;
+  if (left < 1) return 'Son şehrini veremez';
+  if (!deal.ally && !bundleValue(G, deal.give) && !bundleValue(G, deal.get)) return 'Boş teklif';
+  return '';
+}
+function dealScore(G, p, t, deal) {
+  var gain = bundleValue(G, deal.give), loss = bundleValue(G, deal.get) * 1.3, want = 0;
+  if (deal.ally && !isAlly(G, p, t)) {
+    if (G.distrust[p] > G.turn) return { score: -999, why: 'Sana güvenmiyor (' + (G.distrust[p] - G.turn) + ' tur)' };
+    var pp = power(G, p), pt = power(G, t);
+    want = 28 * (pp / pt - 1) - 10;
+    if (G.player === p && cityShare(G, p).mine >= cityShare(G, p).all * 0.45) want -= 40; // çok büyüyen oyuncuya güvenmez
+    if (G.recentLoss && G.recentLoss[t] >= G.turn - 3) want += 15;
+  } else if (deal.ally) want = 10; // uzatma
+  var sc = gain - loss + want;
+  return { score: sc, why: sc >= 0 ? '' : 'Teklif yetersiz' };
+}
+function proposeDeal(G, p, t, deal) {
+  var w = dealCheck(G, p, t, deal); if (w) return { ok: false, why: w };
+  var r = dealScore(G, p, t, deal);
+  return { ok: r.score >= 0, why: r.why, score: r.score };
+}
+function applyDeal(G, p, t, deal) {
+  var fp = G.factions[p], ft = G.factions[t];
+  function move(from, to, b) { from.gold -= b.gold || 0; to.gold += b.gold || 0; from.food -= b.food || 0; to.food += b.food || 0; from.iron -= b.iron || 0; to.iron += b.iron || 0; }
+  move(fp, ft, deal.give); move(ft, fp, deal.get);
+  (deal.give.cells || []).forEach(function (ci) { cedeCell(G, ci, t); });
+  (deal.get.cells || []).forEach(function (ci) { cedeCell(G, ci, p); });
+  if (deal.ally) makeAlly(G, p, t);
+  G.log.push({ t: 'deal', a: p, b: t });
+  checkWin(G);
+}
+/* botun oyuncuya teklifi (tur başında en fazla bir) */
+function aiOffer(G, R) {
+  var P = G.player; if (P < 0 || allyCount(G, P) >= MAX_ALLIES) return null;
+  var pp = power(G, P), best = null;
+  G.factions.forEach(function (f, fi) {
+    if (fi === P || !f.alive || isAlly(G, fi, P) || allyCount(G, fi) >= MAX_ALLIES || G.distrust[P] > G.turn) return;
+    var ratio = power(G, fi) / pp, lost = G.recentLoss && G.recentLoss[fi] >= G.turn - 2;
+    if (ratio > 0.75 && !lost) return;
+    var sc = (1 - ratio) + (lost ? 0.5 : 0);
+    if (!best || sc > best.sc) best = { sc: sc, fi: fi };
+  });
+  if (!best || (R || Math.random)() > 0.35) return null;
+  var f = G.factions[best.fi], gold = Math.max(0, Math.min(60, Math.floor(f.gold * 0.3 / 5) * 5));
+  return { from: best.fi, deal: { give: { gold: gold }, get: {}, ally: true } };
+}
 /* ---------- moral: kıskaç ve kuşatma ----------
    Birliğin karşılıklı iki yanında düşman varsa kıskaçtadır. Bütün yönleri düşman ya da geçilmez
    olduğunda tamamen çevrilidir. Moral saldırı ve savunmayı birlikte düşürür. */
@@ -405,7 +528,7 @@ function morale(G, u) {
     var o = G.cells[c.nb[k]];
     var d = ((Math.round(Math.atan2(o.y - c.y, o.x - c.x) / (Math.PI / 3)) % 6) + 6) % 6;
     var e = unitAt(G, o.i);
-    if (e && e.f !== u.f) { dirs[d] = 1; n++; blocked[d] = 1; }
+    if (e && foe(G, e.f, u.f)) { dirs[d] = 1; n++; blocked[d] = 1; }
     else blocked[d] = water ? (o.t !== 0 && !(o.t === 3 && o.f === u.f && o.port) ? 1 : 0) : (o.t === 0 ? 1 : 0);
   }
   if (!n) return null;
@@ -428,7 +551,7 @@ function terrainMul(G, c, u) {
   return m;
 }
 function canAttack(G, a, d) {
-  if (!d || d.f === a.f || a.acted || UT[a.type].tower) return false;
+  if (!d || d.f === a.f || a.acted || UT[a.type].tower || isAlly(G, a.f, d.f)) return false;
   var ca = G.cells[a.c], cd = G.cells[d.c], dist = hd(ca, cd);
   if (dist < 1 || dist > unitRange(G, a)) return false;
   var ranged = UT[a.type].rng > 1;
@@ -636,6 +759,14 @@ function distMap(G, fi, targets, naval) {
 function* aiTurn(G, fi, R) {
   var f = G.factions[fi];
   R = R || Math.random;
+  // 0) diplomasi: oyuncu çok büyürse zayıf botlar birbirleriyle ittifak kurar
+  if (G.player >= 0 && fi !== G.player && allyCount(G, fi) < MAX_ALLIES) {
+    var cs = cityShare(G, G.player);
+    if (cs.mine >= cs.all * 0.35 && R() < 0.4) {
+      var cand = G.factions.map(function (x, j) { return j; }).filter(function (j) { return j !== fi && j !== G.player && G.factions[j].alive && !isAlly(G, fi, j) && allyCount(G, j) < MAX_ALLIES && G.distrust[j] <= G.turn; });
+      if (cand.length) { cand.sort(function (a, b) { return power(G, a) - power(G, b); }); makeAlly(G, fi, cand[0]); }
+    }
+  }
   // 1) ekonomi
   aiEconomy(G, fi);
   yield 'eco';
@@ -648,10 +779,10 @@ function* aiTurn(G, fi, R) {
   // 3) birlikler
   var units = G.units.filter(function (u) { return u.f === fi; });
   // hedefler
-  var tgtCities = G.cells.filter(function (c) { return c.t === 3 && c.f !== fi; }).map(function (c) { return c.i; });
-  var castles = G.cells.filter(function (c) { return c.t === 4 && c.f !== fi; }).map(function (c) { return c.i; });
+  var tgtCities = G.cells.filter(function (c) { return c.t === 3 && foe(G, c.f, fi); }).map(function (c) { return c.i; });
+  var castles = G.cells.filter(function (c) { return c.t === 4 && foe(G, c.f, fi); }).map(function (c) { return c.i; });
   var DM = distMap(G, fi, tgtCities.concat(castles), false);
-  var DMn = G.navy ? distMap(G, fi, G.units.filter(function (u) { return u.f !== fi && (u.emb || isNaval(u) || G.cells[u.c].coast); }).map(function (u) { return u.c; }), true) : {};
+  var DMn = G.navy ? distMap(G, fi, G.units.filter(function (u) { return foe(G, u.f, fi) && (u.emb || isNaval(u) || G.cells[u.c].coast); }).map(function (u) { return u.c; }), true) : {};
   units.sort(function (a, b) { return (DM[a.c] || 99) - (DM[b.c] || 99); });
   for (var k = 0; k < units.length; k++) {
     var u = units[k];
@@ -666,7 +797,7 @@ function aiEconomy(G, fi) {
   var castles = G.cells.filter(function (c) { return c.t === 4 && c.f === fi; });
   var myUnits = G.units.filter(function (u) { return u.f === fi && !UT[u.type].tower; }).length;
   var foodNet = inc.food - inc.up;
-  var threatened = function (c) { return G.units.some(function (u) { return u.f !== fi && u.f >= 0 && hd(G.cells[u.c], c) <= 2; }); };
+  var threatened = function (c) { return G.units.some(function (u) { return foe(G, u.f, fi) && u.f >= 0 && hd(G.cells[u.c], c) <= 2; }); };
   // asker: yiyecek ve sınır dahilinde
   var cap = armyCap(G, fi);
   var order = cities.concat(castles.filter(threatened)).sort(function (a, b) { return threatened(b) - threatened(a) || b.lv - a.lv; });
@@ -674,7 +805,7 @@ function aiEconomy(G, fi) {
     if (myUnits >= cap) return;
     if (foodNet < 0 && f.food < 3 && !threatened(c)) return;
     var near = { kilic: 0, okcu: 0, atli: 0 };
-    G.units.forEach(function (u) { if (u.f !== fi && u.f >= 0 && hd(G.cells[u.c], c) <= 4 && near[u.type] !== undefined) near[u.type]++; });
+    G.units.forEach(function (u) { if (foe(G, u.f, fi) && u.f >= 0 && hd(G.cells[u.c], c) <= 4 && near[u.type] !== undefined) near[u.type]++; });
     var want = near.atli > near.okcu && near.atli > near.kilic ? 'kilic' : near.kilic > near.okcu ? 'okcu' : (c.smith ? 'atli' : 'kilic');
     if (!recruitInfo(G, c, want).ok) want = recruitInfo(G, c, 'kilic').ok ? 'kilic' : 'okcu';
     var keep = threatened(c) ? 0 : 10;
@@ -696,7 +827,7 @@ function aiEconomy(G, fi) {
     G.cells.forEach(function (c) {
       if (c.t !== 1 || c.f !== fi || unitAt(G, c.i)) return;
       var nearCity = c.nb.some(function (j) { var n = G.cells[j]; return n.f === fi && (n.t === 3 || n.t === 4); });
-      var front = G.units.some(function (u) { return u.f !== fi && u.f >= 0 && hd(G.cells[u.c], c) <= 2; });
+      var front = G.units.some(function (u) { return foe(G, u.f, fi) && u.f >= 0 && hd(G.cells[u.c], c) <= 2; });
       if (nearCity && front && (!spot || c.mt > spot.mt)) spot = c;
     });
     if (spot) buildTower(G, spot.i, fi);
@@ -733,10 +864,10 @@ function aiUnit(G, u, DM, DMn, R) {
     return 'move';
   }
   // savunma: tehdit altındaki şehirde tek birlik ise yerinde kal ve sadece saldır
-  var hold = (c0.t === 3 || c0.t === 4) && c0.f === fi && G.units.some(function (e) { return e.f !== fi && e.f >= 0 && !e.emb && hd(G.cells[e.c], c0) <= (c0.cap ? 3 : 2); }) && u.hp > 20;
+  var hold = (c0.t === 3 || c0.t === 4) && c0.f === fi && G.units.some(function (e) { return foe(G, e.f, fi) && e.f >= 0 && !e.emb && hd(G.cells[e.c], c0) <= (c0.cap ? 3 : 2); }) && u.hp > 20;
   var best = null;
   var cand = hold ? [u.c] : Object.keys(res).map(Number);
-  var enemies = G.units.filter(function (e) { return e.f !== fi; });
+  var enemies = G.units.filter(function (e) { return foe(G, e.f, fi); });
   cand.forEach(function (ci) {
     if (ci !== u.c && unitAt(G, ci)) return;
     var r = res[ci]; if (!r) return;
@@ -784,7 +915,8 @@ function aiUnit(G, u, DM, DMn, R) {
     if (ci === u.c || unitAt(G, ci)) return;
     var d = D[ci] !== undefined ? D[ci] : 999;
     var c = G.cells[ci];
-    var sc = d - (c.t && c.f !== fi ? 0.6 : 0) - (c.t === 3 && c.f !== fi ? 3 : 0) + (R() * 0.3);
+    var hostile = c.t && foe(G, c.f, fi);
+    var sc = d - (hostile ? 0.6 : 0) - (c.t === 3 && hostile ? 3 : 0) + (R() * 0.3);
     if (!isNaval(u) && !res[ci].emb && enemyAdj(G, ci, fi) && u.hp < 60) sc += 1.5;
     if (!bestM || sc < bestM.sc) bestM = { sc: sc, ci: ci };
   });
@@ -801,6 +933,8 @@ function takeEmpty(G, u, res) {
     var c = G.cells[ci], r = res[ci];
     if (ci === u.c || r.pass || r.emb || unitAt(G, ci) || c.f === u.f) return;
     if (c.t !== 3 && c.t !== 4) return;
+    // müttefike ihanet: yalnız çok güçlüyken ve ara sıra
+    if (isAlly(G, u.f, c.f) && !(power(G, u.f) >= 2 * power(G, c.f) && G.turn % 4 === 0)) return;
     var sc = (c.t === 3 ? 10 : 5) + (c.cap ? 5 : 0) - r.cost;
     if (!best || sc > best.sc) best = { sc: sc, ci: ci };
   });
@@ -812,5 +946,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, morale: morale, MORALE: MORALE, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, MORALE: MORALE, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
 };
