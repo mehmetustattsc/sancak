@@ -176,4 +176,16 @@ const capW = G.cells.find(c => c.cap && c.f === weak);
 assert(E.annex(G, P, weak), 'ilhak olmalı');
 assert(capW.f === P && !G.factions[weak].alive && !G.units.some(u => u.f === weak), 'her şey oyuncuya geçmeli');
 console.log('✓ bağlı krallık');
+// 14) senaryo: diplomasi kapalı, zorluk
+{ const g0 = E.newGame({ era: 0, level: 0, player: 'sari', generals: [], seed: 3, noDip: true, diff: 2 });
+  const o = g0.factions.findIndex((f, i) => i !== g0.player);
+  assert(!E.annexInfo(g0, g0.player, o).ok && !E.proposeDeal(g0, g0.player, o, { give: { gold: 1 }, get: {} }).ok && E.aiOffer(g0, () => 0) === null, 'diplomasi kapalıyken anlaşma yok');
+  const g1 = E.newGame({ era: 0, level: 0, player: 'sari', generals: [], seed: 3, diff: 0 });
+  assert(g1.factions[o].eco < g0.factions[o].eco && g1.factions[g1.player].gold > g0.factions[g0.player].gold, 'zorluk ekonomiyi değiştirmeli');
+  const G2 = fresh(); const w2 = G2.factions.findIndex((f, i) => i !== G2.player);
+  const base = E.annexInfo(G2, G2.player, w2).cost; G2.factions[G2.player].annexed = 2;
+  const up = E.annexInfo(G2, G2.player, w2).cost;
+  assert(Math.abs(up / base - 1.5625) < 0.06, 'iki ilhaktan sonra bedel 1.25² olmalı: ' + base + ' → ' + up);
+  console.log('  ilhak bedeli', base, '→ iki ilhaktan sonra', up); }
+console.log('✓ senaryo seçenekleri');
 console.log('KURAL TESTLERİ TAMAM');

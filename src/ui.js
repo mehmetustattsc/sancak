@@ -166,6 +166,7 @@ function openSetup(e, l) {
   function cnt(f) { return land.filter(function (c) { return c[3] === f; }).length; }
   function diff(n) { return n >= 15 ? 'Kolay' : n >= 9 ? 'Orta' : 'Zor'; }
   var gens = GENERALS.filter(function (g) { return g.era === e; });
+  var dfc = save.diff == null ? 1 : save.diff, noDip = !!save.noDip;
   function draw() {
     modal('<div><div class="eyebrow">' + ERAS[e].name + ' · Sefer ' + (l + 1) + '</div><h2>' + M.name + '</h2></div>' +
       '<div class="eyebrow">Ülkeni seç</div><div class="choices">' + M.factions.map(function (fid) {
@@ -179,9 +180,15 @@ function openSetup(e, l) {
         return '<div class="choice' + (un ? ' on' : '') + '"' + (un ? '' : ' style="opacity:.45"') + '><span class="por">' + ART.portrait(g, e) + '</span><div style="min-width:0"><div class="t">' + g.name + '</div>' +
           '<div class="s">' + (un ? ERAS[e].ranks[r - 1] + ' ' + insignia(r) : '★ ' + g.unlock + ' yıldızla açılır') + '</div></div></div>';
       }).join('') + '</div>' +
+      '<div class="eyebrow">Zorluk</div><div class="seg" id="sDiff">' + ['Kolay', 'Normal', 'Zor'].map(function (n, i) {
+        return '<button class="' + (dfc === i ? 'on' : '') + '" data-d="' + i + '">' + n + '<small>' + I.medal.replace('<svg', '<svg width="12" height="12"') + '×' + DIFF_MEDAL[i] + '</small></button>';
+      }).join('') + '</div>' +
+      '<div class="eyebrow">Diplomasi</div><div class="seg" id="sDip"><button class="' + (noDip ? '' : 'on') + '" data-n="0">' + I.handshake + 'Açık</button><button class="' + (noDip ? 'on' : '') + '" data-n="1">' + I.sword + 'Saf savaş</button></div>' +
       '<div class="goals"><span>Hedef: <b>şehirlerin %60’ını al</b> ya da bütün rakipleri yık</span><span>★★★ <b>' + L.par + '</b> tur</span><span>★★ <b>' + Math.round(L.par * 1.4) + '</b> tur</span><span>Sınır <b>' + L.limit + '</b> tur</span></div>' +
       '<div class="row"><button class="btn ghost" id="sCancel">Vazgeç</button><button class="btn" id="sGo">Sefere çık</button></div>');
     document.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { SFX.tap(); sel = b.dataset.f; draw(); }; });
+    document.querySelectorAll('[data-d]').forEach(function (b) { b.onclick = function () { SFX.tap(); dfc = save.diff = +b.dataset.d; persist(); draw(); }; });
+    document.querySelectorAll('[data-n]').forEach(function (b) { b.onclick = function () { SFX.tap(); noDip = save.noDip = b.dataset.n === '1'; persist(); draw(); }; });
     $('#sCancel').onclick = closeModal;
     $('#sGo').onclick = function () { SFX.tap(); closeModal(); startGame(e, l, sel); };
   }
@@ -322,7 +329,7 @@ function renderSettings() {
     '<div class="setrow"><div><h3>Müzik</h3><p class="muted">Menüde ud ve ney, savaşta davullu hicaz</p></div><button class="switch' + (save.music ? ' on' : '') + '" id="swMusic" aria-label="Müzik"></button></div></div>' +
     '<div class="card"><div class="setrow"><div><h3>Eğitim ipuçları</h3><p class="muted">İlk seferdeki ipuçlarını yeniden göster</p></div><button class="btn small ghost" id="tutAgain">Sıfırla</button></div></div>' +
     '<div class="card"><h3>İlerlemeyi sil</h3><p class="muted">Yıldızlar, madalyalar, general rütbeleri ve yarım kalan sefer silinir.</p><div class="row" id="resetRow"><button class="btn small ghost" id="resetBtn">İlerlemeyi sil</button></div></div>' +
-    '<p class="muted" style="text-align:center">Sancak · sürüm 0.7 · Harita verisi: Natural Earth (kamu malı)</p>';
+    '<p class="muted" style="text-align:center">Sancak · sürüm 0.8 · Harita verisi: Natural Earth (kamu malı)</p>';
   $('#swSound').onclick = function () { save.sound = !save.sound; AUDIO.setSfx(save.sound); persist(); renderSettings(); SFX.tap(); };
   $('#swMusic').onclick = function () { save.music = !save.music; AUDIO.setMusic(save.music); persist(); renderSettings(); };
   $('#tutAgain').onclick = function () { save.tut = false; persist(); toast('İpuçları bir sonraki seferde görünecek.'); };
@@ -351,7 +358,7 @@ function startGame(e, l, fid) {
   var gens = GENERALS.filter(function (g) { return g.era === e && genUnlocked(g); }).map(function (g) {
     return { id: g.id, name: g.name, spec: g.spec, skill: g.skill, xp: genXP(g.id), look: g.look };
   });
-  var G = newGame({ era: e, level: l, player: fid, generals: gens, upgrades: Object.assign({}, save.upg || {}), seed: (Date.now() & 0x7fffffff) | 1 });
+  var G = newGame({ era: e, level: l, player: fid, generals: gens, diff: save.diff == null ? 1 : save.diff, noDip: !!save.noDip, upgrades: Object.assign({}, save.upg || {}), seed: (Date.now() & 0x7fffffff) | 1 });
   enterBattle(G);
 }
 function resumeGame(G) { enterBattle(G); }
@@ -427,6 +434,7 @@ function buildHud() {
     '<button class="btn endturn" id="pEnd"></button></div>' +
     '<div id="hBanner" class="banner" hidden></div><div id="hTip" class="tip" hidden></div>';
   $('#hPause').onclick = pauseMenu;
+  if (B.G.noDip) $('#hDip').hidden = true;
   $('#hDip').onclick = function () { if (B.phase === 'player') { SFX.tap(); dipMenu(); } };
   $('#hRes').onclick = resInfo;
   $('#hFit').onclick = function () { SFX.tap(); if (B.cam.s > B.fit * 1.1) { B.cam.s = B.fit; B.cam.x = (B.bounds.minx + B.bounds.maxx) / 2; B.cam.y = (B.bounds.miny + B.bounds.maxy) / 2; } else focusHome(B); clampCam(B); dirty = true; };
@@ -1012,6 +1020,7 @@ function finish(win, timeout, stopped) {
   if (stopped) win = true;
   var st = win ? (full ? G.stars0 : starsFor(G)) : 0;
   var medals = stopped ? cq.medals : full ? 30 + 10 * G.level + cq.medals : win ? 20 + 10 * st + 10 * G.level : (G.endless ? 0 : 10);
+  medals = Math.round(medals * DIFF_MEDAL[G.diff == null ? 1 : G.diff]);
   if (stopped || full) st = G.stars0;
   if (win && !full && !stopped && st > prev) { medals += 10 * (st - prev); save.stars[key] = st; }
   var canGoOn = win && !full && !stopped && G.factions.some(function (f, i) { return i !== G.player && f.alive; });

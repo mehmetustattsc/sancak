@@ -551,3 +551,11 @@ p.bad { color: #ff8a6a; }
 .annex i { font-style: normal; font-size: 12.5px; color: var(--muted); }
 .annex.off { opacity: .5; background: var(--panel2); border-color: var(--line); }
 .tag.gold { color: var(--brass2); }
+/* senaryo seçenekleri: yan yana düğmeler */
+.seg { display: flex; gap: 6px; }
+.seg button { flex: 1; min-height: 44px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); color: var(--text);
+  font: 600 15px var(--f-body); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 4px; }
+.seg button svg { width: 16px; height: 16px; }
+.seg #sDip button, #sDip button { flex-direction: row; gap: 6px; }
+.seg button small { font: 600 12px var(--f-num); color: var(--muted); display: flex; align-items: center; gap: 2px; }
+.seg button.on { border-color: var(--brass2); background: #2f2a1c; color: var(--brass2); }

@@ -119,6 +119,9 @@ var RANK_XP = [0, 120, 320, 650, 1100];
 function rankOf(xp) { var r = 1; for (var i = 1; i < RANK_XP.length; i++) if (xp >= RANK_XP[i]) r = i + 1; return r; }
 
 /* sefer ayarları */
+var DIFF_ECO = [0.88, 1, 1.15];          // zorluk: bot ekonomisi
+var DIFF_MEDAL = [0.75, 1, 1.5];        // zorluk: madalya çarpanı
+var ANNEX_STEP = 1.25;                  // her ilhak bir sonrakini %25 pahalı yapar
 var LEVELS = [
   { map: 0, par: 30, limit: 60, aiEco: 0.8, grace: 3 },
   { map: 1, par: 38, limit: 70, aiEco: 0.85, grace: 3 }
@@ -134,13 +137,14 @@ function hd(a, b) { var A = cubeOf(a.q, a.r), B = cubeOf(b.q, b.r); return Math.
 function newGame(o) {
   // o: { era, level, player (faction id), generals: [{id, xp}], seed }
   var L = LEVELS[o.level], M = MAPS[L.map], R = rng(o.seed || 7);
+  var diff = o.diff == null ? 1 : o.diff;   // 0 kolay, 1 normal, 2 zor
   var G = { v: 2, era: o.era, level: o.level, mapIdx: L.map, turn: 1, cur: 0, over: 0, seed: (o.seed || 7) | 0, nextId: 1,
-    par: L.par, limit: L.limit, grace: L.grace, navy: M.navy, cells: [], units: [], factions: [], log: [], stats: { kills: 0, lost: 0, cities: 0 } };
+    diff: diff, noDip: o.noDip ? 1 : 0, par: L.par, limit: L.limit, grace: L.grace, navy: M.navy, cells: [], units: [], factions: [], log: [], stats: { kills: 0, lost: 0, cities: 0 } };
   var fidx = {};
   G.factions = M.factions.map(function (id, i) {
     fidx[id] = i;
     var me = id === o.player, up = me ? (o.upgrades || {}) : {};
-    return { id: id, gold: 100 + 40 * (up.baslangic || 0), food: 8, iron: 3, alive: true, isPlayer: me, generals: [], eco: me ? 1 + 0.1 * (up.hazine || 0) : L.aiEco, recruited: {}, upg: up };
+    return { id: id, gold: 100 + 40 * (up.baslangic || 0) + (me && diff === 0 ? 40 : 0), food: 8, iron: 3, alive: true, isPlayer: me, generals: [], eco: me ? 1 + 0.1 * (up.hazine || 0) : L.aiEco * DIFF_ECO[diff], recruited: {}, upg: up };
   });
   M.cells.forEach(function (c, i) {
     var p = hexXY(c[0], c[1]);
@@ -174,7 +178,7 @@ function newGame(o) {
       (o.generals || []).forEach(function (g) { f.generals.push({ id: g.id, name: g.name, spec: g.spec, skill: g.skill, xp: g.xp || 0, rank: rankOf(g.xp || 0), unit: 0, rest: 0, look: g.look, gained: 0 }); });
     } else {
       var eg = ENEMY_GENS[(fi + G.seed) % ENEMY_GENS.length];
-      var rank = 1 + o.level + (R() < 0.4 ? 1 : 0);
+      var rank = Math.max(1, Math.min(RANK_XP.length, 1 + o.level + (R() < 0.4 ? 1 : 0) + diff - 1));
       f.generals.push({ id: 'ai' + fi, name: eg.name, spec: eg.spec, skill: null, xp: RANK_XP[rank - 1], rank: rank, unit: 0, rest: 0, look: eg.look, gained: 0 });
     }
   });
@@ -487,6 +491,7 @@ function dealScore(G, p, t, deal) {
   return { score: sc, why: sc >= 0 ? '' : 'Teklif yetersiz' };
 }
 function proposeDeal(G, p, t, deal) {
+  if (G.noDip) return { ok: false, why: 'Diplomasi kapalı' };
   var w = dealCheck(G, p, t, deal); if (w) return { ok: false, why: w };
   var r = dealScore(G, p, t, deal);
   return { ok: r.score >= 0, why: r.why, score: r.score };
@@ -509,9 +514,10 @@ function annexInfo(G, p, t) {
   var ratio = power(G, t) / power(G, p), lost = G.recentLoss && G.recentLoss[t] >= G.turn - 3;
   var cityN = cities.filter(function (c) { return c.t === 3; }).length;
   var desperation = Math.max(0.5, Math.min(1, ratio * 1.6)) * (lost ? 0.85 : 1);
-  var cost = Math.round((cities.reduce(function (a, c) { return a + cellValue(G, c); }, 0) * 0.6 + units.length * 12 + ft.gold * 0.5) * desperation / 5) * 5;
+  var cost = Math.round((cities.reduce(function (a, c) { return a + cellValue(G, c); }, 0) * 0.6 + units.length * 12 + ft.gold * 0.5) * desperation * Math.pow(ANNEX_STEP, fp.annexed || 0) / 5) * 5;
   var r = { cost: cost, ok: true, why: '', cities: cityN, units: units.length };
-  if (!ft.alive || p === t) { r.ok = false; r.why = 'Olmaz'; }
+  if (G.noDip) { r.ok = false; r.why = 'Diplomasi kapalı'; }
+  else if (!ft.alive || p === t) { r.ok = false; r.why = 'Olmaz'; }
   else if (ratio >= 0.4) { r.ok = false; r.why = 'Henüz güçlü (gücü seninkinin %' + Math.round(ratio * 100) + '’i)'; }
   else if (cityN > 2 && !lost) { r.ok = false; r.why = 'Elinde hâlâ ' + cityN + ' şehir var'; }
   else if (fp.gold < cost) { r.ok = false; r.why = 'Bedel ' + cost + ' altın'; }
@@ -520,7 +526,7 @@ function annexInfo(G, p, t) {
 function annex(G, p, t) {
   var r = annexInfo(G, p, t); if (!r.ok) return false;
   var fp = G.factions[p], ft = G.factions[t];
-  fp.gold -= r.cost;
+  fp.gold -= r.cost; fp.annexed = (fp.annexed || 0) + 1;
   fp.food += ft.food; fp.iron += ft.iron;
   G.cells.forEach(function (c) { if (c.f === t) c.f = p; });
   G.units.forEach(function (u) { if (u.f === t) { u.f = p; u.gen = 0; u.acted = true; u.mp = 0; } });
@@ -533,7 +539,7 @@ function annex(G, p, t) {
 }
 /* botun oyuncuya teklifi (tur başında en fazla bir) */
 function aiOffer(G, R) {
-  var P = G.player; if (P < 0 || allyCount(G, P) >= MAX_ALLIES) return null;
+  var P = G.player; if (G.noDip || P < 0 || allyCount(G, P) >= MAX_ALLIES) return null;
   var pp = power(G, P), best = null;
   G.factions.forEach(function (f, fi) {
     if (fi === P || !f.alive || isAlly(G, fi, P) || allyCount(G, fi) >= MAX_ALLIES || G.distrust[P] > G.turn) return;
@@ -790,7 +796,7 @@ function* aiTurn(G, fi, R) {
   var f = G.factions[fi];
   R = R || Math.random;
   // 0) diplomasi: oyuncu çok büyürse zayıf botlar birbirleriyle ittifak kurar
-  if (G.player >= 0 && fi !== G.player && allyCount(G, fi) < MAX_ALLIES) {
+  if (!G.noDip && G.player >= 0 && fi !== G.player && allyCount(G, fi) < MAX_ALLIES) {
     var cs = cityShare(G, G.player);
     if (cs.mine >= cs.all * 0.35 && R() < 0.4) {
       var cand = G.factions.map(function (x, j) { return j; }).filter(function (j) { return j !== fi && j !== G.player && G.factions[j].alive && !isAlly(G, fi, j) && allyCount(G, j) < MAX_ALLIES && G.distrust[j] <= G.turn; });
@@ -976,5 +982,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, MORALE: MORALE, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, MORALE: MORALE, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
 };
