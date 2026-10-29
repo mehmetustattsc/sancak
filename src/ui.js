@@ -747,7 +747,7 @@ function dealTable(fi, preset) {
     $('#tAlly').onclick = function () { deal.ally = !deal.ally; draw(); };
     if ($('#tAnnex')) $('#tAnnex').onclick = function () {
       if (!annexInfo(G, P, fi).ok) return;
-      act(function () { return annex(G, P, fi); }); B.undo = [];
+      act(function () { return annex(G, P, fi); }); B.undo = []; updateHud();
       closeModal(); SFX.win();
       playLog(function () { updateHud(); renderPanel(); checkOver(); }); dirty = true;
     };
@@ -764,7 +764,7 @@ function dealTable(fi, preset) {
     $('#tGo').onclick = function () {
       var r2 = proposeDeal(G, P, fi, deal); if (!r2.ok) return;
       act(function () { applyDeal(G, P, fi, deal); return true; });
-      B.undo = []; // anlaşmalar geri alınmaz
+      B.undo = []; updateHud(); // anlaşmalar geri alınmaz
       closeModal(); SFX.city();
       playLog(function () { updateHud(); renderPanel(); checkOver(); });
       dirty = true;
@@ -787,7 +787,7 @@ function offerPopup() {
     '<div class="row"><button class="btn ghost" id="oNo">Reddet</button><button class="btn" id="oYes">' + I.handshake + ' Kabul et</button></div>');
   $('#oNo').onclick = closeModal;
   $('#oYes').onclick = function () {
-    closeModal(); applyDeal(G, o.from, G.player, o.deal); B.undo = [];
+    closeModal(); applyDeal(G, o.from, G.player, o.deal); B.undo = []; updateHud();
     playLog(function () { updateHud(); renderPanel(); }); dirty = true;
   };
 }
@@ -829,7 +829,7 @@ function deselect() { B.sel = 0; B.view = null; B.reach = null; B.targets = []; 
 function nextUnit(silentIfNone) {
   var G = B.G;
   var list = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); });
-  if (!list.length) { if (!silentIfNone) toast('Hamle bekleyen birlik yok. Devam et’e basabilirsin.'); deselect(); return; }
+  if (!list.length) { deselect(); return; }
   var i = list.findIndex(function (u) { return u.id === B.sel; });
   var u = list[(i + 1) % list.length];
   selectUnit(u); B.camT = { x: G.cells[u.c].x, y: G.cells[u.c].y, t: 0 };
@@ -873,8 +873,7 @@ function doAttack() {
   if (!a || !d || !canAttack(G, a, d)) return;
   B.lastAct = a.c;
   attack(G, a, d, Math.random);
-  if (B.undo.length) toast('Saldırılar geri alınamaz; önceki hamleler de kilitlendi.');
-  B.undo = [];
+  B.undo = []; updateHud();
   B.preview = null; B.reach = null; B.targets = [];
   playLog(function () {
     var a2 = unitById(G, a.id);
@@ -941,10 +940,8 @@ function animEvent(e, sp) {
   } else if (e.t === 'tower') {
     fx({ k: 'ring', c: e.c, col: '#e8c977' }); if (e.f === G.player) { fx({ k: 'text', c: e.c, txt: 'Kule tamam', col: '#e8c977' }); SFX.build(); }
   } else if (e.t === 'towerDown') {
-    if (e.f === G.player) toast('Bir kulen yıkıldı.');
   } else if (e.t === 'ally') {
     if (e.a === G.player || e.b === G.player) { SFX.city(); toast(factionName(G, e.a === G.player ? e.b : e.a) + ' ile ittifak kuruldu (' + ALLY_TURNS + ' tur)'); }
-    else toast(factionName(G, e.a) + ' ve ' + factionName(G, e.b) + ' ittifak kurdu');
     d = 500 / sp;
   } else if (e.t === 'betray') {
     SFX.lost(); toast(e.a === G.player ? 'İttifakı bozdun: ' + factionName(G, e.b) + ' artık düşman' : factionName(G, e.a) + ' ihanet etti!'); d = 700 / sp;
@@ -963,9 +960,9 @@ function animEvent(e, sp) {
     toast(factionName(G, e.f) + ' yıkıldı!'); d = 700 / sp;
   } else if (e.t === 'wounded') {
     var gg = G.factions[e.f].generals.filter(function (x) { return x.id === e.gen; })[0];
-    if (gg && e.f === G.player) toast(gg.name + ' yaralandı, 3 tur dinlenecek.');
+    if (gg && e.f === G.player) toast(gg.name + ' yaralandı');
   } else if (e.t === 'starve') {
-    if (e.f === G.player) toast('Gıda bitti! Birliklerin aç, her tur can kaybediyor.');
+    if (e.f === G.player) toast('Gıda bitti!');
   }
   dirty = true;
   return d;
@@ -989,7 +986,6 @@ function undoLast() {
   SFX.tap(); B.anim = []; FX = [];
   B.sel = 0; B.view = null; B.reach = null; B.targets = []; B.preview = null; B.confirmEnd = false;
   updateHud(); renderPanel(); dirty = true;
-  toast('Son hamle geri alındı');
 }
 function endPlayerTurn() {
   if (B) B.camMem = { x: B.cam.x, y: B.cam.y, s: B.cam.s };
