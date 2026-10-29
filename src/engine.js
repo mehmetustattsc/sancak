@@ -198,7 +198,9 @@ var ERA_LEVELS = [[
     story: 'Doğu ile Batı’nın kavşağı. Sekiz sancak, iki deniz ve bir Boğaz. İstanbul’u tutan iki denizin geçidini tutar; ama her sancak aynı şansla başlar.' }
 ], [
   { map: 3, par: 35, limit: 80, aiEco: 0.85, grace: 3,
-    story: 'Demiryolları, fabrikalar ve büyük ordular. Kanal’ın iki yakasında sekiz devlet. Ordun ikmal hattından kopmasın: şehirden ve kaleden 3 hücreden uzaklaşan birlik zayıflar ve iyileşmez.' }
+    story: 'Demiryolları, fabrikalar ve büyük ordular. Kanal’ın iki yakasında sekiz devlet. Ordun ikmal hattından kopmasın: şehirden ve kaleden 3 hücreden uzaklaşan birlik zayıflar ve iyileşmez.' },
+  { map: 4, par: 45, limit: 95, aiEco: 0.85, grace: 3,
+    story: 'Uçsuz bozkırlar, bataklıklar ve Karadeniz. Mesafeler uzun, ikmal her şey: şehirden şehre ilerle. Baltık’tan Kafkas eteklerine sekiz devlet.' }
 ], []];
 var LEVELS = ERA_LEVELS[0];
 function levelsOf(e) { return ERA_LEVELS[e || 0] || []; }

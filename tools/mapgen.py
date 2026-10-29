@@ -257,7 +257,7 @@ BALKAN = {
   'places': [
     ('İstanbul', 28.97, 41.01, 3, 'city'), ('Bursa', 29.06, 40.19, 3, 'city'), ('Konya', 32.49, 37.87, 3, 'city'), ('Atina', 23.73, 37.98, 3, 'city'),
     ('Tırnova', 25.63, 43.08, 3, 'city'), ('Belgrad', 20.46, 44.82, 3, 'city'), ('Tergovişte', 25.46, 44.93, 3, 'city'), ('Saraybosna', 18.41, 43.86, 3, 'city'),
-    ('Edirne', 26.56, 41.68, 2, 'city'), ('Selanik', 22.94, 40.64, 2, 'city'), ('Ankara', 32.85, 39.93, 2, 'city'), ('İzmir', 27.14, 38.42, 2, 'city'),
+    ('Edirne', 26.56, 41.68, 2, 'city', 'kirmizi'), ('Selanik', 22.94, 40.64, 2, 'city'), ('Ankara', 32.85, 39.93, 2, 'city'), ('İzmir', 27.14, 38.42, 2, 'city'),
     ('Sofya', 23.32, 42.70, 2, 'city'), ('Üsküp', 21.43, 42.00, 2, 'city'), ('Kraiova', 23.80, 44.32, 1, 'city'), ('Ragusa', 18.09, 42.65, 2, 'city', 'sari'),
     ('İznik', 29.72, 40.43, 1, 'city'), ('Antalya', 30.71, 36.89, 1, 'city'), ('Denizli', 29.09, 37.78, 1, 'city'), ('Kastamonu', 33.78, 41.38, 1, 'city'),
     ('Varna', 27.91, 43.21, 1, 'city'), ('Filibe', 24.75, 42.14, 1, 'city'), ('Niş', 21.90, 43.32, 1, 'city'), ('Kalas', 28.05, 45.43, 1, 'city'),
@@ -303,7 +303,43 @@ WEST = {
     ('Koblenz', 7.59, 50.36, 1, 'castle', 'kahve'), ('Magdeburg', 11.63, 52.12, 1, 'castle'), ('Kiel', 10.13, 54.32, 1, 'castle'),
     ('Ulm', 9.99, 48.40, 1, 'castle'), ('Linz', 14.29, 48.31, 1, 'castle'), ('Olomouc', 17.25, 49.59, 1, 'castle'), ('Verona', 10.99, 45.44, 1, 'castle'),
   ]}
-maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST)]
+def east_owner(c, lon, lat):
+    if c == 'RUS': return 'siyah' if lon < 23 else ('buz' if lat >= 50.2 else 'turuncu')
+    if c == 'POL': return 'siyah' if lat >= 51.0 else 'bordo'
+    if c in ('HUN', 'SVK'): return 'bordo'
+    if c == 'UKR': return 'bordo' if lon < 25.6 else 'mor'
+    if c == 'ROU': return 'bordo' if (lat > 46.3 and lon < 25.2) else 'yesil'
+    if c == 'MDA': return 'yesil'
+    if c == 'TUR': return 'kirmizi'
+    if c in ('GEO', 'ARM', 'AZE'): return 'turuncu'
+    if c in ('LTU', 'LVA'): return 'kahve'
+    if c == 'BLR': return 'kahve' if lon < 28.3 else 'buz'
+    return 'n'                                   # Bulgaristan tarafsız
+EAST = {
+  'name': 'Doğu Cephesi ve Kafkasya', 'navy': True, 'box': (17.6, 39.6, 45.2, 56.4), 'target': 200, 'seed': 5, 'island_min': 2, 'foreign_void': True,
+  'styles': {'kirmizi': 'turk'},
+  'countries': ['RUS', 'POL', 'HUN', 'SVK', 'UKR', 'ROU', 'MDA', 'TUR', 'GEO', 'ARM', 'AZE', 'LTU', 'LVA', 'BLR', 'BGR'],
+  'owner': east_owner,
+  'factions': ['buz', 'siyah', 'bordo', 'yesil', 'kirmizi', 'mor', 'turuncu', 'kahve'],
+  'titles': {'buz': 'Çarlık', 'siyah': 'Krallık', 'bordo': 'İmparatorluk', 'yesil': 'Krallık', 'kirmizi': 'Saltanat', 'mor': 'Hetmanlık', 'turuncu': 'Kazaklığı', 'kahve': 'Dükalık'},
+  'caps': {'buz': 'Moskova', 'siyah': 'Königsberg', 'bordo': 'Budapeşte', 'yesil': 'Bükreş', 'kirmizi': 'İstanbul', 'mor': 'Kiev', 'turuncu': 'Rostov', 'kahve': 'Vilna'},
+  'places': [
+    ('Moskova', 37.62, 55.75, 3, 'city'), ('Königsberg', 20.51, 54.71, 3, 'city'), ('Budapeşte', 19.04, 47.50, 3, 'city'), ('Bükreş', 26.10, 44.43, 3, 'city'),
+    ('İstanbul', 28.97, 41.01, 3, 'city'), ('Kiev', 30.52, 50.45, 3, 'city'), ('Stavropol', 41.97, 45.04, 1, 'city'), ('Vilna', 25.28, 54.69, 3, 'city'),
+    ('Smolensk', 32.05, 54.78, 2, 'city'), ('Voronej', 39.20, 51.66, 1, 'city'), ('Rostov', 39.72, 47.23, 3, 'city'), ('Çaritsin', 44.51, 48.70, 1, 'city'), ('Kursk', 36.19, 51.73, 1, 'city'), ('Krasnodar', 38.98, 45.04, 1, 'city'),
+    ('Danzig', 18.65, 54.35, 2, 'city'), ('Varşova', 21.01, 52.23, 2, 'city'),
+    ('Krakov', 19.94, 50.06, 2, 'city'), ('Lemberg', 24.03, 49.84, 2, 'city'), ('Kolojvar', 23.60, 46.77, 1, 'city'),
+    ('Yaş', 27.60, 47.16, 1, 'city'), ('Köstence', 28.63, 44.17, 1, 'city'), ('Kişinev', 28.86, 47.01, 1, 'city', 'yesil'),
+    ('Edirne', 26.56, 41.68, 2, 'city', 'kirmizi'), ('Bursa', 29.06, 40.19, 2, 'city'), ('Ankara', 32.85, 39.93, 1, 'city'), ('Trabzon', 39.72, 41.00, 2, 'city'),
+    ('Odessa', 30.73, 46.48, 2, 'city'), ('Harkov', 36.23, 49.99, 2, 'city'), ('Yekaterinoslav', 35.04, 48.46, 1, 'city'),
+    ('Riga', 24.10, 56.95, 2, 'city'), ('Minsk', 27.56, 53.90, 2, 'city', 'kahve'),
+    ('Sofya', 23.32, 42.70, 1, 'city'), ('Varna', 27.91, 43.21, 1, 'city'),
+    ('Tula', 37.62, 54.20, 1, 'castle'), ('Bryansk', 34.36, 53.24, 1, 'castle'), ('Novorossiysk', 37.77, 44.72, 1, 'castle'),
+    ('Thorn', 18.60, 53.01, 1, 'castle'), ('Przemyśl', 22.77, 49.78, 2, 'castle'), ('Komárom', 18.13, 47.76, 1, 'castle'),
+    ('Brăila', 27.97, 45.27, 1, 'castle'), ('Çatalca', 28.46, 41.14, 1, 'castle', 'kirmizi'), ('Sinop', 35.15, 42.02, 1, 'castle'), ('Kars', 43.10, 40.60, 2, 'castle'),
+    ('Sivastopol', 33.52, 44.60, 2, 'castle'), ('Jitomir', 28.66, 50.25, 1, 'castle'), ('Kaunas', 23.90, 54.90, 1, 'castle', 'kahve'), ('Brest-Litovsk', 23.69, 52.10, 1, 'castle'),
+  ]}
+maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST)]
 out = os.path.join(os.path.dirname(__file__), '..', 'src', 'maps.json')
 json.dump(maps, open(out, 'w'), ensure_ascii=False, separators=(',', ':'))
 print('wrote', out, os.path.getsize(out), file=sys.stderr)

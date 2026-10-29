@@ -41,6 +41,18 @@ async def main():
                 await pg.wait_for_timeout(150)
                 if await pg.evaluate('()=>__sancak.B().phase') == 'player': break
         await shot('Y5-turn3')
+        # ikinci sefer: Doğu Cephesi, Kızıl Saltanat (fesli birlikler), birkaç tur
+        await pg.evaluate('()=>{__sancak.save().stars["1-0"]=2;__sancak.startGame(1,1,"kirmizi")}'); await pg.wait_for_timeout(900)
+        st = await pg.evaluate('()=>{const G=__sancak.B().G;return [G.level,G.cells.filter(c=>c.t).length,G.factions.length]}'); print('doğu', st)
+        assert st[0] == 1 and st[1] > 180 and st[2] == 8
+        await pg.evaluate('''()=>{const B=__sancak.B(),G=B.G;const c=G.cells.find(c=>c.cap&&c.f===G.player);B.cam.x=c.x;B.cam.y=c.y;B.cam.s=B.fit*2.2;__sancak.clamp();}''')
+        await pg.wait_for_timeout(500); await shot('Y6-east')
+        for t in range(2):
+            await pg.evaluate('()=>__sancak.endPlayerTurn()')
+            if await pg.locator('#aiSkip').count(): await pg.click('#aiSkip')
+            for i in range(150):
+                await pg.wait_for_timeout(150)
+                if await pg.evaluate('()=>__sancak.B().phase') == 'player': break
         print('HATALAR', errs); assert not errs
         await br.close()
 asyncio.run(main())

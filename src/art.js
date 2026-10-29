@@ -271,9 +271,23 @@ var ART = (function () {
       '<path d="M29 33V20h6v13z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1.3"/><path d="M29 22h6" stroke="#1d1712" stroke-width="2"/>' +
       '<path d="M32 18q-4-5 1-8 5-2 3-7" fill="none" stroke="rgba(90,90,90,.5)" stroke-width="4.5" stroke-linecap="round"/>';
   };
+  // Yakın Çağ Türk birlikleri: fesli piyade ve topçu, kalpaklı süvari (çağın figürlerinden başlığı değiştirerek)
+  function dropEl(svg, dPrefixes) { dPrefixes.forEach(function (d) { svg = svg.split('<path d="' + d).map(function (part, i) { return i ? part.slice(part.indexOf('/>') + 2) : part; }).join(''); }); return svg; }
+  function fez(x, y, w) { return '<path d="M' + (x - w / 2) + ' ' + y + 'l' + (w * 0.12) + ' ' + (-w * 0.95) + 'h' + (w * 0.76) + 'l' + (w * 0.12) + ' ' + (w * 0.95) + 'z" fill="#b3201c" stroke="' + OUT + '" stroke-width="1.3"/>' +
+      '<path d="M' + (x + w * 0.1) + ' ' + (y - w * 0.95) + 'q' + (w * 0.45) + ' ' + (w * 0.1) + ' ' + (w * 0.42) + ' ' + (w * 0.75) + '" fill="none" stroke="#1d1712" stroke-width="1.6"/>'; }
+  FIG['kilic#turk@1'] = function (C, D, L) {
+    return dropEl(FIG['kilic@1'](C, D, L), ['M25.5 14l1.5-8h10l1.5 8z', 'M27 7.5h10', 'M24 14.5h17']) + fez(32, 14.5, 12);
+  };
+  FIG['okcu#turk@1'] = function (C, D, L) {
+    return dropEl(FIG['okcu@1'](C, D, L), ['M44 25q0-7 5-7t5 7z', 'M43 25h12']) + fez(49, 25, 9);
+  };
+  FIG['atli#turk@1'] = function (C, D, L) {
+    return dropEl(FIG['atli@1'](C, D, L), ['M27.5 12l.5-9h8l.5 9z', 'M28 4h8', 'M32 3V0']) +
+      '<path d="M26.5 12q-.5-8 5.5-8.5 6 .5 5.5 8.5z" fill="#2a221c" stroke="' + OUT + '" stroke-width="1.2"/><path d="M28 6q4-2 8 0" stroke="#4a3d32" stroke-width="1.2" fill="none"/><path d="M30 4.5h4v2.5h-4z" fill="' + C + '"/>';
+  };
   var IMG = {};
   function curEra() { return typeof ERA_CUR !== 'undefined' ? ERA_CUR : 0; }
-  function figFn(type, era, col) { var st = !era && STYLE_BY_COL[col]; return (st && FIG[type + '#' + st]) || FIG[type + '@' + era] || FIG[type]; }
+  function figFn(type, era, col) { var st = STYLE_BY_COL[col]; return (st && FIG[type + '#' + st + (era ? '@' + era : '')]) || FIG[type + '@' + era] || FIG[type]; }
   function figSVG(type, col, era) {
     var C = col, D = shade(col, -0.35), L = shade(col, 0.55);
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">' + figFn(type, era == null ? curEra() : era, col)(C, D, L) + '</svg>';
