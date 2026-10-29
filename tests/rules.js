@@ -111,4 +111,20 @@ const ship = add(G, P, 'kadirga', shipCell.i), archerT = add(G, enemyF, 'kilic',
 assert(E.canAttack(G, ship, archerT), 'kadırga 2 hücre uzağa atabilmeli');
 assert.strictEqual(E.predict(G, ship, archerT).back, 0, 'kılıçlı uzaktaki gemiye karşılık veremez');
 console.log('✓ kadırga uzaktan atış');
+// 11) moral: kıskaç ve çevrili
+G = fresh();
+const mid = G.cells.find(x => x.t && !x.mt && x.nb.length === 6 && x.nb.every(j => G.cells[j].t));
+const me = add(G, P, 'kilic', mid.i);
+const byDir = {}; for (const j of mid.nb) { const o = G.cells[j]; byDir[((Math.round(Math.atan2(o.y - mid.y, o.x - mid.x) / (Math.PI / 3)) % 6) + 6) % 6] = j; }
+assert.strictEqual(E.morale(G, me), null, 'tek başına moral tam');
+add(G, enemyF, 'kilic', byDir[0]); assert.strictEqual(E.morale(G, me), null, 'tek düşman kıskaç değil');
+add(G, enemyF, 'kilic', byDir[1]); assert.strictEqual(E.morale(G, me), null, 'yan yana iki düşman kıskaç değil');
+add(G, enemyF, 'okcu', byDir[3]); assert.strictEqual(E.morale(G, me), 'kiskac', 'karşılıklı iki düşman kıskaç');
+const dmgK = E.predict(G, G.units.find(u => u.c === byDir[0]), me).dmg;
+add(G, enemyF, 'kilic', byDir[4]); assert.strictEqual(E.morale(G, me), 'agir', 'iki kıskaç ağır');
+add(G, enemyF, 'kilic', byDir[2]); add(G, enemyF, 'kilic', byDir[5]); assert.strictEqual(E.morale(G, me), 'cevrili', 'her yön düşman: çevrili');
+const dmgC = E.predict(G, G.units.find(u => u.c === byDir[0]), me).dmg;
+console.log('  kıskaçta alınan hasar', dmgK.toFixed(1), '· çevriliyken', dmgC.toFixed(1));
+assert(dmgC > dmgK, 'çevrili birlik daha çok hasar almalı');
+console.log('✓ moral');
 console.log('KURAL TESTLERİ TAMAM');

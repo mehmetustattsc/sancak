@@ -15,6 +15,7 @@ Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, i
 |---|---|
 | Tur | Oyuncu hamlelerini yapar, "Devam et" der; rakipler sırayla oynar (izle, hızlandır ya da atla) |
 | Birlik | Her hücrede tek birlik, can çubuğu, seviye (▲). Kılıçlı > Atlı > Okçu > Kılıçlı (×1,5). Kendi birliklerinin içinden geçilir |
+| Moral | Karşılıklı iki yanda düşman: kıskaç −%20; iki kıskaç ya da 4 düşman: −%30; her yan kapalı: çevrili −%45 (saldırı ve savunma) |
 | Saldırı | Saldıran yerinde kalır; boşalan hücreye başka birlik sürülür. Atlı düşmanı yok ettikçe yeniden saldırır ve 1 hücre daha gider. Nakliyedeki birlik karaya %60 güçle çıkarma saldırısı yapar |
 | Ordu sınırı | 2 + şehir başına 2 + kale başına 1 (kuleler hariç) |
 | Karargâh | Madalyayla kalıcı geliştirme: birlik türleri (+%6/sv), kule (+%8/sv), hazine (+%10 altın/sv), tarım (+1 gıda/tarla), savaş sandığı (+40 altın/sv). Sadece oyuncuya |

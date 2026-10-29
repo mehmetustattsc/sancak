@@ -390,8 +390,33 @@ function stat(G, u, kind, vs, cell, attacking) {
     if (g.spec === 'kale' && cell && (cell.t === 3 || cell.t === 4)) m *= specMul(g);
   }
   m *= 0.45 + 0.55 * u.hp / 100;
+  m *= moraleMul(G, u);
   return base * m;
 }
+/* ---------- moral: kıskaç ve kuşatma ----------
+   Birliğin karşılıklı iki yanında düşman varsa kıskaçtadır. Bütün yönleri düşman ya da geçilmez
+   olduğunda tamamen çevrilidir. Moral saldırı ve savunmayı birlikte düşürür. */
+var MORALE = { kiskac: { m: 0.8, name: 'Kıskaç' }, agir: { m: 0.7, name: 'Ağır kıskaç' }, cevrili: { m: 0.55, name: 'Çevrili' } };
+function morale(G, u) {
+  if (!u || UT[u.type].tower || u.c === undefined) return null;
+  var c = G.cells[u.c], dirs = [0, 0, 0, 0, 0, 0], blocked = [1, 1, 1, 1, 1, 1], n = 0;
+  var water = isNaval(u) || u.emb;
+  for (var k = 0; k < c.nb.length; k++) {
+    var o = G.cells[c.nb[k]];
+    var d = ((Math.round(Math.atan2(o.y - c.y, o.x - c.x) / (Math.PI / 3)) % 6) + 6) % 6;
+    var e = unitAt(G, o.i);
+    if (e && e.f !== u.f) { dirs[d] = 1; n++; blocked[d] = 1; }
+    else blocked[d] = water ? (o.t !== 0 && !(o.t === 3 && o.f === u.f && o.port) ? 1 : 0) : (o.t === 0 ? 1 : 0);
+  }
+  if (!n) return null;
+  var pairs = 0;
+  for (var k2 = 0; k2 < 3; k2++) if (dirs[k2] && dirs[k2 + 3]) pairs++;
+  if (n >= 3 && blocked.every(function (b) { return b; })) return 'cevrili';
+  if (pairs >= 2 || (pairs >= 1 && n >= 4)) return 'agir';
+  if (pairs >= 1) return 'kiskac';
+  return null;
+}
+function moraleMul(G, u) { var k = morale(G, u); return k ? MORALE[k].m : 1; }
 function genMul(g) { return 1.25 + 0.05 * g.rank; }   // 1. rütbe +%30 … 5. rütbe +%50
 function specMul(g) { return 1.15 + 0.05 * g.rank; }  // uzmanlık ek +%20 … +%40
 function terrainMul(G, c, u) {
@@ -787,5 +812,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, morale: morale, MORALE: MORALE, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, UT: UT, starsFor: starsFor, rng: rng
 };

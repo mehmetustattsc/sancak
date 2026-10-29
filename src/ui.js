@@ -325,7 +325,8 @@ function renderHelp() {
     '<li>Saldıran birlik yerinde kalır. Boşalan hücreye başka bir birliğini sürüp oradan saldırmaya devam edebilirsin. İki düşman öldüren birlik tecrübe kazanır.</li>' +
     '<li><b>Atlı</b> 2 hücre gider ve düşman yanından geçerken durmaz. Saldırıp düşmanı yok ederse yeniden saldırabilir ve 1 hücre daha ilerleyebilir; gücü yettikçe zincirleme devam eder.</li>' +
     '<li><b>Nakliyedeki birlik</b> kıyıdaki düşmana çıkarma saldırısı yapabilir: gücünün %60’ıyla vurur, karşılığı kendi savunmasının %70’iyle yer, gemide kalır.</li>' +
-    '<li>Kendi birliklerinin içinden geçebilirsin, ama dolu hücrede duramazsın.</li></ul></div>' +
+    '<li>Kendi birliklerinin içinden geçebilirsin, ama dolu hücrede duramazsın.</li>' +
+    '<li><b>Moral:</b> karşılıklı iki yanında düşman olan birlik kıskaçtadır (−%20). İki kıskaç ya da 4 düşman ağır kıskaç (−%30). Her yanı düşman ya da geçilmez olan birlik çevrilidir (−%45). Kayıp hem saldırıya hem savunmaya işler; haritada kırmızı işaretle görünür.</li></ul></div>' +
     '<div class="card"><h3>Kule</h3><p>Her tur kendi boş arazine bir kule kurabilirsin (tarla, şehir ve kaleye olmaz). Kule 2 turda biter; inşaat sırasında savunması yarıdır ve karşılık veremez. Hasar alan inşaat bitince kule o canla başlar. Kule saldırmaz ama saldırana karşılık verir. Yıkılırsa arazi boşalır.</p></div>' +
     '<div class="card"><h3>Ticaret</h3><p>Başkentinde her tur en fazla 3 takas: 10 gıda → 12 altın, 18 altın → 10 gıda, 25 altın → 2 demir, 2 demir → 14 altın.</p></div>' +
     '<div class="card"><h3>Kazanmak</h3><p>Haritadaki şehirlerin %60’ını ele geçir (üstteki şehir sayacı) ya da bütün rakipleri yık. Zaferden sonra istersen tur sınırı olmadan bütün haritayı fethetmeye devam edebilirsin; tam fetih ek madalya getirir. Bütün şehirlerini kaybeden ülke yıkılır. Tur sınırını geçersen sefer kaybedilir. Yıldızlar kaç turda bitirdiğine göre verilir.</p></div>';
@@ -534,6 +535,8 @@ function unitHTML(u) {
   if (u.emb) tags += '<span class="tag">' + I.anchor + '</span>';
   if (u.build) tags += '<span class="tag">' + I.hammer + u.build + '</span>';
   if (u.chase && u.mp > 0) tags += '<span class="tag good">' + I.boot + '+1</span>';
+  var mk = morale(G, u);
+  if (mk) tags += '<span class="tag bad" title="' + MORALE[mk].name + '">' + I.pincer + '−' + Math.round((1 - MORALE[mk].m) * 100) + '%</span>';
   var s = '<div class="ucard"><div class="ufig' + (mine && !hasMoves(u) && !UT[u.type].tower ? ' done' : '') + '">' + ART.figInline(figType(u), col) + '</div><div class="umain">' +
     '<div class="uh"><b>' + unitName(u) + '</b><span class="ulv">' + '▲'.repeat(u.lvl) + '</span>' + tags + (mine || u.f < 0 ? '' : ART.flag(G.factions[u.f].id, 'fl mini')) + '</div>' +
     hpBar(u.hp) + '<div class="ust">' + statChips(G, u) + '</div></div>';
@@ -562,6 +565,9 @@ function previewHTML() {
   if (UT[d.type].beats === a.type && !d.emb) tags += '<span class="tag bad">×1,5</span>';
   if (terrainMul(G, G.cells[d.c], d) > 1.01) tags += '<span class="tag">' + I.shield + '×' + terrainMul(G, G.cells[d.c], d).toFixed(1).replace('.', ',') + '</span>';
   if (p.die) tags += '<span class="tag bad">' + I.skull + '</span>';
+  var md = morale(G, d), ma = morale(G, a);
+  if (md) tags += '<span class="tag good">' + I.pincer + '−' + Math.round((1 - MORALE[md].m) * 100) + '%</span>';
+  if (ma) tags += '<span class="tag bad">' + I.pincer + '−' + Math.round((1 - MORALE[ma].m) * 100) + '%</span>';
   return '<div class="pv"><div class="pvs"><div class="ufig sm">' + ART.figInline(figType(a), colA) + '</div>' + hpBar(a.hp, a.hp - p.back) + '</div>' +
     '<div class="vs">' + I.sword + tags + '</div>' +
     '<div class="pvs"><div class="ufig sm">' + ART.figInline(figType(d), colD) + '</div>' + hpBar(d.hp, d.hp - p.dmg) + '</div>' +
@@ -1153,6 +1159,14 @@ function drawUnit(u, now) {
     rr(bx - 1, by - 1, bw + 2, bh + 2, bh / 2); ctx.fillStyle = 'rgba(15,10,6,.85)'; ctx.fill();
     var hp = Math.max(0, u.hp) / 100;
     rr(bx, by, bw * hp, bh, bh / 2); ctx.fillStyle = hp > 0.6 ? '#6dcf6a' : hp > 0.3 ? '#e8c03a' : '#e2503f'; ctx.fill();
+    var mk2 = morale(G, u);
+    if (mk2) {
+      var mr = Math.max(7, s * 0.2), mx = bx - mr - 2, my = by + bh / 2;
+      ctx.beginPath(); ctx.arc(mx, my, mr, 0, 7); ctx.fillStyle = mk2 === 'cevrili' ? '#b3261e' : '#d9534a'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = Math.max(1.5, mr * 0.28); ctx.beginPath();
+      ctx.moveTo(mx - mr * 0.55, my - mr * 0.45); ctx.lineTo(mx - mr * 0.1, my); ctx.lineTo(mx - mr * 0.55, my + mr * 0.45);
+      ctx.moveTo(mx + mr * 0.55, my - mr * 0.45); ctx.lineTo(mx + mr * 0.1, my); ctx.lineTo(mx + mr * 0.55, my + mr * 0.45); ctx.stroke();
+    }
     // renk şeridi (sahiplik)
     rr(bx - 1, by + bh + 1.5, bw + 2, Math.max(2.5, s * 0.06), 2); ctx.fillStyle = col; ctx.fill();
     if (u.build) { ctx.fillStyle = '#ffe9a8'; ctx.font = '700 ' + Math.max(10, s * 0.3) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.strokeText(u.build + ' tur', p.x, cy - size * 0.5); ctx.fillText(u.build + ' tur', p.x, cy - size * 0.5); }
