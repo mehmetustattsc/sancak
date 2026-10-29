@@ -5,6 +5,7 @@ var AUDIO = (function () {
   'use strict';
   var AC = null, master, sfxBus, musBus, NOISE = null, enabled = { sfx: true, music: true };
   var BUF = {};
+  var MUS_VOL = 0.2;   // müzik arka planda kalsın, efektlerin önüne geçmesin
   function ctx() {
     if (AC) return AC;
     var C = window.AudioContext || window.webkitAudioContext; if (!C) return null;
@@ -58,9 +59,9 @@ var AUDIO = (function () {
     step: function (t) {
       for (var i = 0; i < 2; i++) {
         var tt = t + i * 0.16;
-        noise(tt, 0.09, 'lowpass', 260, 0.7, 0.55, 0.08);
+        noise(tt, 0.09, 'lowpass', 260, 0.7, 0.85, 0.08);
         noise(tt + 0.012, 0.03, 'bandpass', 2600, 2, 0.09, 0.02);          // zırh şıkırtısı
-        noise(tt + 0.025, 0.08, 'lowpass', 320, 0.7, 0.3, 0.07);           // arkadaki sıra
+        noise(tt + 0.025, 0.08, 'lowpass', 320, 0.7, 0.5, 0.07);           // arkadaki sıra
       }
     },
     // dörtnala at: tak-ta-dak
@@ -74,16 +75,29 @@ var AUDIO = (function () {
     },
     // kürek ve dalga
     row: function (t) { noise(t, 0.5, 'bandpass', 500, 0.8, 0.22, 0.45, null, 260); noise(t + 0.35, 0.45, 'bandpass', 420, 0.8, 0.18, 0.4, null, 240); },
-    // kılıç şakırtısı: metalin uyumsuz kısmi sesleri
+    // kılıç şakırtısı: savrulma vızıltısı, çelik çarpması, uzun ve titreşen çınlama, kayan bıçak sürtünmesi
     clash: function (t, heavy) {
-      var parts = [1870, 2930, 4120, 5340, 6890];
-      for (var k = 0; k < (heavy ? 3 : 2); k++) {
-        var tt = t + k * 0.13 + Math.random() * 0.03, det = 0.94 + Math.random() * 0.12;
-        noise(tt, 0.05, 'highpass', 3200, 0.7, 0.5, 0.04);
-        parts.forEach(function (f, i) { var g = tone(tt, f * det, 0.35 + i * 0.05, 'sine', 0.09 / (1 + i * 0.4)); send(g, 0.5); });
-        noise(tt, 0.12, 'bandpass', 900, 1.5, 0.25, 0.1);
+      var n = heavy ? 3 : 2;
+      for (var k = 0; k < n; k++) {
+        var tt = t + 0.13 + k * (0.22 + Math.random() * 0.08), base = 780 + Math.random() * 260, v = k === n - 1 ? 1 : 0.8;
+        noise(tt - 0.13, 0.14, 'bandpass', 900, 1.2, 0.13 * v, 0.12, null, 3800);          // kılıç havayı yarar
+        noise(tt, 0.025, 'bandpass', 5200, 0.8, 0.45 * v, 0.02);                           // çarpma anı
+        tone(tt, 260, 0.06, 'triangle', 0.12 * v);                                         // kabzaya gelen darbe
+        // çelik çubuk kipleri (uyumsuz): her biri iki yakın frekans, birbirini dövüp titreşir
+        [1, 2.76, 5.40, 8.93].forEach(function (r, i) {
+          var f = base * r; if (f > 9000) return;
+          var dec = 1.1 / (1 + i * 0.55), amp = 0.16 * v / (1 + i * 0.5);
+          [-1, 1].forEach(function (sg) { var g = tone(tt, f + sg * (2 + i * 1.5), dec, 'sine', amp * 0.55, null, null, 0.002); send(g, 0.55); });
+          // aynı kipte çınlayan gürültü: saf bip değil, gerçek metal dokusu
+          var s = AC.createBufferSource(); s.buffer = NOISE; s.loop = true;
+          var bp = AC.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = f; bp.Q.value = 60;
+          var g2 = AC.createGain(); env(g2, tt, 0.002, amp * 5, dec * 0.8);
+          s.connect(bp); bp.connect(g2); g2.connect(sfxBus); send(g2, 0.5); s.start(tt, Math.random()); s.stop(tt + dec + 0.1);
+        });
+        // bıçak bıçağa kayar: kısa sürtünme
+        noise(tt + 0.03, 0.22, 'bandpass', 4200, 4, 0.07 * v, 0.2, null, 2600);
       }
-      if (heavy) { noise(t + 0.3, 0.25, 'lowpass', 200, 0.6, 0.5, 0.22); }
+      if (heavy) noise(t + 0.68, 0.3, 'lowpass', 220, 0.6, 0.45, 0.26);                  // kalkana gelen gümbürtü
     },
     // ok: vızıltı ve saplanma
     arrow: function (t) {
@@ -102,8 +116,8 @@ var AUDIO = (function () {
     // ağır darbe ve düşüş
     kill: function (t) {
       FX.clash(t, true);
-      noise(t + 0.45, 0.5, 'lowpass', 160, 0.6, 0.6, 0.45);
-      tone(t + 0.45, 70, 0.4, 'sine', 0.5, null, 40);
+      noise(t + 0.75, 0.5, 'lowpass', 160, 0.6, 0.6, 0.45);
+      tone(t + 0.75, 70, 0.4, 'sine', 0.5, null, 40);
     },
     // çekiç ve örs
     build: function (t) {
@@ -248,14 +262,14 @@ var AUDIO = (function () {
     setTimeout(function () {
       mus.theme = name; mus.beat = 0; mus.bar = 0; mus.nextT = now() + 0.1;
       var th = THEMES[name]; startDrone(th.root / 2, th.drone);
-      var t2 = now(); musBus.gain.cancelScheduledValues(t2); musBus.gain.setValueAtTime(0.0001, t2); musBus.gain.linearRampToValueAtTime(0.55, t2 + 2);
+      var t2 = now(); musBus.gain.cancelScheduledValues(t2); musBus.gain.setValueAtTime(0.0001, t2); musBus.gain.linearRampToValueAtTime(MUS_VOL, t2 + 2);
     }, 650);
     if (!mus.timer) mus.timer = setInterval(schedule, 120);
   }
   function setMusic(on) {
     enabled.music = on; if (!AC) return;
     var t = now(); musBus.gain.cancelScheduledValues(t); musBus.gain.setValueAtTime(musBus.gain.value, t);
-    musBus.gain.linearRampToValueAtTime(on ? 0.55 : 0.0001, t + 0.5);
+    musBus.gain.linearRampToValueAtTime(on ? MUS_VOL : 0.0001, t + 0.5);
     if (on && mus.theme && !drone) { var th = THEMES[mus.theme]; startDrone(th.root / 2, th.drone); mus.nextT = now() + 0.1; }
     if (!on) stopDrone();
   }

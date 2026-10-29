@@ -62,7 +62,10 @@ def build(spec):
         n = sum(1 for c in cells.values() if c['land'])
         if n > spec['target']: lo = s
         else: hi = s
-    cells, cols, rows = grid(spec['box'], s, allowed)
+    box = spec['box']
+    if spec.get('pad_w'):   # kıyı haritanın kenarına değmesin: batıya deniz sütunu ekle (gemiler etrafından dolaşabilsin)
+        box = (box[0] - spec['pad_w'] * math.sqrt(3) * s / K,) + tuple(box[1:])
+    cells, cols, rows = grid(box, s, allowed)
     land = {k for k, c in cells.items() if c['land']}
     # drop tiny land components that are not wanted (or all islands on land-only maps)
     comp = {}; cid = 0
@@ -86,6 +89,17 @@ def build(spec):
         if c['land']: keep[k] = c
         elif any(hdist(k, l) <= (2 if spec['navy'] else 1) for l in land): keep[k] = c
     cells = keep
+    # küçük kopuk su parçalarını at (ör. haritaya alınmayan ülkelerin toprağı göl gibi görünmesin)
+    sea = {k for k, c in cells.items() if not c['land']}; seen = set()
+    for k in list(sea):
+        if k in seen: continue
+        st, part = [k], [k]; seen.add(k)
+        while st:
+            u = st.pop()
+            for v in neigh(*u):
+                if v in sea and v not in seen: seen.add(v); st.append(v); part.append(v)
+        if len(part) < 8:
+            for v in part: del cells[v]
     # owners
     for k, c in cells.items():
         if c['land']: c['f'] = spec['owner'](c['c'], c['lon'], c['lat'])
@@ -155,7 +169,7 @@ def iber_owner(c, lon, lat):
         return 'sari'
     return 'n'
 IBER = {
-  'name': 'İber Yarımadası', 'navy': True, 'box': (-9.7, 35.9, 3.6, 44.0), 'target': 64, 'seed': 1, 'island_min': 1,
+  'name': 'İber Yarımadası', 'navy': True, 'box': (-9.7, 35.9, 3.6, 44.0), 'target': 64, 'seed': 1, 'island_min': 1, 'pad_w': 1,
   'countries': ['ESP', 'PRT', 'FRA', 'AND'],
   'owner': iber_owner,
   'factions': ['sari', 'yesil', 'kirmizi', 'kahve', 'turkuaz', 'mavi'],
