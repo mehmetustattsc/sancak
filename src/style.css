@@ -399,3 +399,109 @@ p { margin: 0; line-height: 1.45; }
 .hero .title { top: 0; bottom: auto; padding: 16px 18px 40px; background: linear-gradient(to bottom, rgba(10,14,18,.85), rgba(10,14,18,0)); }
 .hero canvas.heromap { top: auto; bottom: 10px; right: 10px; width: 30%; height: 26%; }
 .hbtn[disabled] { opacity: .35; }
+
+/* ===================== Sürüm 0.6: sade savaş ekranı ===================== */
+.hud-top { flex-direction: row; align-items: center; gap: 6px; pointer-events: none; }
+.hud-top > * { pointer-events: auto; }
+.hbtn.sm { width: 34px; height: 34px; border-radius: 10px; }
+.hbtn.sm svg { width: 17px; height: 17px; }
+.res { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 2px; height: 34px; padding: 0 8px 0 5px; border-radius: 10px;
+  background: rgba(18,22,27,.78); border: 1px solid rgba(255,255,255,.08); backdrop-filter: blur(4px); font-family: var(--f-num); font-weight: 700; font-size: 15px; color: var(--text); overflow: hidden; }
+.res svg.f { width: 26px; height: 18px; border-radius: 2px; flex: none; }
+.res > span { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.res > span svg { width: 15px; height: 15px; flex: none; }
+.res > span.warn b { color: #ff8a6a; }
+.res #rA svg, .res #rC svg, .res #rT svg { color: var(--brass); }
+.actbar { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 8px; pointer-events: none;
+  padding: 0 max(10px, env(safe-area-inset-right, 0px)) calc(10px + env(safe-area-inset-bottom, 0px)) max(10px, env(safe-area-inset-left, 0px)); }
+.actbar > * { pointer-events: auto; }
+.actbar .sp { flex: 1; pointer-events: none; }
+.actbar .hbtn { width: 42px; height: 42px; border-radius: 13px; position: relative; background: rgba(18,22,27,.86); }
+.actbar .hbtn em { position: absolute; top: -5px; right: -5px; min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9px; background: var(--brass2); color: #2a1d05; font: 700 12px/18px var(--f-num); font-style: normal; }
+.actbar .endturn { min-height: 42px; padding: 0 16px; font-size: 16px; border-radius: 13px; }
+.actbar .endturn.warn { background: linear-gradient(#c9533f, #8f2a1e); color: #fff3e6; box-shadow: 0 2px 0 #5a160f; }
+.actbar .endturn em { font-style: normal; display: inline-grid; place-items: center; min-width: 20px; height: 20px; border-radius: 10px; background: rgba(0,0,0,.25); font: 700 13px var(--f-num); margin-left: 4px; }
+#panel { bottom: calc(60px + env(safe-area-inset-bottom, 0px)); left: 8px; right: 8px; border-radius: 16px; border: 1px solid var(--line); padding: 10px 12px; max-height: 46%; overflow-y: auto; gap: 8px; }
+.aibar { bottom: calc(12px + env(safe-area-inset-bottom, 0px)); }
+.aibar .hbtn { width: 38px; height: 38px; }
+.aibar .hbtn.on { color: var(--brass2); border-color: var(--brass2); }
+.aibar .hbtn svg { width: 18px; height: 18px; }
+/* birlik kartı */
+.ucard { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: center; }
+.ucard .ufig { width: 52px; height: 52px; }
+.ufig.done { filter: saturate(.3) brightness(.75); }
+.umain { gap: 4px; }
+.uh { align-items: center; gap: 6px; flex-wrap: nowrap; min-width: 0; }
+.uh b { font-size: 16px; white-space: nowrap; }
+.uh svg.mini { width: 20px; height: 14px; border-radius: 2px; margin-left: auto; flex: none; }
+.tag { display: inline-flex; align-items: center; gap: 2px; padding: 1px 6px; border-radius: 7px; background: var(--panel2); font: 700 12px var(--f-num); color: var(--text); }
+.tag svg { width: 13px; height: 13px; }
+.tag.good { color: var(--ok); } .tag.bad { color: #ff8a6a; }
+.hpb { height: 14px; }
+.hpb u { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(45deg, rgba(255,90,70,.75) 0 4px, rgba(255,90,70,.4) 4px 8px); text-decoration: none; }
+.hpb span { font-size: 12px; }
+.ust { gap: 9px; font-size: 14px; }
+.ust svg { width: 14px; height: 14px; }
+.uacts { display: flex; flex-direction: column; gap: 6px; align-items: center; }
+.ibtn { width: 38px; height: 38px; border-radius: 11px; display: grid; place-items: center; background: var(--panel2); border: 1px solid var(--line); color: var(--text); font-size: 16px; }
+.ibtn svg { width: 19px; height: 19px; }
+.ibtn.gold { background: linear-gradient(#e0bd63, #b48a32); color: #2a1d05; border-color: #b48a32; }
+.gbtn { position: relative; width: 44px; height: 44px; border-radius: 50%; overflow: visible; border: 2px solid var(--brass); padding: 0; background: none; }
+.gbtn svg { width: 100%; height: 100%; border-radius: 50%; display: block; }
+.gbtn.spec { border-color: var(--ok); box-shadow: 0 0 0 2px rgba(109,187,111,.25); }
+.gbtn em { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); padding: 0 5px; border-radius: 7px; background: #1b2128; border: 1px solid var(--line); font: 700 11px/15px var(--f-num); font-style: normal; color: var(--ok); white-space: nowrap; }
+/* saldırı önizleme */
+.pv { grid-template-columns: 1fr auto 1fr; row-gap: 8px; }
+.pvs { flex-direction: column; align-items: stretch; gap: 4px; }
+.pvs .ufig.sm { align-self: center; }
+.vs { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+.pvb { grid-column: 1 / -1; display: flex; gap: 8px; }
+.pvb .btn { flex: 1; min-height: 42px; }
+/* hücre kartı */
+.chd { gap: 8px; flex-wrap: wrap; }
+.chd > svg:not(.fl) { width: 18px; height: 18px; color: var(--brass); }
+.chd b { font-size: 16px; }
+.chd .facts { display: inline-flex; gap: 8px; margin-left: auto; font: 700 14px var(--f-num); color: var(--muted); }
+.chd .facts span { display: inline-flex; align-items: center; gap: 2px; }
+.chd .facts svg { width: 14px; height: 14px; }
+.lvtag { font-size: 12px; padding: 0 6px; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(70px, 1fr)); gap: 6px; }
+.tile { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 5px 3px; border-radius: 11px; background: var(--panel2); border: 1px solid var(--line); min-width: 0; }
+.tile:active { transform: translateY(1px); }
+.tile.off { opacity: .42; }
+.tile .rf { width: 34px; height: 34px; }
+.tile .ri { width: 34px; height: 34px; display: grid; place-items: center; color: var(--brass2); }
+.tile .ri svg { width: 22px; height: 22px; }
+.tile .tt { font-family: var(--f-display); font-weight: 700; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.tile .cost { font-size: 13px; }
+.tile .cost svg { width: 13px; height: 13px; }
+.trades { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.trades .tl { display: inline-flex; align-items: center; gap: 2px; color: var(--brass); font: 700 13px var(--f-num); }
+.trades .tl svg { width: 18px; height: 18px; }
+.trades .tl em { font-style: normal; }
+.trb { flex: 1; min-width: 70px; flex-direction: row; justify-content: center; gap: 2px; padding: 6px 4px; font: 700 13px var(--f-num); color: var(--brass2); display: inline-flex; align-items: center; }
+.trb.off { opacity: .42; }
+.trb svg { width: 13px; height: 13px; }
+.trb .ar { color: var(--muted); }
+/* kaynak ve general pencereleri */
+.rinfo { display: flex; flex-direction: column; gap: 6px; }
+.rinfo > div { display: grid; grid-template-columns: 24px 1fr auto auto; gap: 8px; align-items: center; padding: 8px 10px; border-radius: 10px; background: var(--panel2); }
+.rinfo svg { width: 20px; height: 20px; color: var(--brass); }
+.rinfo b { font: 700 18px var(--f-num); }
+.rinfo i { font-style: normal; font-size: 13px; color: var(--muted); text-align: right; }
+.gm { display: flex; gap: 12px; align-items: center; }
+.gmp { width: 84px; height: 84px; border-radius: 14px; overflow: hidden; flex: none; border: 2px solid var(--brass); }
+.gmp svg { width: 100%; height: 100%; display: block; }
+.tip { top: calc(52px + env(safe-area-inset-top, 0px)); padding: 10px 12px; font-size: 14px; }
+.tip button { font-size: 20px; padding: 0 8px; }
+.banner { top: calc(54px + env(safe-area-inset-top, 0px)); }
+
+/* yatay ekran: panel yana, harita geniş */
+@media (orientation: landscape) and (max-height: 600px) {
+  #panel { left: auto; right: max(8px, env(safe-area-inset-right, 0px)); top: calc(48px + env(safe-area-inset-top, 0px)); bottom: calc(8px + env(safe-area-inset-bottom, 0px)); width: min(330px, 42vw); max-height: none; }
+  .hud-top { max-width: 560px; }
+  #scr-battle:has(#panel:not([hidden])) .actbar { right: min(346px, calc(42vw + 16px)); }
+  .actbar { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+  .tiles { grid-template-columns: repeat(3, 1fr); }
+}
+.pv .pvs > div.hpb { display: block; flex: none; width: 100%; min-width: 64px; height: 14px; }

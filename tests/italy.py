@@ -28,7 +28,7 @@ async def main():
         # kadırga al
         await pg.evaluate('()=>{const B=__sancak.B(),G=B.G;G.factions[G.player].gold=500;G.factions[G.player].iron=9;const c=G.cells.find(c=>c.cap&&c.f===G.player);__sancak.tapCell(c.i)}')
         await pg.wait_for_timeout(200)
-        k = pg.locator('[data-rec="kadirga"]:not([disabled])')
+        k = pg.locator('[data-rec="kadirga"]:not(.off)')
         print('kadırga alınabilir', await k.count())
         if await k.count(): await k.click(); await pg.wait_for_timeout(300)
         await shot('i3')

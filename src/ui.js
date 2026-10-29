@@ -335,7 +335,7 @@ function renderSettings() {
     '<div class="card"><div class="setrow"><div><h3>Ses</h3><p class="muted">Savaş sesleri ve melodiler</p></div><button class="switch' + (save.sound ? ' on' : '') + '" id="swSound" aria-label="Ses"></button></div></div>' +
     '<div class="card"><div class="setrow"><div><h3>Eğitim ipuçları</h3><p class="muted">İlk seferdeki ipuçlarını yeniden göster</p></div><button class="btn small ghost" id="tutAgain">Sıfırla</button></div></div>' +
     '<div class="card"><h3>İlerlemeyi sil</h3><p class="muted">Yıldızlar, madalyalar, general rütbeleri ve yarım kalan sefer silinir.</p><div class="row" id="resetRow"><button class="btn small ghost" id="resetBtn">İlerlemeyi sil</button></div></div>' +
-    '<p class="muted" style="text-align:center">Sancak · sürüm 0.5 · Harita verisi: Natural Earth (kamu malı)</p>';
+    '<p class="muted" style="text-align:center">Sancak · sürüm 0.6 · Harita verisi: Natural Earth (kamu malı)</p>';
   $('#swSound').onclick = function () { save.sound = !save.sound; persist(); renderSettings(); SFX.tap(); };
   $('#tutAgain').onclick = function () { save.tut = false; persist(); toast('İpuçları bir sonraki seferde görünecek.'); };
   $('#resetBtn').onclick = function () {
@@ -382,26 +382,33 @@ function enterBattle(G) {
 function persistGame() { if (B && !B.G.over) store(GAME_KEY, B.G); }
 
 /* ---------- kamera ---------- */
+var SIDE_MQ = window.matchMedia ? window.matchMedia('(orientation: landscape) and (max-height: 600px)') : { matches: false };
+function isSide() { return SIDE_MQ.matches; }
+function sideW() { var e = $('#panel'); return isSide() && e && !e.hidden ? e.getBoundingClientRect().width + 8 : 0; }
 function fitBounds(b) {
   var minx = Infinity, maxx = -Infinity, miny = Infinity, maxy = -Infinity;
   b.G.cells.forEach(function (c) { if (!c.t && !c.nb.some(function (j) { return b.G.cells[j].t; })) return; minx = Math.min(minx, c.x); maxx = Math.max(maxx, c.x); miny = Math.min(miny, c.y); maxy = Math.max(maxy, c.y); });
   b.bounds = { minx: minx - 1, maxx: maxx + 1, miny: miny - 1, maxy: maxy + 1 };
-  var top = topH(), bot = botH(), avH = Math.max(80, H - top - bot);
-  b.fit = Math.min(W / (b.bounds.maxx - b.bounds.minx), avH / (b.bounds.maxy - b.bounds.miny));
-  b.oy = top + avH / 2;
+  var top = topH(), bot = botH(), avH = Math.max(80, H - top - bot), avW = Math.max(120, W - sideW());
+  b.fit = Math.min(avW / (b.bounds.maxx - b.bounds.minx), avH / (b.bounds.maxy - b.bounds.miny));
+  b.oy = top + avH / 2; b.ox = avW / 2; b.aw = avW;
 }
-function topH() { var e = $('.hud-top'); return e ? e.getBoundingClientRect().height + 6 : 90; }
-function botH() { var e = $('#panel'); return e && !e.hidden ? e.getBoundingClientRect().height : 0; }
+function topH() { var e = $('.hud-top'); return e ? e.getBoundingClientRect().height + 4 : 50; }
+function botH() {
+  var a = $('#actbar'), e = $('#panel'), h = a && !a.hidden ? a.getBoundingClientRect().height + 6 : 0;
+  if (!isSide() && e && !e.hidden) h += e.getBoundingClientRect().height;
+  return h;
+}
 function focusHome(b) {
   var G = b.G, cap = G.cells.filter(function (c) { return c.cap && c.f === G.player; })[0] || G.cells.filter(function (c) { return c.f === G.player; })[0];
-  b.cam = { s: Math.max(b.fit, Math.min(40, b.fit * 2.6)), x: cap ? cap.x : 0, y: cap ? cap.y : 0 };
+  b.cam = { s: Math.max(b.fit, Math.min(42, b.fit * (isSide() ? 1.8 : 2.6))), x: cap ? cap.x : 0, y: cap ? cap.y : 0 };
 }
-function w2s(x, y) { return { x: (x - B.cam.x) * B.cam.s + W / 2, y: (y - B.cam.y) * B.cam.s + B.oy }; }
-function s2w(x, y) { return { x: (x - W / 2) / B.cam.s + B.cam.x, y: (y - B.oy) / B.cam.s + B.cam.y }; }
+function w2s(x, y) { return { x: (x - B.cam.x) * B.cam.s + B.ox, y: (y - B.cam.y) * B.cam.s + B.oy }; }
+function s2w(x, y) { return { x: (x - B.ox) / B.cam.s + B.cam.x, y: (y - B.oy) / B.cam.s + B.cam.y }; }
 function clampCam(b) {
   var bd = b.bounds;
   b.cam.s = Math.max(b.fit * 0.95, Math.min(64, b.cam.s));
-  var hw = W / 2 / b.cam.s, hh = (H - topH() - botH()) / 2 / b.cam.s;
+  var hw = b.aw / 2 / b.cam.s, hh = (H - topH() - botH()) / 2 / b.cam.s;
   var cx = (bd.minx + bd.maxx) / 2, cy = (bd.miny + bd.maxy) / 2;
   b.cam.x = hw * 2 >= bd.maxx - bd.minx ? cx : Math.max(bd.minx + hw, Math.min(bd.maxx - hw, b.cam.x));
   b.cam.y = hh * 2 >= bd.maxy - bd.miny ? cy : Math.max(bd.miny + hh, Math.min(bd.maxy - hh, b.cam.y));
@@ -413,212 +420,236 @@ function cellAt(sx, sy) {
 }
 function ensureVisible(ci) {
   var c = B.G.cells[ci], p = w2s(c.x, c.y);
-  if (p.x < 30 || p.x > W - 30 || p.y < topH() + 20 || p.y > H - botH() - 20) { B.camT = { x: c.x, y: c.y, t: 0 }; }
+  if (p.x < 30 || p.x > B.aw - 30 || p.y < topH() + 20 || p.y > H - botH() - 20) { B.camT = { x: c.x, y: c.y, t: 0 }; }
 }
 
-/* ---------- HUD ---------- */
+/* ---------- üst bilgi: sadece simgeler ve sayılar ---------- */
 function buildHud() {
   var G = B.G, f = G.factions[G.player];
   $('#hud').innerHTML =
-    '<div class="hud-top"><div class="hud-row"><button class="hbtn" id="hPause" aria-label="Menü">' + I.pause + '</button>' +
-    '<div class="who">' + ART.flag(f.id, 'f') + '<span class="nm">' + factionName(G, G.player) + '</span></div>' +
-    '<span class="pill turn" id="hCity"></span><span class="pill turn" id="hTurn"></span></div>' +
-    '<div class="hud-row res"><span class="pill" id="rG">' + I.coin + '<b></b><i></i></span><span class="pill" id="rF">' + I.food + '<b></b><i></i></span><span class="pill" id="rI">' + I.iron + '<b></b><i></i></span><span class="pill" id="rA">' + I.sword + '<b></b><i></i></span>' +
-    '<button class="hbtn" id="hFit" aria-label="Haritayı sığdır">' + I.fit + '</button></div></div>' +
-    '<div id="aiBar" class="aibar" hidden><span id="aiWho"></span><button class="btn small ghost" id="aiFast">Hızlı ⏩</button><button class="btn small ghost" id="aiSkip">Atla ⏭</button></div>' +
+    '<div class="hud-top"><button class="hbtn sm" id="hPause" aria-label="Menü">' + I.pause + '</button>' +
+    '<button class="res" id="hRes" aria-label="Kaynaklar">' + ART.flag(f.id, 'f') +
+    '<span id="rG">' + I.coin + '<b></b></span><span id="rF">' + I.food + '<b></b></span><span id="rI">' + I.iron + '<b></b></span>' +
+    '<span id="rA">' + I.sword + '<b></b></span><span id="rC">' + I.city + '<b></b></span><span id="rT">' + I.hourglass + '<b></b></span></button></div>' +
+    '<div id="aiBar" class="aibar" hidden><span id="aiWho"></span><button class="hbtn" id="aiFast" aria-label="Hızlı">' + I.ff + '</button><button class="hbtn" id="aiSkip" aria-label="Atla">' + I.skip + '</button></div>' +
+    '<div id="actbar" class="actbar"><button class="hbtn" id="pUndo" aria-label="Geri al">' + I.undo + '</button>' +
+    '<button class="hbtn" id="pNext" aria-label="Sıradaki birlik">' + I.next + '<em id="pLeft"></em></button>' +
+    '<button class="hbtn" id="hFit" aria-label="Haritayı sığdır">' + I.fit + '</button><span class="sp"></span>' +
+    '<button class="btn endturn" id="pEnd"></button></div>' +
     '<div id="hBanner" class="banner" hidden></div><div id="hTip" class="tip" hidden></div>';
   $('#hPause').onclick = pauseMenu;
+  $('#hRes').onclick = resInfo;
   $('#hFit').onclick = function () { SFX.tap(); if (B.cam.s > B.fit * 1.1) { B.cam.s = B.fit; B.cam.x = (B.bounds.minx + B.bounds.maxx) / 2; B.cam.y = (B.bounds.miny + B.bounds.maxy) / 2; } else focusHome(B); clampCam(B); dirty = true; };
   $('#aiFast').onclick = function () { B.fast = B.fast === 1 ? 3 : 1; this.classList.toggle('on', B.fast > 1); };
   $('#aiSkip').onclick = function () { B.skip = true; };
+  $('#pUndo').onclick = undoLast;
+  $('#pNext').onclick = function () { SFX.tap(); nextUnit(); };
+  $('#pEnd').onclick = function () {
+    var G = B.G, left = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
+    if (left && !B.confirmEnd) { B.confirmEnd = true; SFX.tap(); updateActbar(); clearTimeout(B.confirmT); B.confirmT = setTimeout(function () { if (B) { B.confirmEnd = false; updateActbar(); } }, 3000); return; }
+    B.confirmEnd = false; endPlayerTurn();
+  };
   updateHud();
   if (B.tut) showTip();
 }
 function updateHud() {
-  var G = B.G, f = G.factions[G.player], inc = income(G, G.player);
-  $('#hTurn').innerHTML = 'Tur <b>' + G.turn + '</b><span>/' + G.limit + '</span>';
-  var cs = cityShare(G, G.player);
-  $('#hCity').innerHTML = I.city + '<b>' + cs.mine + '</b><span>/' + cs.need + '</span>';
-  var set = function (id, v, d, warn) { var e = $(id); e.querySelector('b').textContent = Math.floor(v); var i = e.querySelector('i'); i.textContent = (d >= 0 ? '+' : '') + d; i.className = d < 0 ? 'neg' : ''; e.classList.toggle('warn', !!warn); };
-  set('#rG', f.gold, inc.g);
-  set('#rF', f.food, inc.food - inc.up, f.food + inc.food - inc.up < 0);
-  set('#rI', f.iron, inc.iron);
-  var ea = $('#rA'); ea.querySelector('b').textContent = armySize(G, G.player); ea.querySelector('i').textContent = '/' + armyCap(G, G.player); ea.querySelector('i').className = 'cap';
+  var G = B.G, f = G.factions[G.player], inc = income(G, G.player), cs = cityShare(G, G.player);
+  var set = function (id, txt, warn) { var e = $(id); e.querySelector('b').textContent = txt; e.classList.toggle('warn', !!warn); };
+  set('#rG', Math.floor(f.gold));
+  set('#rF', Math.floor(f.food), f.food + inc.food - inc.up < 0);
+  set('#rI', Math.floor(f.iron));
+  set('#rA', armySize(G, G.player) + '/' + armyCap(G, G.player));
+  set('#rC', cs.mine + '/' + cs.need);
+  set('#rT', G.turn, G.limit - G.turn < 5);
+  updateActbar();
+}
+function updateActbar() {
+  if (!B) return;
+  var G = B.G, bar = $('#actbar'); if (!bar) return;
+  bar.hidden = B.phase !== 'player';
+  var left = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
+  $('#pLeft').textContent = left || ''; $('#pLeft').hidden = !left;
+  $('#pUndo').disabled = !B.undo.length;
+  var e = $('#pEnd');
+  e.classList.toggle('warn', !!B.confirmEnd);
+  e.innerHTML = B.confirmEnd ? 'Bitir? <em>' + left + '</em>' : 'Devam et';
+}
+function resInfo() {
+  SFX.tap();
+  var G = B.G, f = G.factions[G.player], inc = income(G, G.player), cs = cityShare(G, G.player);
+  var sg = function (n) { return (n >= 0 ? '+' : '') + n; };
+  modal('<div class="chd">' + ART.flag(f.id) + '<b>' + factionName(G, G.player) + '</b></div>' +
+    '<div class="rinfo">' +
+    '<div>' + I.coin + '<span>Altın</span><b>' + Math.floor(f.gold) + '</b><i>' + sg(inc.g) + ' / tur</i></div>' +
+    '<div>' + I.food + '<span>Gıda</span><b>' + Math.floor(f.food) + '</b><i class="' + (inc.food - inc.up < 0 ? 'bad' : '') + '">' + sg(inc.food - inc.up) + ' / tur</i></div>' +
+    '<div>' + I.iron + '<span>Demir</span><b>' + Math.floor(f.iron) + '</b><i>' + sg(inc.iron) + ' / tur</i></div>' +
+    '<div>' + I.sword + '<span>Ordu</span><b>' + armySize(G, G.player) + '</b><i>sınır ' + armyCap(G, G.player) + '</i></div>' +
+    '<div>' + I.city + '<span>Şehir</span><b>' + cs.mine + '</b><i>zafer için ' + cs.need + '</i></div>' +
+    '<div>' + I.hourglass + '<span>Tur</span><b>' + G.turn + '</b><i>sınır ' + G.limit + ' · ★★★ ' + G.par + '</i></div></div>' +
+    '<div class="row"><button class="btn" id="rOk">Tamam</button></div>');
+  $('#rOk').onclick = closeModal;
 }
 var bannerT = 0;
 function banner(t, ms) { var el = $('#hBanner'); el.textContent = t; el.hidden = false; clearTimeout(bannerT); bannerT = setTimeout(function () { el.hidden = true; }, ms || 1400); }
 var TIPS = [
-  'Hoş geldin komutan! Haritada <b>parlak çerçeveli</b> birlikler senin. Birine dokun.',
-  'Açık renkli hücreler gidebileceğin yerler. Birine dokun ve yürü. <b>Kırmızı halka</b> saldırabileceğin düşman demek.',
-  'Generalin henüz bir birliğe atanmadı. Birlik kartında <b>General ata</b> düğmesine bas: birlik güçlenir.',
-  '<b>Şehrine dokun</b>: asker al, şehri ve demirciyi geliştir. Altın, gıda ve demir sağ üstte; artı/eksi tur başı değişim.',
-  'Hamlelerin bitince <b>Devam et</b>’e bas. Rakipler oynar, sonra sıra yine sende. Bütün rakipleri yık!'
+  'Hoş geldin komutan! Parlak halkalı birlikler senin. Birine dokun.',
+  'Açık hücrelere yürür, <b>kırmızı halkalı</b> düşmana saldırırsın.',
+  'Kartta <b>general</b> simgesine dokunup generalini ata: birlik güçlenir.',
+  '<b>Şehrine dokun</b>: asker al, şehri geliştir. Üstteki şeride dokunursan kaynak ayrıntıları açılır.',
+  'Hamlelerin bitince sağ alttaki <b>Devam et</b>. Sol alttaki ok son hamleyi geri alır.'
 ];
 function showTip() {
   var el = $('#hTip');
   if (!B || !B.tut || B.tut > TIPS.length) { el.hidden = true; return; }
   el.hidden = false;
-  el.innerHTML = '<span>' + TIPS[B.tut - 1] + '</span><button id="tipNext">' + (B.tut < TIPS.length ? 'Sonraki' : 'Tamam') + '</button>';
+  el.innerHTML = '<span>' + TIPS[B.tut - 1] + '</span><button id="tipNext">' + (B.tut < TIPS.length ? '›' : '✓') + '</button>';
   $('#tipNext').onclick = function () { B.tut++; if (B.tut > TIPS.length) { save.tut = true; persist(); } showTip(); };
 }
 
-/* ---------- alt panel ---------- */
+/* ---------- seçim paneli (yalnız bir şey seçiliyken) ---------- */
 function panelHTML() {
   var G = B.G;
-  if (B.phase === 'ai') return '';
-  var leftN = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
-  var end = B.confirmEnd ? '<button class="btn endturn warn" id="pEnd">' + leftN + ' birlik bekliyor · Yine de bitir</button>' : '<button class="btn endturn" id="pEnd">Devam et</button>';
-  var nxt = '<button class="hbtn" id="pUndo" aria-label="Geri al"' + (B.undo.length ? '' : ' disabled') + '>' + I.undo + '</button><button class="hbtn" id="pNext" aria-label="Sıradaki birlik">' + I.next + '</button>';
-  var body = '';
-  if (B.preview) body = previewHTML();
-  else if (B.sel) body = unitHTML(unitById(G, B.sel));
-  else if (B.view !== null && B.view !== undefined) body = cellHTML(G.cells[B.view]);
-  else {
-    var left = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
-    body = '<div class="pinfo"><b>' + (left ? 'Emir bekleniyor' : 'Bütün birlikler hazır') + '</b><span class="muted">Birliğe, şehre ya da boş araziye dokun. Nişangâh düğmesi sıradaki birliği seçer, ok düğmesi son hamleyi geri alır.</span></div>';
-  }
-  var cs = cityShare(G, G.player);
-  var mid = B.confirmEnd ? '' : '<span class="pmid">' + (leftN ? '<b>' + leftN + '</b> birlik hamle bekliyor' : 'Hamleler tamam') + '</span>';
-  return '<div class="pbody">' + body + '</div><div class="pfoot">' + nxt + mid + end + '</div>';
+  if (B.preview) return previewHTML();
+  if (B.sel) return unitHTML(unitById(G, B.sel));
+  if (B.view !== null && B.view !== undefined) return cellHTML(G.cells[B.view]);
+  return '';
 }
 function hasMoves(u) { return !UT[u.type].tower && (u.mp > 0 || (!u.acted && hasTarget(u))); }
 function hasTarget(u) { var G = B.G; return G.units.some(function (e) { return canAttack(G, u, e); }); }
 function statChips(G, u) {
-  var T = UT[u.type];
   return '<span>' + I.sword + Math.round(stat(G, Object.assign({}, u, { hp: 100 }), 'atk', null, G.cells[u.c], true)) + '</span>' +
     '<span>' + I.shield + Math.round(stat(G, Object.assign({}, u, { hp: 100 }), 'def', null, G.cells[u.c], false) * terrainMul(G, G.cells[u.c], u)) + '</span>' +
-    '<span>' + I.boot + unitMv(G, u) + '</span>' + (unitRange(G, u) > 1 ? '<span>↗ ' + unitRange(G, u) + '</span>' : '');
+    (UT[u.type].tower ? '' : '<span>' + I.boot + (u.mp > 0 ? u.mp : 0) + '/' + unitMv(G, u) + '</span>') + (unitRange(G, u) > 1 ? '<span>' + I.bow + unitRange(G, u) + '</span>' : '');
 }
-function unitName(u) { return u.emb ? UT[u.type].name + ' (nakliyede)' : u.build ? 'Kule inşaatı' : UT[u.type].name; }
+function unitName(u) { return u.emb ? UT[u.type].name : u.build ? 'İnşaat' : UT[u.type].name; }
 function figType(u) { return u.emb ? 'nakliye' : u.type === 'kule' ? (u.build ? 'insaat' : 'kule') : u.type; }
+function hpBar(hp, to) {
+  var c = hp > 60 ? '#6dbb6f' : hp > 30 ? '#e0b322' : '#d0453a';
+  return '<div class="hpb"><i style="width:' + Math.max(0, hp) + '%;background:' + c + '"></i>' + (to !== undefined ? '<u style="left:' + Math.max(0, to) + '%;width:' + Math.max(0, hp - Math.max(0, to)) + '%"></u>' : '') + '<span>' + Math.max(0, Math.round(hp)) + (to !== undefined ? ' → ' + Math.max(0, Math.round(to)) : '') + '</span></div>';
+}
 function unitHTML(u) {
   var G = B.G; if (!u) return '';
   var mine = u.f === G.player, g = genOf(G, u), col = u.f < 0 ? NEUTRAL_COL : FACTIONS[G.factions[u.f].id].col;
-  var s = '<div class="ucard"><div class="ufig">' + ART.figInline(figType(u), col) + '</div><div class="umain">' +
-    '<div class="uh"><b>' + unitName(u) + '</b><span class="ulv">' + '▲'.repeat(u.lvl) + '</span><span class="muted">' + esc(factionName(G, u.f)) + '</span></div>' +
-    '<div class="hpb"><i style="width:' + Math.max(0, u.hp) + '%;background:' + (u.hp > 60 ? '#6dbb6f' : u.hp > 30 ? '#e0b322' : '#d0453a') + '"></i><span>' + Math.max(0, Math.round(u.hp)) + ' / 100</span></div>' +
-    '<div class="ust">' + statChips(G, u) + '</div>';
+  var tags = '';
+  if (u.emb) tags += '<span class="tag">' + I.anchor + '</span>';
+  if (u.build) tags += '<span class="tag">' + I.hammer + u.build + '</span>';
+  if (u.chase && u.mp > 0) tags += '<span class="tag good">' + I.boot + '+1</span>';
+  var s = '<div class="ucard"><div class="ufig' + (mine && !hasMoves(u) && !UT[u.type].tower ? ' done' : '') + '">' + ART.figInline(figType(u), col) + '</div><div class="umain">' +
+    '<div class="uh"><b>' + unitName(u) + '</b><span class="ulv">' + '▲'.repeat(u.lvl) + '</span>' + tags + (mine || u.f < 0 ? '' : ART.flag(G.factions[u.f].id, 'fl mini')) + '</div>' +
+    hpBar(u.hp) + '<div class="ust">' + statChips(G, u) + '</div></div>';
+  // sağdaki eylem simgeleri
+  var acts = '';
   if (g) {
-    var gb = Math.round((genMul(g) - 1) * 100), sb = Math.round((specMul(g) - 1) * 100), isSpec = g.spec === u.type || (g.spec === 'kale' && G.cells[u.c].t >= 3);
-    s += '<div class="ugen"><span class="gp">' + ART.portrait(g, G.era) + '</span><span><b>' + esc(g.name) + '</b> · ' + ERAS[G.era].ranks[g.rank - 1] + ' ' + insignia(g.rank) +
-      '<br><span class="good">Güç +%' + gb + (isSpec ? ', uzman +%' + sb : '') + '</span>' + (g.skill ? ' <span class="muted">· ' + SKILLS[g.skill].name + '</span>' : '') + '</span>' + (mine ? '<button class="btn small ghost" id="uRecall">Geri çağır</button>' : '') + '</div>';
-  } else if (mine && !UT[u.type].tower) {
-    var free = freeGenerals(G, G.player), resting = G.factions[G.player].generals.filter(function (x) { return x.rest; });
-    if (free.length) s += '<div class="ugen"><button class="btn small" id="uAssign">General ata (' + free.length + ')</button></div>';
-    else if (resting.length) s += '<div class="ugen muted">' + resting.map(function (x) { return esc(x.name) + ' ' + Math.max(1, x.rest - G.turn) + ' tur dinleniyor'; }).join(' · ') + '</div>';
+    var isSpec = g.spec === u.type || (g.spec === 'kale' && G.cells[u.c].t >= 3);
+    acts += '<button class="gbtn' + (isSpec ? ' spec' : '') + '" id="uGen" aria-label="General">' + ART.portrait(g, G.era) + '<em>+' + Math.round((genMul(g) * (isSpec ? specMul(g) : 1) - 1) * 100) + '%</em></button>';
+  } else if (mine && !UT[u.type].tower && freeGenerals(G, G.player).length) {
+    acts += '<button class="ibtn gold" id="uAssign" aria-label="General ata">' + I.genplus + '</button>';
   }
-  s += '</div></div>';
   if (mine) {
-    var acts = [];
-    if (UT[u.type].tower) acts.push('<span class="muted">' + (u.build ? 'İnşaat: ' + u.build + ' tur sonra kule olur. Saldırıya uğrarsa karşılık veremez.' : 'Kule saldırmaz; saldırana karşılık verir.') + '</span>');
-    else if (u.chase && u.mp > 0) acts.push('<span class="good">Takip: 1 hücre daha ilerleyebilir</span>');
-    else if (!u.acted && B.targets.length) acts.push('<span class="muted">' + B.targets.length + ' hedef menzilde</span>');
-    else if (!hasMoves(u)) acts.push('<span class="muted">Bu tur hamlesini yaptı</span>');
-    else if (u.mp <= 0) acts.push('<span class="muted">Hareketi bitti</span>');
     var c = G.cells[u.c];
-    if (c.f === G.player && c.t >= 2) acts.push('<button class="btn small ghost" id="uCell">' + (c.t === 3 ? I.city : c.t === 4 ? I.castle : I.wheat) + ' ' + (c.t === 3 ? 'Şehir' : c.t === 4 ? 'Kale' : 'Tarla') + '</button>');
-    if (hasMoves(u)) acts.push('<button class="btn small ghost" id="uWait">Beklet</button>');
-    s += '<div class="uacts">' + acts.join('') + '</div>';
+    if (c.f === G.player && c.t >= 2) acts += '<button class="ibtn" id="uCell" aria-label="Yapı">' + (c.t === 3 ? I.city : c.t === 4 ? I.castle : I.wheat) + '</button>';
+    if (hasMoves(u)) acts += '<button class="ibtn" id="uWait" aria-label="Beklet">' + I.hourglass + '</button>';
   }
-  return s;
+  return s + (acts ? '<div class="uacts">' + acts + '</div>' : '') + '</div>';
 }
 function previewHTML() {
   var G = B.G, a = unitById(G, B.sel), d = unitById(G, B.preview);
   if (!a || !d) { B.preview = null; return ''; }
   var p = predict(G, a, d);
   var colA = FACTIONS[G.factions[a.f].id].col, colD = d.f < 0 ? NEUTRAL_COL : FACTIONS[G.factions[d.f].id].col;
-  var adv = UT[a.type].beats === d.type ? '<span class="good">Avantajlı</span>' : UT[d.type].beats === a.type && !d.emb ? '<span class="bad">Dezavantajlı</span>' : '';
-  var cd = G.cells[d.c], ter = terrainMul(G, cd, d);
-  return '<div class="pv"><div class="pvs"><div class="ufig sm">' + ART.figInline(figType(a), colA) + '</div><div><b>' + unitName(a) + '</b><div class="hpb"><i style="width:' + a.hp + '%"></i><span>' + Math.round(a.hp) + ' → ' + Math.max(0, Math.round(a.hp - p.back)) + '</span></div></div></div>' +
-    '<div class="vs">' + I.sword + '</div>' +
-    '<div class="pvs"><div class="ufig sm">' + ART.figInline(figType(d), colD) + '</div><div><b>' + unitName(d) + '</b><div class="hpb"><i style="width:' + d.hp + '%"></i><span>' + Math.round(d.hp) + ' → ' + Math.max(0, Math.round(d.hp - p.dmg)) + '</span></div></div></div></div>' +
-    '<div class="pvnote">' + adv + (ter > 1.01 ? '<span>Arazi savunması ×' + ter.toFixed(2) + '</span>' : '') + (p.kill ? '<span class="good">Düşman yok olur</span>' : '') + (p.back === 0 && !p.kill ? '<span class="good">Karşılık yok</span>' : '') + (p.die ? '<span class="bad">Birliğin ölebilir</span>' : '') + '<span class="muted">±%10 şans</span></div>' +
-    '<div class="row"><button class="btn small ghost" id="pvNo">Vazgeç</button><button class="btn small" id="pvGo">' + I.sword + ' Saldır</button></div>';
+  var tags = '';
+  if (UT[a.type].beats === d.type && !a.emb) tags += '<span class="tag good">×1,5</span>';
+  if (UT[d.type].beats === a.type && !d.emb) tags += '<span class="tag bad">×1,5</span>';
+  if (terrainMul(G, G.cells[d.c], d) > 1.01) tags += '<span class="tag">' + I.shield + '×' + terrainMul(G, G.cells[d.c], d).toFixed(1).replace('.', ',') + '</span>';
+  if (p.die) tags += '<span class="tag bad">' + I.skull + '</span>';
+  return '<div class="pv"><div class="pvs"><div class="ufig sm">' + ART.figInline(figType(a), colA) + '</div>' + hpBar(a.hp, a.hp - p.back) + '</div>' +
+    '<div class="vs">' + I.sword + tags + '</div>' +
+    '<div class="pvs"><div class="ufig sm">' + ART.figInline(figType(d), colD) + '</div>' + hpBar(d.hp, d.hp - p.dmg) + '</div>' +
+    '<div class="pvb"><button class="ibtn" id="pvNo" aria-label="Vazgeç">✕</button><button class="btn" id="pvGo">' + I.sword + ' Saldır</button></div></div>';
 }
 function resTag(o) { return (o.gold ? I.coin + o.gold : '') + (o.food ? I.food + o.food : '') + (o.iron ? I.iron + o.iron : ''); }
 function costTag(g, i) { return '<span class="cost">' + I.coin + g + (i ? ' ' + I.iron + i : '') + '</span>'; }
+function tile(attr, icon, title, cost, info) {
+  // devre dışı karo dokununca sebebini söyler
+  return '<button class="tile' + (info.ok ? '' : ' off') + '" ' + attr + (info.ok ? '' : ' data-why="' + esc(info.why) + '"') + '>' + icon + '<span class="tt">' + title + '</span>' + cost + '</button>';
+}
 function cellHTML(c) {
   var G = B.G, f = c.f, mine = f === G.player && c.t;
-  if (!c.t) return '<div class="pinfo"><b>Deniz</b><span class="muted">' + (G.navy ? 'Limandan çıkan birlikler nakliye ile geçer. Kadırgalar denizi korur.' : 'Bu haritada deniz yolu yok.') + '</span></div>';
-  var kind = c.t === 3 ? (c.cap ? 'Başkent' : 'Şehir') : c.t === 4 ? 'Kale' : c.t === 2 ? 'Tarla' : (c.mt ? 'Dağlık arazi' : 'Boş arazi');
-  var s = '<div class="chd">' + (f >= 0 ? ART.flag(G.factions[f].id) : '') + '<div style="min-width:0"><b>' + (c.nm ? esc(c.nm) + ' · ' : '') + kind + (c.t >= 2 ? ' <span class="lvtag">Sv ' + c.lv + '</span>' : '') + '</b><br><span class="muted">' + esc(factionName(G, f)) + (c.mt ? ' · dağ +%30 savunma' : '') + '</span></div></div>';
-  if (c.t === 3) {
-    s += '<div class="facts"><span class="fact">' + I.coin + '+' + Math.round((CITY_INCOME[c.lv] + c.port * 2) * (G.factions[f] ? G.factions[f].eco : 1)) + '</span><span class="fact">' + I.food + '+1</span>' +
-      (c.smith ? '<span class="fact">' + I.hammer + 'Demirci ' + c.smith + ' · ' + I.iron + '+' + c.smith + '</span>' : '') + (c.port ? '<span class="fact">' + I.anchor + 'Liman ' + c.port + '</span>' : '') +
-      '<span class="fact">' + I.shield + '+%' + (8 * c.lv) + '</span></div>';
-  }
-  if (c.t === 4) s += '<div class="facts"><span class="fact">' + I.shield + 'Savunma +%' + Math.round(CASTLE_DEF[c.lv] * 100) + '</span><span class="fact">İyileşme +18</span></div>';
-  if (c.t === 2) s += '<div class="facts"><span class="fact">' + I.food + '+' + FARM_FOOD[c.lv] + ' gıda</span></div>';
+  if (!c.t) return '<div class="chd">' + I.anchor + '<b>Deniz</b></div>';
+  var kindIcon = c.t === 3 ? I.city : c.t === 4 ? I.castle : c.t === 2 ? I.wheat : c.mt ? I.mount : I.flag;
+  var facts = '';
+  if (c.t === 3) facts += '<span>' + I.coin + '+' + Math.round((CITY_INCOME[c.lv] + c.port * 2) * (G.factions[f] ? G.factions[f].eco : 1)) + '</span>' + (c.smith ? '<span>' + I.hammer + c.smith + '</span>' : '') + (c.port ? '<span>' + I.anchor + c.port + '</span>' : '') + '<span>' + I.shield + '+' + (8 * c.lv) + '%</span>';
+  if (c.t === 4) facts += '<span>' + I.shield + '+' + Math.round(CASTLE_DEF[c.lv] * 100) + '%</span>';
+  if (c.t === 2) facts += '<span>' + I.food + '+' + FARM_FOOD[c.lv] + '</span>';
+  if (c.mt) facts += '<span>' + I.mount + '+30%</span>';
+  var s = '<div class="chd">' + (f >= 0 ? ART.flag(G.factions[f].id) : '') + kindIcon + '<b>' + (c.nm ? esc(c.nm) : (c.t === 1 ? (c.mt ? 'Dağ' : 'Arazi') : c.t === 2 ? 'Tarla' : '')) + '</b>' + (c.t >= 2 ? '<span class="lvtag">' + c.lv + '</span>' : '') + '<span class="facts">' + facts + '</span></div>';
   if (!mine) return s;
-  var ups = [];
-  function up(what, label, info, fx) {
-    if (!info) return;
-    ups.push('<button class="upb" data-up="' + what + '"' + (info.ok ? '' : ' disabled') + '><span class="un">' + label + ' → ' + info.next + '</span><span class="ue">' + fx + '</span>' + costTag(info.g, info.i) + (info.ok ? '' : '<span class="why">' + info.why + '</span>') + '</button>');
+  var cols = FACTIONS[G.factions[f].id].col, tiles = [];
+  if (c.t === 3 || c.t === 4) {
+    var types = c.t === 3 ? ['kilic', 'okcu', 'atli'].concat(G.navy ? ['kadirga'] : []) : ['kilic', 'okcu', 'atli'];
+    types.forEach(function (t) { var r = recruitInfo(G, c, t); tiles.push(tile('data-rec="' + t + '"', '<span class="rf">' + ART.figInline(t, cols) + '</span>', UT[t].name, costTag(r.g, r.i), r)); });
   }
+  function up(what, icon, label, info) { if (info) tiles.push(tile('data-up="' + what + '"', '<span class="ri">' + icon + '</span>', label + ' ' + info.next, costTag(info.g, info.i), info)); }
   if (c.t === 3) {
-    var ci = upgradeInfo(G, c, 'city'); if (ci) up('city', 'Şehir', ci, '+' + (CITY_INCOME[ci.next] - CITY_INCOME[c.lv]) + ' altın, +%8 savunma');
-    var si = upgradeInfo(G, c, 'smith'); if (si) up('smith', c.smith ? 'Demirci' : 'Demirci kur', si, si.next === 1 ? 'Atlı açılır, +1 demir' : 'Seviye ' + si.next + ' birlik, +1 demir');
-    var pi = upgradeInfo(G, c, 'port'); if (pi) up('port', c.port ? 'Liman' : 'Liman kur', pi, pi.next === 1 ? 'Kadırga, nakliye, +2 altın' : 'Tecrübeli gemi, +2 altın');
-    s += '<div class="rec">' + ['kilic', 'okcu', 'atli', 'kadirga'].filter(function (t) { return !UT[t].naval || G.navy; }).map(function (t) {
-      var r = recruitInfo(G, c, t);
-      return '<button class="recb" data-rec="' + t + '"' + (r.ok ? '' : ' disabled') + '><span class="rf">' + ART.figInline(t, FACTIONS[G.factions[f].id].col) + '</span><span class="rn">' + UT[t].name + '</span>' + costTag(r.g, r.i) + (r.ok ? '' : '<span class="why">' + r.why + '</span>') + '</button>';
-    }).join('') + '</div>';
+    up('city', I.city, 'Şehir', upgradeInfo(G, c, 'city'));
+    up('smith', I.hammer, 'Demirci', upgradeInfo(G, c, 'smith'));
+    up('port', I.anchor, 'Liman', upgradeInfo(G, c, 'port'));
   }
-  if (c.t === 4) {
-    s += '<div class="rec">' + ['kilic', 'okcu', 'atli'].map(function (t) {
-      var r = recruitInfo(G, c, t);
-      return '<button class="recb" data-rec="' + t + '"' + (r.ok ? '' : ' disabled') + '><span class="rf">' + ART.figInline(t, FACTIONS[G.factions[f].id].col) + '</span><span class="rn">' + UT[t].name + '</span>' + costTag(r.g, r.i) + (r.ok ? '' : '<span class="why">' + r.why + '</span>') + '</button>';
-    }).join('') + '</div>';
-  }
+  if (c.t === 4) up('castle', I.castle, 'Kale', upgradeInfo(G, c, 'castle'));
+  if (c.t === 2) up('farm', I.wheat, 'Sulama', upgradeInfo(G, c, 'farm'));
+  if (c.t === 1 && !unitAt(G, c.i)) { var ti = towerInfo(G, c, f); tiles.push(tile('data-tower="1"', '<span class="rf">' + ART.figInline('kule', cols) + '</span>', 'Kule', costTag(ti.g, ti.i), ti)); }
+  if (tiles.length) s += '<div class="tiles">' + tiles.join('') + '</div>';
   if (c.t === 3 && c.cap) {
-    s += '<div class="eyebrow" style="margin-top:2px">Ticaret · bu tur ' + (TRADE_MAX - (G.factions[f].trades || 0)) + '/' + TRADE_MAX + ' hak</div><div class="trades">' + TRADES.map(function (t) {
+    s += '<div class="trades"><span class="tl">' + I.scale + '<em>' + (TRADE_MAX - (G.factions[f].trades || 0)) + '</em></span>' + TRADES.map(function (t) {
       var r = tradeInfo(G, f, t.id);
-      return '<button class="trb" data-tr="' + t.id + '"' + (r.ok ? '' : ' disabled') + '><span class="un">' + t.name + '</span><span class="tx">' + resTag(t.give) + ' → ' + resTag(t.get) + '</span></button>';
+      return '<button class="trb' + (r.ok ? '' : ' off') + '" data-tr="' + t.id + '"' + (r.ok ? '' : ' data-why="' + esc(r.why) + '"') + '>' + resTag(t.give) + '<span class="ar">›</span>' + resTag(t.get) + '</button>';
     }).join('') + '</div>';
   }
-  if (c.t === 1 && !unitAt(G, c.i)) {
-    var ti = towerInfo(G, c, f);
-    ups.push('<button class="upb" data-tower="1"' + (ti.ok ? '' : ' disabled') + '><span class="un">' + I.castle + ' Kule inşa et</span><span class="ue">2 turda biter · savunma ' + UT.kule.def + ' · her tur bir kule</span>' + costTag(ti.g, ti.i) + (ti.ok ? '' : '<span class="why">' + ti.why + '</span>') + '</button>');
-  }
-  if (c.t === 4) { var ki = upgradeInfo(G, c, 'castle'); if (ki) up('castle', 'Kale', ki, 'Savunma +%' + Math.round(CASTLE_DEF[ki.next] * 100)); }
-  if (c.t === 2) { var fi2 = upgradeInfo(G, c, 'farm'); if (fi2) up('farm', 'Sulama', fi2, '+2 gıda'); }
-  if (ups.length) s += '<div class="ups">' + ups.join('') + '</div>';
   return s;
 }
+var UP_FX = { city: 'Gelir ve savunma arttı', smith: 'Demirci geliştirildi', port: 'Liman geliştirildi', castle: 'Kale güçlendi', farm: 'Tarla sulandı' };
 function renderPanel() {
   var el = $('#panel');
-  if (!B || B.phase !== 'player') { el.hidden = true; return; }
-  el.hidden = false;
-  el.innerHTML = panelHTML();
+  var html = B && B.phase === 'player' ? panelHTML() : '';
+  el.hidden = !html;
+  el.innerHTML = html;
+  if (B) updateActbar();
+  if (!B || !html) { if (B) { fitBounds(B); clampCam(B); dirty = true; } return; }
   var G = B.G;
-  $('#pEnd').onclick = function () {
-    var left = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
-    if (left && !B.confirmEnd) { B.confirmEnd = true; SFX.tap(); renderPanel(); clearTimeout(B.confirmT); B.confirmT = setTimeout(function () { if (B) { B.confirmEnd = false; renderPanel(); } }, 3500); return; }
-    B.confirmEnd = false; endPlayerTurn();
-  };
-  $('#pNext').onclick = function () { SFX.tap(); nextUnit(); };
+  el.querySelectorAll('[data-why]').forEach(function (b) { b.onclick = function (ev) { ev.stopPropagation(); toast(b.dataset.why); }; });
   if ($('#pvNo')) $('#pvNo').onclick = function () { B.preview = null; renderPanel(); dirty = true; };
   if ($('#pvGo')) $('#pvGo').onclick = doAttack;
   if ($('#uWait')) $('#uWait').onclick = function () { var u = unitById(G, B.sel); if (u) act(function () { u.acted = true; u.mp = 0; return true; }); deselect(); nextUnit(true); };
-  $('#pUndo').onclick = undoLast;
   if ($('#uCell')) $('#uCell').onclick = function () { var u = unitById(G, B.sel); B.view = u.c; B.sel = 0; B.reach = null; B.targets = []; renderPanel(); dirty = true; };
   if ($('#uAssign')) $('#uAssign').onclick = assignMenu;
-  if ($('#uRecall')) $('#uRecall').onclick = function () { var u = unitById(G, B.sel); if (act(function () { return recallGeneral(G, G.player, u.id); })) { toast('General geri çağrıldı. Sonraki tur yeniden atanabilir.'); selectUnit(u); } };
-  el.querySelectorAll('[data-up]').forEach(function (b) { b.onclick = function () {
-    if (act(function () { return upgrade(G, B.view, b.dataset.up); })) { SFX.build(); fx({ k: 'text', c: B.view, txt: 'Geliştirildi', col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; }
+  if ($('#uGen')) $('#uGen').onclick = genMenu;
+  el.querySelectorAll('[data-up]:not(.off)').forEach(function (b) { b.onclick = function () {
+    var what = b.dataset.up;
+    if (act(function () { return upgrade(G, B.view, what); })) { SFX.build(); fx({ k: 'text', c: B.view, txt: UP_FX[what], col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; }
   }; });
-  el.querySelectorAll('[data-tr]').forEach(function (b) { b.onclick = function () {
+  el.querySelectorAll('[data-tr]:not(.off)').forEach(function (b) { b.onclick = function () {
     if (act(function () { return trade(G, G.player, b.dataset.tr); })) { SFX.coin(); G.log.length = 0; updateHud(); renderPanel(); }
   }; });
-  el.querySelectorAll('[data-tower]').forEach(function (b) { b.onclick = function () {
+  el.querySelectorAll('[data-tower]:not(.off)').forEach(function (b) { b.onclick = function () {
     var u = act(function () { return buildTower(G, B.view, G.player); });
-    if (u) { SFX.build(); G.log.length = 0; fx({ k: 'ring', c: u.c, col: '#e8c977' }); fx({ k: 'text', c: u.c, txt: 'İnşaat başladı', col: '#fff' }); updateHud(); renderPanel(); dirty = true; }
+    if (u) { SFX.build(); G.log.length = 0; fx({ k: 'ring', c: u.c, col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; }
   }; });
-  el.querySelectorAll('[data-rec]').forEach(function (b) { b.onclick = function () {
+  el.querySelectorAll('[data-rec]:not(.off)').forEach(function (b) { b.onclick = function () {
     var u = act(function () { return recruit(G, B.view, b.dataset.rec); });
-    if (u) { SFX.coin(); fx({ k: 'ring', c: u.c, col: '#e8c977' }); fx({ k: 'text', c: u.c, txt: UT[u.type].name, col: '#fff' }); updateHud(); renderPanel(); dirty = true; G.log.length = 0; }
+    if (u) { SFX.coin(); fx({ k: 'ring', c: u.c, col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; G.log.length = 0; }
   }; });
   fitBounds(B); clampCam(B); dirty = true;
+}
+function genMenu() {
+  var G = B.G, u = unitById(G, B.sel), g = genOf(G, u); if (!g) return;
+  var mine = u.f === G.player, si = ART.specInfo(g.spec), isSpec = g.spec === u.type || (g.spec === 'kale' && G.cells[u.c].t >= 3);
+  modal('<div class="gm"><span class="gmp">' + ART.portrait(g, G.era) + '</span><div><h3>' + esc(g.name) + '</h3><div class="muted">' + ERAS[G.era].ranks[g.rank - 1] + ' ' + insignia(g.rank) + '</div>' +
+    '<span class="spec sm" style="--sc:' + si.col + '"><svg viewBox="0 0 24 24">' + si.icon + '</svg>' + si.name + '</span></div></div>' +
+    '<div class="rinfo"><div>' + I.sword + '<span>Güç</span><b>+' + Math.round((genMul(g) - 1) * 100) + '%</b><i>' + (isSpec ? 'uzman: +' + Math.round((specMul(g) - 1) * 100) + '% daha' : 'uzmanlık dışı') + '</i></div>' +
+    (g.skill ? '<div>' + I.medal + '<span>' + SKILLS[g.skill].name + '</span><i style="grid-column:2/-1">' + SKILLS[g.skill].desc + '</i></div>' : '') + '</div>' +
+    '<div class="row">' + (mine ? '<button class="btn ghost" id="gRecall">Geri çağır</button>' : '') + '<button class="btn" id="gOk">Tamam</button></div>');
+  $('#gOk').onclick = closeModal;
+  if ($('#gRecall')) $('#gRecall').onclick = function () { closeModal(); if (act(function () { return recallGeneral(G, G.player, u.id); })) { toast('General geri çağrıldı'); selectUnit(u); } };
 }
 function assignMenu() {
   var G = B.G, u = unitById(G, B.sel), free = freeGenerals(G, G.player);
@@ -892,9 +923,9 @@ cv.addEventListener('pointermove', function (ev) {
     var ids = Object.keys(ptrs); if (ids.length < 2) return;
     var a = ptrs[ids[0]], c = ptrs[ids[1]];
     var d = Math.hypot(a.x - c.x, a.y - c.y), mx = (a.x + c.x) / 2, my = (a.y + c.y) / 2;
-    var wx = (gest.mx - W / 2) / gest.s + gest.cx, wy = (gest.my - B.oy) / gest.s + gest.cy;
+    var wx = (gest.mx - B.ox) / gest.s + gest.cx, wy = (gest.my - B.oy) / gest.s + gest.cy;
     B.cam.s = gest.s * d / gest.d; clampCam(B);
-    B.cam.x = wx - (mx - W / 2) / B.cam.s; B.cam.y = wy - (my - B.oy) / B.cam.s; clampCam(B); dirty = true; return;
+    B.cam.x = wx - (mx - B.ox) / B.cam.s; B.cam.y = wy - (my - B.oy) / B.cam.s; clampCam(B); dirty = true; return;
   }
   if (Math.hypot(p.x - p.x0, p.y - p.y0) > 9) gest.moved = true;
   if (gest.moved) { B.cam.x = gest.cx - (p.x - p.x0) / B.cam.s; B.cam.y = gest.cy - (p.y - p.y0) / B.cam.s; clampCam(B); B.camT = null; dirty = true; }
@@ -912,7 +943,7 @@ cv.addEventListener('wheel', function (ev) {
   if (!B) return; ev.preventDefault();
   var r = cv.getBoundingClientRect(), x = ev.clientX - r.left, y = ev.clientY - r.top, w = s2w(x, y);
   B.cam.s *= ev.deltaY < 0 ? 1.12 : 0.89; clampCam(B);
-  B.cam.x = w.x - (x - W / 2) / B.cam.s; B.cam.y = w.y - (y - B.oy) / B.cam.s; clampCam(B); dirty = true;
+  B.cam.x = w.x - (x - B.ox) / B.cam.s; B.cam.y = w.y - (y - B.oy) / B.cam.s; clampCam(B); dirty = true;
 }, { passive: false });
 
 /* ---------- çizim ---------- */

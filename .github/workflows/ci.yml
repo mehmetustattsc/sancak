@@ -33,6 +33,7 @@ jobs:
           python3 tests/smoke.py
           python3 tests/italy.py
           python3 tests/features.py
+          python3 tests/landscape.py
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
