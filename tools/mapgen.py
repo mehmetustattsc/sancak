@@ -85,6 +85,10 @@ def build(spec):
     for k in list(land):
         if comp[k] != main and (not spec['navy'] or size[comp[k]] < spec.get('island_min', 2)):
             cells[k] = {'land': 0, 'lon': cells[k]['lon'], 'lat': cells[k]['lat']}; land.discard(k)
+    # deniz yaz: kaba ızgarada kaybolan dar denizler (Marmara gibi)
+    for lon, lat in spec.get('sea_at', []):
+        k = min(land, key=lambda k: ((cells[k]['lon'] - lon) * K) ** 2 + (cells[k]['lat'] - lat) ** 2)
+        cells[k] = {'land': 0, 'lon': cells[k]['lon'], 'lat': cells[k]['lat']}; land.discard(k)
     # sea: keep only sea cells within 2 of land (navy) else within 1 (decor)
     keep = {}
     for k, c in cells.items():
@@ -146,6 +150,7 @@ def build(spec):
     out = {'name': spec['name'], 'navy': spec['navy'], 'factions': spec['factions'], 'cells': []}
     if spec.get('titles'): out['titles'] = spec['titles']
     if spec.get('story'): out['story'] = spec['story']
+    if spec.get('styles'): out['styles'] = spec['styles']
     idx = {}
     for i, (k, c) in enumerate(sorted(cells.items(), key=lambda kv: (kv[0][1], kv[0][0]))):
         idx[k] = i
@@ -157,7 +162,9 @@ def build(spec):
         elif k in farms: t, lv = 2, 1
         mt = 1 if mountain(c['lon'], c['lat']) and t != 3 else 0
         cap = 1 if k in caps.values() else 0
-        out['cells'].append([k[0], k[1], t, c['f'], mt, lv, nm, cap])
+        row = [k[0], k[1], t, c['f'], mt, lv, nm, cap]
+        if nm and nm in spec.get('straits', []): row.append(1)   # boğaz şehri: gemiler içinden geçebilir
+        out['cells'].append(row)
     fac = {}
     for row in out['cells']:
         if row[2]: fac.setdefault(row[3], [0, 0]); fac[row[3]][0] += 1; fac[row[3]][1] += row[2] == 3
@@ -240,6 +247,8 @@ def balkan_owner(c, lon, lat):
     return 'n'                                                             # Arnavutluk tarafsız
 BALKAN = {
   'name': 'Balkanlar ve Anadolu', 'navy': True, 'box': (15.6, 34.8, 33.6, 46.3), 'target': 135, 'seed': 3, 'island_min': 1, 'foreign_void': True,
+  'sea_at': [(28.4, 40.75), (27.2, 40.6)], 'straits': ['İstanbul'],
+  'styles': {'kirmizi': 'turk', 'kahve': 'turk'},
   'countries': ['TUR', 'GRC', 'BGR', 'ROU', 'SRB', 'KOS', 'MNE', 'MKD', 'BIH', 'HRV', 'ALB'],
   'owner': balkan_owner,
   'factions': ['kirmizi', 'mor', 'turkuaz', 'siyah', 'bordo', 'yesil', 'sari', 'kahve'],

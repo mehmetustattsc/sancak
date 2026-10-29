@@ -114,6 +114,74 @@ var ART = (function () {
         '<path d="M32 10l8 2.5-8 2.5z" fill="' + C + '"/>';
     }
   };
+  /* ---- Orta Çağ Türk birlikleri: börk ve sarık, kaftan, yuvarlak kalkan, eğri kılıç, çift kavisli yay ---- */
+  FIG['kilic#turk'] = function (C, D, L) {
+    return '<ellipse cx="32" cy="58" rx="17" ry="4.5" fill="rgba(0,0,0,.35)"/>' +
+      '<path d="M25 46h6v11h-6zM33 46h6v11h-6z" fill="#7a2f1e" stroke="' + OUT + '" stroke-width="1.5"/>' +
+      '<path d="M23 55.5h9v3.5h-9zM32 55.5h9v3.5h-9z" fill="#b8862e" stroke="' + OUT + '" stroke-width="1"/>' +
+      // kaftan (uzun, önden açık) ve kuşak
+      '<path d="M21 26q11-6 22 0l3 23H18z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1.5"/>' +
+      '<path d="M32 28l-3 21M32 28l3 21" stroke="' + D + '" stroke-width="1.6"/>' +
+      '<path d="M20.5 38h23" stroke="#e3c25c" stroke-width="3"/><path d="M20.5 38h23" stroke="' + D + '" stroke-width="1"/>' +
+      // eğri kılıç
+      '<path d="M43 28l6-5" stroke="' + C + '" stroke-width="5" stroke-linecap="round"/>' +
+      '<path d="M48 24q9-6 10-19" fill="none" stroke="#dfe4e8" stroke-width="3" stroke-linecap="round"/><path d="M48 24q9-6 10-19" fill="none" stroke="#8e969d" stroke-width="1"/>' +
+      '<path d="M45 21.5l6 4.5" stroke="#c9a24a" stroke-width="2.6" stroke-linecap="round"/>' +
+      // baş: sakal ve börk
+      '<circle cx="32" cy="18" r="6.8" fill="#d9a67a" stroke="' + OUT + '" stroke-width="1.5"/>' +
+      '<path d="M26.5 20q5.5 7 11 0" fill="#3b2a1e"/>' +
+      '<path d="M25 15q0-4 7-4.5 7 .5 7 4.5z" fill="#efe8d6" stroke="' + OUT + '" stroke-width="1.3"/>' +
+      '<path d="M27 11.5q1-9 5-10 6 1 9 9-4 1-6 2z" fill="#f3ecdc" stroke="' + OUT + '" stroke-width="1.3"/>' +
+      '<path d="M30 11l2-7" stroke="#e3c25c" stroke-width="1.6"/>' +
+      // yuvarlak kalkan: halkalar ve göbek
+      '<circle cx="18" cy="36" r="11" fill="' + C + '" stroke="' + OUT + '" stroke-width="2"/>' +
+      '<circle cx="18" cy="36" r="8" fill="none" stroke="#e3c25c" stroke-width="1.6"/>' +
+      '<circle cx="18" cy="36" r="5" fill="' + D + '" stroke="' + L + '" stroke-width="1.2"/><circle cx="18" cy="36" r="2.2" fill="#e3c25c"/>';
+  };
+  FIG['okcu#turk'] = function (C, D, L) {
+    return '<ellipse cx="32" cy="58" rx="16" ry="4.5" fill="rgba(0,0,0,.35)"/>' +
+      '<path d="M26 46h5v11h-5zM34 46h5v11h-5z" fill="#7a2f1e" stroke="' + OUT + '" stroke-width="1.5"/>' +
+      '<path d="M24.5 55.5h8v3.5h-8zM33 55.5h8v3.5h-8z" fill="#b8862e" stroke="' + OUT + '" stroke-width="1"/>' +
+      '<path d="M22 27q10-5 20 0l3 22H19z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1.5"/>' +
+      '<path d="M21 38h22" stroke="#e3c25c" stroke-width="2.6"/>' +
+      // sadak
+      '<path d="M37 22l7-3 5 18-6 2z" fill="#8a3a1c" stroke="' + OUT + '" stroke-width="1.3"/><path d="M38.5 25l8 9" stroke="#e3c25c" stroke-width="1.2"/>' +
+      '<path d="M42 18l3-6M44.5 18.5l4-5M47 19l4-4" stroke="#e8dcc0" stroke-width="1.6" stroke-linecap="round"/>' +
+      // çift kavisli (Türk) yay
+      '<path d="M15 7q-6 1-4 6 3 6 1 17-2 11-1 17 2 5 4 6" fill="none" stroke="#5a2f12" stroke-width="3.2" stroke-linecap="round"/>' +
+      '<path d="M15 7l13 23-13 24" fill="none" stroke="#efe6d2" stroke-width="1"/>' +
+      '<path d="M8 30h22" stroke="#d8cfb8" stroke-width="1.8"/><path d="M5 30l5-2.5v5z" fill="#9aa0a6"/>' +
+      '<path d="M26 30l4-1.5" stroke="#d9a67a" stroke-width="4" stroke-linecap="round"/>' +
+      // baş ve sarık
+      '<circle cx="32" cy="19" r="6.5" fill="#d9a67a" stroke="' + OUT + '" stroke-width="1.5"/><path d="M28 23q4 3 8 0" fill="#3b2a1e"/>' +
+      '<path d="M24.5 16q-1-8 7.5-8.5 8.5.5 7.5 8.5-7-3-15 0z" fill="#efe8d6" stroke="' + OUT + '" stroke-width="1.3"/>' +
+      '<path d="M26 12q6-3 12 0M25.5 14.5q6.5-3 13 0" fill="none" stroke="#c9bfa5" stroke-width="1"/><circle cx="32" cy="8.5" r="1.8" fill="' + C + '"/>';
+  };
+  FIG['atli#turk'] = function (C, D, L) {
+    return '<ellipse cx="32" cy="58" rx="24" ry="4.5" fill="rgba(0,0,0,.35)"/>' +
+      '<path d="M14 40q0-8 10-9h17q8 0 11-7l3-6 5 2-1 8q-1 7-6 11l-1 6h-4l-1-5H24l-2 6h-4l-1-6q-3-2-3-0z" fill="#d8cdb6" stroke="' + OUT + '" stroke-width="1.6"/>' +
+      '<path d="M18 46l-2 11M23 46l1 11M45 46l2 11M49 44l4 12" stroke="#b8ab90" stroke-width="3.4" stroke-linecap="round"/>' +
+      '<path d="M14.5 57h3M22 57h3.5M45 57h3.5M51.5 56h3.5" stroke="#1d1410" stroke-width="2.4"/>' +
+      '<path d="M12 37q-6 4-4 12" fill="none" stroke="#8a7a60" stroke-width="3" stroke-linecap="round"/>' +
+      '<path d="M53 18l3-5 2 6" fill="#b8ab90"/><circle cx="57" cy="22" r="1" fill="#000"/>' +
+      // eyer örtüsü (püsküllü)
+      '<path d="M22 31h20l1 10H21z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1.4"/><path d="M22 41l2 3M27 41l1 3M32 41v3M37 41l-1 3M42 41l-2 3" stroke="#e3c25c" stroke-width="1.4"/>' +
+      // sipahi: zincir zırh üstüne kaftan, sivri miğfer sarıklı
+      '<path d="M27 32q-1-11 5-13 6 1 5 13z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1.5"/><path d="M27.5 27h9" stroke="#e3c25c" stroke-width="2"/>' +
+      '<circle cx="32" cy="14" r="5.3" fill="#d9a67a" stroke="' + OUT + '" stroke-width="1.4"/><path d="M28.5 17q3.5 3 7 0" fill="#3b2a1e"/>' +
+      '<path d="M26.5 12q0-3 5.5-3.5 5.5.5 5.5 3.5z" fill="#efe8d6" stroke="' + OUT + '" stroke-width="1.2"/>' +
+      '<path d="M28 9l4-8 4 8z" fill="#aab1b8" stroke="' + OUT + '" stroke-width="1.2"/>' +
+      // yuvarlak kalkan ve mızrak
+      '<circle cx="24" cy="27" r="6" fill="' + D + '" stroke="' + OUT + '" stroke-width="1.4"/><circle cx="24" cy="27" r="2" fill="#e3c25c"/>' +
+      '<path d="M22 32 60 4" stroke="#8a6234" stroke-width="2.4" stroke-linecap="round"/><path d="M57 6l5-4-1.5 5z" fill="#c9cfd4"/>' +
+      '<path d="M53 8.5q2 5-1 9 5-1 7-6z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1"/>';
+  };
+  // harita bazlı görünüm: hangi renk hangi üslupla çizilir (ör. Balkanlar haritasında Türk beylikleri)
+  var STYLE_BY_COL = {}, FLAG_OV = {};
+  function setMapStyle(M) {
+    STYLE_BY_COL = {}; FLAG_OV = {};
+    if (M && M.styles) Object.keys(M.styles).forEach(function (fid) { if (FACTIONS[fid]) { STYLE_BY_COL[FACTIONS[fid].col] = M.styles[fid]; FLAG_OV[fid] = M.styles[fid]; } });
+  }
   /* ---- Yakın Çağ figürleri (1850–1920) ---- */
   FIG['kilic@1'] = function (C, D, L) {   // tüfekli piyade
     return '<ellipse cx="32" cy="58" rx="16" ry="4.5" fill="rgba(0,0,0,.35)"/>' +
@@ -205,13 +273,13 @@ var ART = (function () {
   };
   var IMG = {};
   function curEra() { return typeof ERA_CUR !== 'undefined' ? ERA_CUR : 0; }
-  function figFn(type, era) { return FIG[type + '@' + era] || FIG[type]; }
+  function figFn(type, era, col) { var st = !era && STYLE_BY_COL[col]; return (st && FIG[type + '#' + st]) || FIG[type + '@' + era] || FIG[type]; }
   function figSVG(type, col, era) {
     var C = col, D = shade(col, -0.35), L = shade(col, 0.55);
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">' + figFn(type, era == null ? curEra() : era)(C, D, L) + '</svg>';
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">' + figFn(type, era == null ? curEra() : era, col)(C, D, L) + '</svg>';
   }
   function figImg(type, col) {
-    var e = curEra(), k = type + col + '@' + e;
+    var e = curEra(), k = type + col + '@' + e + (STYLE_BY_COL[col] || '');
     if (!IMG[k]) { var im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(figSVG(type, col, e)); IMG[k] = im; }
     return IMG[k];
   }
@@ -220,7 +288,10 @@ var ART = (function () {
   function flag(fid, cls) {
     var F = FACTIONS[fid]; if (!F) return '';
     var c = F.col, d = F.dark, w = '#f3ecdc', p;
-    switch (F.flag) {
+    var kind = FLAG_OV[fid] === 'turk' ? (fid === 'kahve' ? 'hilal3' : 'hilal') : F.flag;
+    switch (kind) {
+      case 'hilal': p = '<rect width="30" height="20" fill="' + c + '"/><circle cx="13" cy="10" r="5.6" fill="' + w + '"/><circle cx="15.13" cy="10" r="4.59" fill="' + c + '"/>'; break;
+      case 'hilal3': p = '<rect width="30" height="20" fill="' + c + '"/><circle cx="9.5" cy="6.5" r="3.4" fill="' + '#e8c977' + '"/><circle cx="10.79" cy="6.5" r="2.79" fill="' + c + '"/><circle cx="19.5" cy="6.5" r="3.4" fill="' + '#e8c977' + '"/><circle cx="20.79" cy="6.5" r="2.79" fill="' + c + '"/><circle cx="14.5" cy="14" r="3.4" fill="' + '#e8c977' + '"/><circle cx="15.79" cy="14" r="2.79" fill="' + c + '"/>'; break;
       case 'cross': p = '<rect width="30" height="20" fill="' + c + '"/><path d="M0 10h30M15 0v20" stroke="' + w + '" stroke-width="4"/>'; break;
       case 'eagle': p = '<rect width="30" height="20" fill="#e9dfc8"/><path d="M15 4 19 9 25 7 21 13H9L5 7l6 2z" fill="' + c + '"/><rect y="16" width="30" height="4" fill="' + c + '"/>'; break;
       case 'saltire': p = '<rect width="30" height="20" fill="' + c + '"/><path d="M0 0 30 20M30 0 0 20" stroke="' + w + '" stroke-width="3"/>'; break;
@@ -425,5 +496,5 @@ var ART = (function () {
     castle: '<svg viewBox="0 0 24 24"><path d="M3 21V9h3v3h3V9h2v3h2V9h2v3h3V9h3v12z" fill="currentColor"/></svg>',
     city: '<svg viewBox="0 0 24 24"><path d="M3 21V11h5V6h6v5h7v10z" fill="currentColor"/></svg>'
   };
-  return { fig: figImg, figInline: figInline, flag: flag, portrait: portrait, portraitImg: portraitImg, specInfo: specInfo, scene: scene, bImg: bImg, UI: UI, shade: shade };
+  return { setMapStyle: setMapStyle, fig: figImg, figInline: figInline, flag: flag, portrait: portrait, portraitImg: portraitImg, specInfo: specInfo, scene: scene, bImg: bImg, UI: UI, shade: shade };
 })();

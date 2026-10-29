@@ -188,4 +188,19 @@ console.log('✓ bağlı krallık');
   assert(Math.abs(up / base - 1.5625) < 0.06, 'iki ilhaktan sonra bedel 1.25² olmalı: ' + base + ' → ' + up);
   console.log('  ilhak bedeli', base, '→ iki ilhaktan sonra', up); }
 console.log('✓ senaryo seçenekleri');
+// 15) Boğaz: gemiler İstanbul'un içinden geçer; düşman garnizonu boğazı kapatır
+{ const g = E.newGame({ era: 0, level: 2, player: 'siyah', generals: [], seed: 3 });
+  const ist = g.cells.find(c => c.strait); assert(ist && ist.nm === 'İstanbul', 'boğaz şehri');
+  const seaN = ist.nb.map(j => g.cells[j]).filter(c => c.t === 0);
+  // Karadeniz tarafı ve Marmara tarafı: aralarında doğrudan deniz komşuluğu yok
+  const north = seaN.find(c => c.r < ist.r), south = seaN.find(c => c.r > ist.r);
+  assert(north && south && !north.nb.includes(south.i), 'boğazın iki yakası');
+  g.units = g.units.filter(u => u.c !== ist.i);
+  const P = g.player, ship = { id: g.nextId++, f: P, type: 'kadirga', c: north.i, hp: 100, lvl: 1, mp: 3, acted: false, kills: 0, gen: 0, emb: 0 };
+  g.units.push(ship);
+  let R = E.reach(g, ship); assert(R[south.i], 'gemi boşken boğazdan geçmeli'); assert(R[ist.i] && R[ist.i].pass, 'boğazda duramaz');
+  assert(!E.moveUnit(g, ship, ist.i), 'boğaz şehrine gemiyle girilmez');
+  const own = ist.f; g.units.push({ id: g.nextId++, f: own, type: 'kilic', c: ist.i, hp: 100, lvl: 1, mp: 1, acted: false, kills: 0, gen: 0, emb: 0 });
+  R = E.reach(g, ship); assert(!R[south.i] || R[south.i].cost > 3 || !R[ist.i], 'düşman garnizonu boğazı kapatır');
+  console.log('✓ boğaz'); }
 console.log('KURAL TESTLERİ TAMAM');

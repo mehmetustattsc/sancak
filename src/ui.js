@@ -99,6 +99,7 @@ var heroAnim = null;
 function renderHome() {
   var el = $('#scr-home .wrap');
   var g = load(GAME_KEY);
+  ART.setMapStyle(g && !g.over ? MAPS[g.mapIdx] : null);
   el.innerHTML =
     '<div class="topbar"><span class="brand">SANCAK</span>' + medalsPill() + '</div>' +
     '<div class="hero"><div class="hscene">' + ART.scene().replace('xMidYMid slice', 'xMidYMax slice') + '</div><canvas id="heroCv" class="heromap"></canvas><div class="title"><h1>Sancak</h1><p class="sub">Avrupa haritasında sıra tabanlı strateji. Şehirlerini büyüt, ordunu kur, generallerinle fethet.</p></div></div>' +
@@ -144,7 +145,7 @@ function startHero() {
 /* ---------------- ÇAĞ / SEFERLER ---------------- */
 var curEra = 0;
 function openEra(e) {
-  curEra = e; var E = ERAS[e]; setEra(e);
+  curEra = e; var E = ERAS[e]; setEra(e); ART.setMapStyle(null);
   show('era');
   var el = $('#scr-era .wrap');
   el.innerHTML = '<div class="topbar"><button class="back" id="eraBack" aria-label="Geri">' + I.back + '</button>' +
@@ -174,7 +175,7 @@ function openEra(e) {
 
 /* ---------------- KURULUM ---------------- */
 function openSetup(e, l) {
-  var L = levelsOf(e)[l], M = MAPS[L.map];
+  var L = levelsOf(e)[l], M = MAPS[L.map]; ART.setMapStyle(M);
   var land = M.cells.filter(function (c) { return c[2]; });
   var sel = M.factions.slice().sort(function (a, b) { return cnt(b) - cnt(a); })[0];
   function cnt(f) { return land.filter(function (c) { return c[3] === f; }).length; }
@@ -413,6 +414,7 @@ function startGame(e, l, fid) {
 }
 function resumeGame(G) { setEra(G.era); enterBattle(G); }
 function enterBattle(G) {
+  ART.setMapStyle(MAPS[G.mapIdx]);
   B = { G: G, undo: [], sel: 0, view: null, reach: null, targets: [], preview: null, anim: [], phase: 'player', fast: 1, skip: false, tut: (!save.tut && G.level === 0 && G.turn === 1) ? 1 : 0 };
   $('#tabbar').hidden = true;
   ['home', 'era', 'hq', 'gen', 'help', 'set'].forEach(function (s) { $('#scr-' + s).hidden = true; });
@@ -1253,6 +1255,19 @@ function render(now) {
       else { if (n.i < c.i) continue; ctx.strokeStyle = 'rgba(0,0,0,.13)'; ctx.lineWidth = 1; }
       ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
     }
+  });
+  // boğaz: şehrin içinden geçen su yolu
+  vis.forEach(function (v) {
+    var c = v[0], p = v[1]; if (!c.strait) return;
+    var seas = c.nb.map(function (j) { return G.cells[j]; }).filter(function (o) { return o.t === 0; });
+    var a = seas.filter(function (o) { return o.r < c.r; })[0], b = seas.filter(function (o) { return o.r > c.r; })[0]; if (!a || !b) return;
+    var pa = w2s((c.x + a.x) / 2, (c.y + a.y) / 2), pb = w2s((c.x + b.x) / 2, (c.y + b.y) / 2);
+    var mx = (pa.x + pb.x) / 2 + s * 0.38, my = (pa.y + pb.y) / 2;
+    ctx.save(); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(pa.x, pa.y); ctx.quadraticCurveTo(mx, my, pb.x, pb.y);
+    ctx.strokeStyle = '#2a5578'; ctx.lineWidth = s * 0.34; ctx.stroke();
+    ctx.strokeStyle = 'rgba(180,220,245,.55)'; ctx.lineWidth = Math.max(1, s * 0.05); ctx.setLineDash([s * 0.12, s * 0.1]); ctx.stroke();
+    ctx.restore();
   });
   // vurgular
   if (B.reach && B.phase === 'player') {

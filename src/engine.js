@@ -227,7 +227,7 @@ function newGame(o) {
     var p = hexXY(c[0], c[1]);
     var cell = { i: i, q: c[0], r: c[1], x: p.x, y: p.y, t: c[2], nb: [] };
     if (c[2]) {
-      cell.f = c[3] === 'n' ? -1 : fidx[c[3]]; cell.mt = c[4]; cell.lv = c[5]; cell.nm = c[6] || ''; cell.cap = c[7] || 0;
+      cell.f = c[3] === 'n' ? -1 : fidx[c[3]]; cell.mt = c[4]; cell.lv = c[5]; cell.nm = c[6] || ''; cell.cap = c[7] || 0; if (c[8]) cell.strait = 1;
       cell.smith = 0; cell.port = 0;
     } else { cell.f = -1; }
     G.cells.push(cell);
@@ -383,7 +383,8 @@ function reach(G, u) {
       var cost, emb = cur.emb, stop = false;
       if (naval) {
         if (n.t === 0) cost = 1;
-        else if (n.t === 3 && n.f === fi && n.port) { cost = 1; stop = true; }
+        else if (n.t === 3 && n.f === fi && n.port) { cost = 1; stop = n.strait ? false : true; }
+        else if (n.strait) { cost = 1; pass = true; }   // boğaz: her gemi şehrin yanından geçer, orada duramaz
         else continue;
       } else if (!cur.emb) {
         if (n.t === 0) {
@@ -399,6 +400,7 @@ function reach(G, u) {
       } else {
         // gemideyken
         if (n.t === 0) cost = 1;
+        else if (n.strait && (n.f === fi || isAlly(G, n.f, fi))) { cost = 1; pass = true; }   // kendi boğazından nakliye geçer
         else { cost = 99; emb = 0; stop = true; if (other) continue; } // karaya çıkış
       }
       var nc = cur.cost + (cost === 99 ? 0 : cost);
