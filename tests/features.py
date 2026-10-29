@@ -24,6 +24,21 @@ async def main():
         g1 = await pg.evaluate('()=>__sancak.B().G.factions[__sancak.B().G.player].gold')
         assert g1 == g0 + 12, (g0, g1)
         await shot('t1-trade')
+        # geri al: ticareti geri al
+        await pg.click('#pUndo'); await pg.wait_for_timeout(200)
+        g2 = await pg.evaluate('()=>__sancak.B().G.factions[__sancak.B().G.player].gold')
+        assert g2 == g0, ('geri alma çalışmadı', g0, g2)
+        # yürüyüşü geri al
+        mv = await pg.evaluate('''()=>{const B=__sancak.B(),G=B.G;const u=G.units.find(u=>u.f===G.player&&u.mp>0&&u.type!=="kule");const c0=u.c;__sancak.tapCell(u.c);
+          const k=Object.keys(B.reach).map(Number).find(k=>k!==u.c&&!G.units.some(x=>x.c===k)&&G.cells[k].t);__sancak.tapCell(k);return [u.id,c0,k]}''')
+        await pg.wait_for_timeout(800)
+        await pg.click('#pUndo'); await pg.wait_for_timeout(200)
+        back = await pg.evaluate(f'()=>__sancak.B().G.units.find(u=>u.id=={mv[0]}).c')
+        assert back == mv[1], ('yürüyüş geri alınmadı', mv, back)
+        await pg.evaluate('()=>{const B=__sancak.B(),G=B.G;const c=G.cells.find(c=>c.cap&&c.f===G.player);__sancak.tapCell(c.i)}')
+        await pg.wait_for_timeout(200)
+        if await pg.locator('#uCell').count(): await pg.click('#uCell'); await pg.wait_for_timeout(200)
+        await pg.click('[data-tr="sellFood"]'); await pg.wait_for_timeout(200)
         # boş araziye kule
         ci = await pg.evaluate('()=>{const B=__sancak.B(),G=B.G;const c=G.cells.find(c=>c.t===1&&c.f===G.player&&!G.units.some(u=>u.c===c.i));__sancak.tapCell(c.i);return c.i}')
         await pg.wait_for_timeout(200); await shot('t2-land')

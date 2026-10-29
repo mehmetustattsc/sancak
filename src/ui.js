@@ -305,6 +305,7 @@ function renderHelp() {
     '<li>Açık hücreye dokun: birlik yürür. Kırmızı halkaya dokun: savaş tahmini çıkar, <b>Saldır</b>’a bas.</li>' +
     '<li>Her birlik bir turda bir kez yürür ve bir kez saldırır. Önce yürüyüp sonra saldırabilirsin; saldırı hareketi bitirir.</li>' +
     '<li>Şehrine dokun: asker al, şehri, demirciyi ve limanı geliştir. Tarlaya ve kaleye dokunarak onları da geliştirirsin.</li>' +
+    '<li>Yanlış hamleyi sol alttaki <b>geri al</b> düğmesiyle geri çekebilirsin (yürüme, asker, bina, ticaret, general). Saldırılar geri alınmaz.</li>' +
     '<li>Hamlelerin bitince <b>Devam et</b>. Rakipler sırayla oynar; izleyebilir, hızlandırabilir ya da atlayabilirsin.</li></ol></div>' +
     '<div class="card"><h3>Kaynaklar</h3><ul>' +
     '<li><b>Altın:</b> şehirlerden gelir, seviye arttıkça artar. Asker ve binalar altınla alınır.</li>' +
@@ -334,7 +335,7 @@ function renderSettings() {
     '<div class="card"><div class="setrow"><div><h3>Ses</h3><p class="muted">Savaş sesleri ve melodiler</p></div><button class="switch' + (save.sound ? ' on' : '') + '" id="swSound" aria-label="Ses"></button></div></div>' +
     '<div class="card"><div class="setrow"><div><h3>Eğitim ipuçları</h3><p class="muted">İlk seferdeki ipuçlarını yeniden göster</p></div><button class="btn small ghost" id="tutAgain">Sıfırla</button></div></div>' +
     '<div class="card"><h3>İlerlemeyi sil</h3><p class="muted">Yıldızlar, madalyalar, general rütbeleri ve yarım kalan sefer silinir.</p><div class="row" id="resetRow"><button class="btn small ghost" id="resetBtn">İlerlemeyi sil</button></div></div>' +
-    '<p class="muted" style="text-align:center">Sancak · sürüm 0.4 · Harita verisi: Natural Earth (kamu malı)</p>';
+    '<p class="muted" style="text-align:center">Sancak · sürüm 0.5 · Harita verisi: Natural Earth (kamu malı)</p>';
   $('#swSound').onclick = function () { save.sound = !save.sound; persist(); renderSettings(); SFX.tap(); };
   $('#tutAgain').onclick = function () { save.tut = false; persist(); toast('İpuçları bir sonraki seferde görünecek.'); };
   $('#resetBtn').onclick = function () {
@@ -367,7 +368,7 @@ function startGame(e, l, fid) {
 }
 function resumeGame(G) { enterBattle(G); }
 function enterBattle(G) {
-  B = { G: G, sel: 0, view: null, reach: null, targets: [], preview: null, anim: [], phase: 'player', fast: 1, skip: false, tut: (!save.tut && G.level === 0 && G.turn === 1) ? 1 : 0 };
+  B = { G: G, undo: [], sel: 0, view: null, reach: null, targets: [], preview: null, anim: [], phase: 'player', fast: 1, skip: false, tut: (!save.tut && G.level === 0 && G.turn === 1) ? 1 : 0 };
   $('#tabbar').hidden = true;
   ['home', 'era', 'hq', 'gen', 'help', 'set'].forEach(function (s) { $('#scr-' + s).hidden = true; });
   $('#scr-battle').hidden = false;
@@ -467,14 +468,14 @@ function panelHTML() {
   if (B.phase === 'ai') return '';
   var leftN = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
   var end = B.confirmEnd ? '<button class="btn endturn warn" id="pEnd">' + leftN + ' birlik bekliyor · Yine de bitir</button>' : '<button class="btn endturn" id="pEnd">Devam et</button>';
-  var nxt = '<button class="hbtn" id="pNext" aria-label="Sıradaki birlik">' + I.next + '</button>';
+  var nxt = '<button class="hbtn" id="pUndo" aria-label="Geri al"' + (B.undo.length ? '' : ' disabled') + '>' + I.undo + '</button><button class="hbtn" id="pNext" aria-label="Sıradaki birlik">' + I.next + '</button>';
   var body = '';
   if (B.preview) body = previewHTML();
   else if (B.sel) body = unitHTML(unitById(G, B.sel));
   else if (B.view !== null && B.view !== undefined) body = cellHTML(G.cells[B.view]);
   else {
     var left = G.units.filter(function (u) { return u.f === G.player && hasMoves(u); }).length;
-    body = '<div class="pinfo"><b>' + (left ? 'Emir bekleniyor' : 'Bütün birlikler hazır') + '</b><span class="muted">Birliğe, şehre ya da boş araziye dokun. Ortadaki düğme sıradaki birliği seçer.</span></div>';
+    body = '<div class="pinfo"><b>' + (left ? 'Emir bekleniyor' : 'Bütün birlikler hazır') + '</b><span class="muted">Birliğe, şehre ya da boş araziye dokun. Nişangâh düğmesi sıradaki birliği seçer, ok düğmesi son hamleyi geri alır.</span></div>';
   }
   var cs = cityShare(G, G.player);
   var mid = B.confirmEnd ? '' : '<span class="pmid">' + (leftN ? '<b>' + leftN + '</b> birlik hamle bekliyor' : 'Hamleler tamam') + '</span>';
@@ -598,22 +599,23 @@ function renderPanel() {
   $('#pNext').onclick = function () { SFX.tap(); nextUnit(); };
   if ($('#pvNo')) $('#pvNo').onclick = function () { B.preview = null; renderPanel(); dirty = true; };
   if ($('#pvGo')) $('#pvGo').onclick = doAttack;
-  if ($('#uWait')) $('#uWait').onclick = function () { var u = unitById(G, B.sel); if (u) { u.acted = true; u.mp = 0; } deselect(); nextUnit(true); };
+  if ($('#uWait')) $('#uWait').onclick = function () { var u = unitById(G, B.sel); if (u) act(function () { u.acted = true; u.mp = 0; return true; }); deselect(); nextUnit(true); };
+  $('#pUndo').onclick = undoLast;
   if ($('#uCell')) $('#uCell').onclick = function () { var u = unitById(G, B.sel); B.view = u.c; B.sel = 0; B.reach = null; B.targets = []; renderPanel(); dirty = true; };
   if ($('#uAssign')) $('#uAssign').onclick = assignMenu;
-  if ($('#uRecall')) $('#uRecall').onclick = function () { var u = unitById(G, B.sel); if (recallGeneral(G, G.player, u.id)) { toast('General geri çağrıldı. Sonraki tur yeniden atanabilir.'); selectUnit(u); } };
+  if ($('#uRecall')) $('#uRecall').onclick = function () { var u = unitById(G, B.sel); if (act(function () { return recallGeneral(G, G.player, u.id); })) { toast('General geri çağrıldı. Sonraki tur yeniden atanabilir.'); selectUnit(u); } };
   el.querySelectorAll('[data-up]').forEach(function (b) { b.onclick = function () {
-    if (upgrade(G, B.view, b.dataset.up)) { SFX.build(); fx({ k: 'text', c: B.view, txt: 'Geliştirildi', col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; }
+    if (act(function () { return upgrade(G, B.view, b.dataset.up); })) { SFX.build(); fx({ k: 'text', c: B.view, txt: 'Geliştirildi', col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; }
   }; });
   el.querySelectorAll('[data-tr]').forEach(function (b) { b.onclick = function () {
-    if (trade(G, G.player, b.dataset.tr)) { SFX.coin(); G.log.length = 0; updateHud(); renderPanel(); }
+    if (act(function () { return trade(G, G.player, b.dataset.tr); })) { SFX.coin(); G.log.length = 0; updateHud(); renderPanel(); }
   }; });
   el.querySelectorAll('[data-tower]').forEach(function (b) { b.onclick = function () {
-    var u = buildTower(G, B.view, G.player);
+    var u = act(function () { return buildTower(G, B.view, G.player); });
     if (u) { SFX.build(); G.log.length = 0; fx({ k: 'ring', c: u.c, col: '#e8c977' }); fx({ k: 'text', c: u.c, txt: 'İnşaat başladı', col: '#fff' }); updateHud(); renderPanel(); dirty = true; }
   }; });
   el.querySelectorAll('[data-rec]').forEach(function (b) { b.onclick = function () {
-    var u = recruit(G, B.view, b.dataset.rec);
+    var u = act(function () { return recruit(G, B.view, b.dataset.rec); });
     if (u) { SFX.coin(); fx({ k: 'ring', c: u.c, col: '#e8c977' }); fx({ k: 'text', c: u.c, txt: UT[u.type].name, col: '#fff' }); updateHud(); renderPanel(); dirty = true; G.log.length = 0; }
   }; });
   fitBounds(B); clampCam(B); dirty = true;
@@ -627,7 +629,7 @@ function assignMenu() {
   }).join('') + '</div><div class="row"><button class="btn ghost" id="aNo">Vazgeç</button></div>');
   $('#aNo').onclick = closeModal;
   document.querySelectorAll('[data-g]').forEach(function (b) { b.onclick = function () {
-    if (assignGeneral(G, G.player, b.dataset.g, u.id)) { SFX.city(); closeModal(); fx({ k: 'ring', c: u.c, col: '#e8c977' }); selectUnit(unitById(G, u.id)); if (B.tut === 3) { B.tut = 4; showTip(); } }
+    if (act(function () { return assignGeneral(G, G.player, b.dataset.g, u.id); })) { SFX.city(); closeModal(); fx({ k: 'ring', c: u.c, col: '#e8c977' }); selectUnit(unitById(G, u.id)); if (B.tut === 3) { B.tut = 4; showTip(); } }
   }; });
 }
 
@@ -660,7 +662,7 @@ function tapCell(ci) {
   }
   // hareket
   if (sel && B.reach && B.reach[ci] && ci !== sel.c && !u) {
-    var path = moveUnit(G, sel, ci);
+    var path = act(function () { return moveUnit(G, sel, ci); });
     if (path) {
       SFX.step();
       playLog(function () { selectUnit(unitById(G, sel.id)); updateHud(); });
@@ -679,6 +681,8 @@ function doAttack() {
   var G = B.G, a = unitById(G, B.sel), d = unitById(G, B.preview);
   if (!a || !d || !canAttack(G, a, d)) return;
   attack(G, a, d, Math.random);
+  if (B.undo.length) toast('Saldırılar geri alınamaz; önceki hamleler de kilitlendi.');
+  B.undo = [];
   B.preview = null; B.reach = null; B.targets = [];
   playLog(function () {
     var a2 = unitById(G, a.id);
@@ -757,8 +761,24 @@ function animEvent(e, sp) {
 }
 
 /* ---------- tur akışı ---------- */
+/* geri alma: saldırı dışındaki her hamleden önce durum saklanır */
+function act(fn) {
+  var snap = JSON.stringify(B.G);
+  var r = fn();
+  if (r) { B.undo.push(snap); if (B.undo.length > 30) B.undo.shift(); }
+  return r;
+}
+function undoLast() {
+  if (!B || B.phase !== 'player' || playing || !B.undo.length) return;
+  B.G = JSON.parse(B.undo.pop()); B.G.log = [];
+  SFX.tap(); B.anim = []; FX = [];
+  B.sel = 0; B.view = null; B.reach = null; B.targets = []; B.preview = null; B.confirmEnd = false;
+  updateHud(); renderPanel(); dirty = true;
+  toast('Son hamle geri alındı');
+}
 function endPlayerTurn() {
   var G = B.G;
+  B.undo = [];
   if (B.phase !== 'player' || playing) return;
   SFX.tap();
   deselect();

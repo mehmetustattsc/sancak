@@ -5,8 +5,8 @@ Avrupa haritasında **sıra tabanlı** strateji oyunu. Şehirlerini büyüt, tar
 **Oyna:** depo herkese açık olduğunda https://mehmetustattsc.github.io/sancak/ (GitHub Pages ücretsiz planda yalnız açık depolarda çalışır).
 Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, ilk açılıştan sonra internetsiz de çalışır.
 
-## Durum (sürüm 0.4)
-- **Orta Çağ**, iki sefer: İber Yarımadası (6 ülke, kara savaşı) ve İtalya ve Akdeniz (6 ülke + tarafsız adalar, deniz savaşı)
+## Durum (sürüm 0.5)
+- **Orta Çağ**, iki sefer: İber Yarımadası (6 ülke + tarafsız Mayorka, deniz yolları) ve İtalya ve Akdeniz (6 ülke + tarafsız adalar, deniz savaşı)
 - Yakın Çağ ve Modern Çağ menüde "Yakında" olarak duruyor
 - Referanslar: European War 4 (harita, generaller), War Regions (sadelik), Medieval: Total War (arazi, kale, general etkisi)
 

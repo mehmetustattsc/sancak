@@ -2,7 +2,7 @@ const fs = require('fs'); const E = require('../src/engine.js');
 const M = JSON.parse(fs.readFileSync(__dirname + '/../src/maps.json', 'utf8')); E.setMaps(M);
 let emb=0, ships=0, shipAtk=0, landings=0;
 for (let s=1;s<=4;s++){
-  const G = E.newGame({ era: 0, level: 1, player: 'turuncu', generals: [], seed: s });
+  const G = E.newGame({ era: 0, level: +(process.env.LV||1), player: process.env.PL||'turuncu', generals: [], seed: s });
   const R=E.rng(s);
   while(!G.over && G.turn<45){ E.runAI(G,G.cur,R);
     G.log.forEach(e=>{ if(e.t==='move'&&e.emb) emb++; if(e.t==='recruit'&&G.units.find(u=>u.id===e.u&&u.type==='kadirga')) ships++; if(e.t==='attack'&&e.naval) shipAtk++;

@@ -78,7 +78,7 @@ def build(spec):
     for k in land: size[comp[k]] = size.get(comp[k], 0) + 1
     main = max(size, key=size.get)
     for k in list(land):
-        if comp[k] != main and (not spec['navy'] or size[comp[k]] < 2):
+        if comp[k] != main and (not spec['navy'] or size[comp[k]] < spec.get('island_min', 2)):
             cells[k] = {'land': 0, 'lon': cells[k]['lon'], 'lat': cells[k]['lat']}; land.discard(k)
     # sea: keep only sea cells within 2 of land (navy) else within 1 (decor)
     keep = {}
@@ -148,13 +148,14 @@ def iber_owner(c, lon, lat):
     if c == 'PRT': return 'turkuaz'
     if c in ('FRA', 'AND'): return 'mavi'
     if c == 'ESP':
+        if lon > 1.1 and lat < 40.3: return 'n'   # Balear adaları tarafsız
         if lat < 38.6: return 'yesil'
         if lon > -1.5 and lat < 43: return 'kirmizi'
         if lon < -4.9 and lat > 41.2: return 'kahve'
         return 'sari'
     return 'n'
 IBER = {
-  'name': 'İber Yarımadası', 'navy': False, 'box': (-9.7, 35.9, 3.6, 44.0), 'target': 64, 'seed': 1,
+  'name': 'İber Yarımadası', 'navy': True, 'box': (-9.7, 35.9, 3.6, 44.0), 'target': 64, 'seed': 1, 'island_min': 1,
   'countries': ['ESP', 'PRT', 'FRA', 'AND'],
   'owner': iber_owner,
   'factions': ['sari', 'yesil', 'kirmizi', 'kahve', 'turkuaz', 'mavi'],
@@ -166,7 +167,7 @@ IBER = {
     ('Valensiya', -0.38, 39.47, 2, 'city'), ('Burgos', -3.70, 42.34, 2, 'city'), ('Porto', -8.61, 41.15, 2, 'city'),
     ('Santiago', -8.54, 42.88, 1, 'city'), ('Valladolid', -4.72, 41.65, 1, 'city'),
     ('Murcia', -1.13, 37.99, 1, 'city'), ('Badajoz', -6.97, 38.88, 1, 'city'), ('Pamplona', -1.64, 42.81, 1, 'city'),
-    ('Montpellier', 3.88, 43.61, 1, 'city'), ('Coimbra', -8.43, 40.20, 1, 'city'),
+    ('Montpellier', 3.88, 43.61, 1, 'city'), ('Coimbra', -8.43, 40.20, 1, 'city'), ('Palma', 2.65, 39.57, 1, 'city'),
     ('Segovia', -4.12, 40.95, 1, 'castle'), ('Calatrava', -3.83, 38.90, 1, 'castle'), ('Loarre', -0.61, 42.33, 1, 'castle'),
     ('Carcassonne', 2.35, 43.21, 2, 'castle'), ('Almería', -2.47, 36.84, 1, 'castle'), ('Tarifa', -5.60, 36.01, 1, 'castle'),
     ('Peñíscola', 0.40, 40.36, 1, 'castle'), ('Guimarães', -8.29, 41.44, 1, 'castle'), ('Trujillo', -5.88, 39.46, 1, 'castle'),

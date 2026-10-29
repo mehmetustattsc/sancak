@@ -687,7 +687,7 @@ function aiEconomy(G, fi) {
     if (ui && ui.ok && f.gold - ui.g >= 40 && c.lv < 5) upgrade(G, c.i, 'city');
     var si = upgradeInfo(G, c, 'smith');
     if (c.cap && si && si.ok && f.gold - si.g >= 40) upgrade(G, c.i, 'smith');
-    if (G.navy && c.coast && !c.port && f.gold > 160) upgrade(G, c.i, 'port');
+    if (G.navy && c.coast && !c.port && f.gold > 120 && !cities.some(function (x) { return x.port; })) upgrade(G, c.i, 'port');
   });
   G.cells.forEach(function (c) {
     if (c.f === fi && c.t === 4 && threatened(c)) { var ci = upgradeInfo(G, c, 'castle'); if (ci && ci.ok && f.gold - ci.g >= 20) upgrade(G, c.i, 'castle'); }
