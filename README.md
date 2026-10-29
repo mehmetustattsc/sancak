@@ -6,7 +6,7 @@ Avrupa haritasında **sıra tabanlı** strateji oyunu. Şehirlerini büyüt, tar
 Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, ilk açılıştan sonra internetsiz de çalışır.
 
 ## Durum (sürüm 0.7)
-- **Orta Çağ**, iki sefer: İber Yarımadası (6 ülke + tarafsız Mayorka, deniz yolları) ve İtalya ve Akdeniz (6 ülke + tarafsız adalar, deniz savaşı)
+- **Orta Çağ**, üç sefer (sırayla açılır): İber Yarımadası (6 ülke + tarafsız Mayorka), İtalya ve Akdeniz (6 ülke + tarafsız adalar) ve Balkanlar ve Anadolu (8 ülke, 136 kara bölgesi, İstanbul ve Boğaz, Kızıl Beylik)
 - Yakın Çağ ve Modern Çağ menüde "Yakında" olarak duruyor
 - Referanslar: European War 4 (harita, generaller), War Regions (sadelik), Medieval: Total War (arazi, kale, general etkisi)
 

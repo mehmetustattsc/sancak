@@ -31,8 +31,8 @@ function chosenGens(e) {
   return sel.slice(0, MAX_GENS);
 }
 function levelUnlocked(e, l) { return l === 0 || (save.stars[e + '-' + (l - 1)] || 0) > 0; }
-function factionName(G, fi) { return fi < 0 ? 'Tarafsız' : FACTIONS[G.factions[fi].id].name + ' ' + ERAS[G.era].suffix; }
-function fname(fid, e) { return FACTIONS[fid].name + ' ' + ERAS[e].suffix; }
+function factionName(G, fi) { return fi < 0 ? 'Tarafsız' : fname(G.factions[fi].id, G.era, G.mapIdx); }
+function fname(fid, e, mi) { var T = mi != null && MAPS[mi] && MAPS[mi].titles; return FACTIONS[fid].name + ' ' + ((T && T[fid]) || ERAS[e].suffix); }
 function insignia(r) { var s = ''; for (var i = 0; i < 5; i++) s += i < r ? '★' : '☆'; return s; }
 
 /* ---------------- ses ---------------- */
@@ -102,7 +102,7 @@ function renderHome() {
   el.innerHTML =
     '<div class="topbar"><span class="brand">SANCAK</span>' + medalsPill() + '</div>' +
     '<div class="hero"><div class="hscene">' + ART.scene().replace('xMidYMid slice', 'xMidYMax slice') + '</div><canvas id="heroCv" class="heromap"></canvas><div class="title"><h1>Sancak</h1><p class="sub">Avrupa haritasında sıra tabanlı strateji. Şehirlerini büyüt, ordunu kur, generallerinle fethet.</p></div></div>' +
-    (g && !g.over ? '<button class="resume" id="resume"><span>' + ART.flag(g.factions[g.player].id) + '</span><span style="min-width:0;flex:1"><b>Kaldığın yerden devam et</b><br><span class="muted">' + MAPS[g.mapIdx].name + ' · Tur ' + g.turn + ' · ' + fname(g.factions[g.player].id, g.era) + '</span></span><span class="go">▶</span></button>' : '') +
+    (g && !g.over ? '<button class="resume" id="resume"><span>' + ART.flag(g.factions[g.player].id) + '</span><span style="min-width:0;flex:1"><b>Kaldığın yerden devam et</b><br><span class="muted">' + MAPS[g.mapIdx].name + ' · Tur ' + g.turn + ' · ' + fname(g.factions[g.player].id, g.era, g.mapIdx) + '</span></span><span class="go">▶</span></button>' : '') +
     '<div class="eyebrow">Çağ seç</div>' +
     '<div class="eras">' + ERAS.map(function (E, i) {
       var st = eraStars(i), max = LEVELS.length * 3;
@@ -161,7 +161,7 @@ function openEra(e) {
         '<div class="meta">' + M.factions.length + ' ülke · ' + nc + ' şehir · ' + nk + ' kale' + (M.navy ? ' · deniz' : '') + '</div>' +
         '<div class="meta">★★★ ' + L.par + ' turda · sınır ' + L.limit + ' tur</div></div>' +
         (un ? '<div class="st">' + [1, 2, 3].map(function (k) { return k <= st ? '<b>★</b>' : '★'; }).join('') + '</div>' : I.lock) + '</button>';
-    }).join('') + '<div class="lvl soon"><div class="ph">?</div><div><div class="nm">Batı Avrupa, Balkanlar, Doğu Cephesi…</div><div class="meta">Denge oturunca eklenecek</div></div></div></div>';
+    }).join('') + '<div class="lvl soon"><div class="ph">?</div><div><div class="nm">Batı Avrupa, Doğu Cephesi, Kuzey Denizleri…</div><div class="meta">Denge oturunca eklenecek</div></div></div></div>';
   $('#eraBack').onclick = function () { SFX.tap(); show('home'); };
   el.querySelectorAll('.lvl[data-l]').forEach(function (b) {
     drawMini(b.querySelector('canvas'), LEVELS[+b.dataset.l].map);
@@ -183,11 +183,11 @@ function openSetup(e, l) {
   var dfc = save.diff == null ? 1 : save.diff, noDip = !!save.noDip;
   var legs = LEGENDS.filter(function (L) { return legUnlocked(L.id); }), gsel = chosenGens(e);
   function draw() {
-    modal('<div><div class="eyebrow">' + ERAS[e].name + ' · Sefer ' + (l + 1) + '</div><h2>' + M.name + '</h2></div>' +
+    modal('<div><div class="eyebrow">' + ERAS[e].name + ' · Sefer ' + (l + 1) + '</div><h2>' + M.name + '</h2>' + (L.story ? '<p class="story">' + L.story + '</p>' : '') + '</div>' +
       '<div class="eyebrow">Ülkeni seç</div><div class="choices">' + M.factions.map(function (fid) {
         var n = cnt(fid), c = land.filter(function (x) { return x[3] === fid && x[2] === 3; }).length;
         var cap = land.filter(function (x) { return x[3] === fid && x[7]; })[0];
-        return '<button class="choice' + (sel === fid ? ' on' : '') + '" data-f="' + fid + '">' + ART.flag(fid) + '<div style="min-width:0"><div class="t">' + fname(fid, e) + '</div>' +
+        return '<button class="choice' + (sel === fid ? ' on' : '') + '" data-f="' + fid + '">' + ART.flag(fid) + '<div style="min-width:0"><div class="t">' + fname(fid, e, L.map) + '</div>' +
           '<div class="s">' + (cap ? esc(cap[6]) + ' · ' : '') + n + ' bölge · ' + c + ' şehir · <span class="diff-' + diff(n) + '">' + diff(n) + '</span></div></div></button>';
       }).join('') + '</div>' +
       '<div class="eyebrow">Yanındaki generaller · ' + gsel.length + '/' + MAX_GENS + '</div><div class="choices">' + gens.map(function (g) {

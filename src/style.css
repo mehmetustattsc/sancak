@@ -575,3 +575,4 @@ p.bad { color: #ff8a6a; }
 @keyframes rvGlow { from { box-shadow: 0 0 18px rgba(242, 201, 76, .3); } to { box-shadow: 0 0 46px rgba(242, 201, 76, .6); } }
 .gen.leg { border-color: #8a6a1e; background: linear-gradient(135deg, #2b2312, var(--panel) 60%); }
 .gen.leg.locked .por { filter: brightness(0) opacity(.55); }
+.story { font-family: var(--f-display); font-style: italic; color: var(--brass2); margin: 6px 0 2px; font-size: 15px; line-height: 1.35; }

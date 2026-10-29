@@ -14,7 +14,7 @@ for f in C['features']:
     g = f['geometry']; parts = g['coordinates'] if g['type'] == 'MultiPolygon' else [g['coordinates']]
     for poly in parts:
         ring = np.array(poly[0])
-        if ring[:, 0].max() < -15 or ring[:, 0].min() > 30 or ring[:, 1].max() < 33 or ring[:, 1].min() > 52: continue
+        if ring[:, 0].max() < -15 or ring[:, 0].min() > 36 or ring[:, 1].max() < 33 or ring[:, 1].min() > 52: continue
         polys.append((a, Path(ring), ring[:, 0].min(), ring[:, 0].max(), ring[:, 1].min(), ring[:, 1].max()))
 
 def country_at(lon, lat):
@@ -35,7 +35,7 @@ def cube(q, r):
 def hdist(a, b):
     ax, ay, az = cube(*a); bx, by, bz = cube(*b); return max(abs(ax-bx), abs(ay-by), abs(az-bz))
 
-def grid(box, s, allowed):
+def grid(box, s, allowed, foreign_void=False):
     lon0, lat0, lon1, lat1 = box
     w = math.sqrt(3) * s; h = 1.5 * s
     cols = int((lon1 - lon0) * K / w) + 1; rows = int((lat1 - lat0) / h) + 1
@@ -50,6 +50,8 @@ def grid(box, s, allowed):
             if len(land) >= 3 or (cs[0] and cs[0] in allowed):
                 best = max(set(land), key=land.count) if land else cs[0]
                 cells[(q, r)] = {'land': 1, 'c': best, 'lon': lon, 'lat': lat}
+            elif foreign_void and cs[0]:
+                continue   # haritaya alınmayan ülkenin toprağı: boşluk (deniz değil)
             else:
                 cells[(q, r)] = {'land': 0, 'lon': lon, 'lat': lat}
     return cells, cols, rows
@@ -58,14 +60,14 @@ def build(spec):
     allowed = set(spec['countries'])
     lo, hi = 0.15, 2.0
     for _ in range(26):
-        s = (lo + hi) / 2; cells, cols, rows = grid(spec['box'], s, allowed)
+        s = (lo + hi) / 2; cells, cols, rows = grid(spec['box'], s, allowed, spec.get('foreign_void'))
         n = sum(1 for c in cells.values() if c['land'])
         if n > spec['target']: lo = s
         else: hi = s
     box = spec['box']
     if spec.get('pad_w'):   # kıyı haritanın kenarına değmesin: batıya deniz sütunu ekle (gemiler etrafından dolaşabilsin)
         box = (box[0] - spec['pad_w'] * math.sqrt(3) * s / K,) + tuple(box[1:])
-    cells, cols, rows = grid(box, s, allowed)
+    cells, cols, rows = grid(box, s, allowed, spec.get('foreign_void'))
     land = {k for k, c in cells.items() if c['land']}
     # drop tiny land components that are not wanted (or all islands on land-only maps)
     comp = {}; cid = 0
@@ -107,7 +109,9 @@ def build(spec):
     def nearest(lon, lat):
         return min(land, key=lambda k: ((cells[k]['lon'] - lon) * K) ** 2 + (cells[k]['lat'] - lat) ** 2)
     places = {}
-    for name, lon, lat, lvl, kind in spec['places']:
+    force = {}
+    for pl in spec['places']:
+        name, lon, lat, lvl, kind = pl[:5]
         k = nearest(lon, lat)
         d = math.hypot((cells[k]['lon'] - lon) * K, cells[k]['lat'] - lat)
         if d > 1.6 * s: print('  skip far', name, file=sys.stderr); continue
@@ -123,6 +127,8 @@ def build(spec):
         if kind == 'castle' and sum(1 for o in places if hdist(k, o) < 2 and places[o][2] == 'castle'):
             print('  castle next to castle, skip', name, file=sys.stderr); continue
         places[k] = (name, lvl, kind)
+        if len(pl) > 5: force[k] = pl[5]
+    for k, f in force.items(): cells[k]['f'] = f      # tarihî sahibine ver (kaba ızgarada karşı kıyıya düşen yerler)
     # capitals
     caps = {}
     for f, cname in spec['caps'].items():
@@ -138,6 +144,8 @@ def build(spec):
         if sum(1 for n in neigh(*k) if n in farms) >= 2: continue
         farms.add(k)
     out = {'name': spec['name'], 'navy': spec['navy'], 'factions': spec['factions'], 'cells': []}
+    if spec.get('titles'): out['titles'] = spec['titles']
+    if spec.get('story'): out['story'] = spec['story']
     idx = {}
     for i, (k, c) in enumerate(sorted(cells.items(), key=lambda kv: (kv[0][1], kv[0][0]))):
         idx[k] = i
@@ -218,7 +226,40 @@ ITALY = {
     ('Verona', 10.99, 45.44, 1, 'castle'),
   ]}
 
-maps = [build(IBER), build(ITALY)]
+def balkan_owner(c, lon, lat):
+    if c == 'TUR':
+        if (lon < 29.4 and lat > 40.85) or (lon < 26.9 and lat > 40.0): return 'mor'      # Trakya ve İstanbul
+        return 'kirmizi' if lat >= 39.0 else 'kahve'
+    if c == 'GRC':
+        if lat < 35.8 or (lon > 25.6 and lat < 40.0): return 'n'          # Girit, Rodos ve Ege adaları tarafsız
+        return 'mor' if (lat > 40.25 and lon > 22.3) else 'turkuaz'
+    if c == 'BGR': return 'siyah'
+    if c == 'ROU': return 'yesil'
+    if c in ('SRB', 'KOS', 'MNE', 'MKD'): return 'bordo'
+    if c in ('BIH', 'HRV'): return 'sari'
+    return 'n'                                                             # Arnavutluk tarafsız
+BALKAN = {
+  'name': 'Balkanlar ve Anadolu', 'navy': True, 'box': (15.6, 34.8, 33.6, 46.3), 'target': 135, 'seed': 3, 'island_min': 1, 'foreign_void': True,
+  'countries': ['TUR', 'GRC', 'BGR', 'ROU', 'SRB', 'KOS', 'MNE', 'MKD', 'BIH', 'HRV', 'ALB'],
+  'owner': balkan_owner,
+  'factions': ['kirmizi', 'mor', 'turkuaz', 'siyah', 'bordo', 'yesil', 'sari', 'kahve'],
+  'titles': {'kirmizi': 'Beylik', 'kahve': 'Sultanlık', 'mor': 'İmparatorluk', 'siyah': 'Çarlık', 'yesil': 'Voyvodalık', 'bordo': 'Despotluk', 'sari': 'Banlık'},
+  'caps': {'kirmizi': 'Bursa', 'kahve': 'Konya', 'mor': 'İstanbul', 'turkuaz': 'Atina', 'siyah': 'Tırnova', 'bordo': 'Belgrad', 'yesil': 'Tergovişte', 'sari': 'Saraybosna'},
+  'places': [
+    ('İstanbul', 28.97, 41.01, 3, 'city'), ('Bursa', 29.06, 40.19, 3, 'city'), ('Konya', 32.49, 37.87, 3, 'city'), ('Atina', 23.73, 37.98, 3, 'city'),
+    ('Tırnova', 25.63, 43.08, 3, 'city'), ('Belgrad', 20.46, 44.82, 3, 'city'), ('Tergovişte', 25.46, 44.93, 3, 'city'), ('Saraybosna', 18.41, 43.86, 3, 'city'),
+    ('Edirne', 26.56, 41.68, 2, 'city'), ('Selanik', 22.94, 40.64, 2, 'city'), ('Ankara', 32.85, 39.93, 2, 'city'), ('İzmir', 27.14, 38.42, 2, 'city'),
+    ('Sofya', 23.32, 42.70, 2, 'city'), ('Üsküp', 21.43, 42.00, 2, 'city'), ('Kraiova', 23.80, 44.32, 1, 'city'), ('Ragusa', 18.09, 42.65, 2, 'city', 'sari'),
+    ('İznik', 29.72, 40.43, 1, 'city'), ('Antalya', 30.71, 36.89, 1, 'city'), ('Denizli', 29.09, 37.78, 1, 'city'), ('Kastamonu', 33.78, 41.38, 1, 'city'),
+    ('Varna', 27.91, 43.21, 1, 'city'), ('Filibe', 24.75, 42.14, 1, 'city'), ('Niş', 21.90, 43.32, 1, 'city'), ('Kalas', 28.05, 45.43, 1, 'city'),
+    ('Split', 16.44, 43.51, 1, 'city'), ('Zagreb', 15.98, 45.81, 1, 'city'), ('Yanya', 20.85, 39.66, 1, 'city'), ('Mora', 22.11, 37.04, 1, 'city'),
+    ('Kandiye', 25.13, 35.34, 1, 'city'), ('Draç', 19.45, 41.32, 1, 'city'),
+    ('Kütahya', 29.98, 39.42, 1, 'castle'), ('Alanya', 32.00, 36.54, 1, 'castle'), ('Vize', 27.77, 41.57, 1, 'castle', 'mor'), ('Rumeli', 27.6, 41.1, 1, 'castle'),
+    ('Vidin', 22.88, 43.99, 1, 'castle'), ('Semendire', 20.93, 44.66, 2, 'castle'), ('Braşov', 25.59, 45.65, 1, 'castle'), ('Prizren', 20.74, 42.21, 1, 'castle'),
+    ('Jajce', 17.27, 44.34, 1, 'castle'), ('Mistra', 22.37, 37.07, 1, 'castle'), ('Akrokorint', 22.87, 37.89, 1, 'castle'), ('Kruja', 19.79, 41.51, 1, 'castle'),
+    ('Çimenlik', 26.40, 40.15, 1, 'castle'), ('Silistre', 27.26, 44.12, 1, 'castle'),
+  ]}
+maps = [build(IBER), build(ITALY), build(BALKAN)]
 out = os.path.join(os.path.dirname(__file__), '..', 'src', 'maps.json')
 json.dump(maps, open(out, 'w'), ensure_ascii=False, separators=(',', ':'))
 print('wrote', out, os.path.getsize(out), file=sys.stderr)

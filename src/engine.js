@@ -163,8 +163,12 @@ var DIFF_ECO = [0.88, 1, 1.15];          // zorluk: bot ekonomisi
 var DIFF_MEDAL = [0.75, 1, 1.5];        // zorluk: madalya çarpanı
 var ANNEX_STEP = 1.25;                  // her ilhak bir sonrakini %25 pahalı yapar
 var LEVELS = [
-  { map: 0, par: 30, limit: 60, aiEco: 0.8, grace: 3 },
-  { map: 1, par: 38, limit: 70, aiEco: 0.85, grace: 3 }
+  { map: 0, par: 30, limit: 60, aiEco: 0.8, grace: 3,
+    story: 'Yarımada altı sancağa bölünmüş. Kuzeyde dağlar, güneyde verimli ovalar. Tahtı, yarımadayı ilk birleştiren alır.' },
+  { map: 1, par: 38, limit: 70, aiEco: 0.85, grace: 3,
+    story: 'Zengin şehirler, karlı Alpler ve Akdeniz. Denizi tutan kıyıları, dağları tutan geçitleri tutar.' },
+  { map: 2, par: 45, limit: 100, aiEco: 0.85, grace: 3,
+    story: 'Doğu ile Batı’nın kavşağı. Sekiz sancak, iki deniz ve bir Boğaz. İstanbul’u tutan iki denizin geçidini tutar; ama her sancak aynı şansla başlar.' }
 ];
 
 function rng(seed) { var s = seed >>> 0 || 1; return function () { s ^= s << 13; s >>>= 0; s ^= s >> 17; s ^= s << 5; s >>>= 0; return s / 4294967296; }; }
