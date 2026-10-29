@@ -666,6 +666,7 @@ function assignMenu() {
 
 /* ---------- seçim ve emirler ---------- */
 function selectUnit(u) {
+  if (u && u.f === B.G.player) B.lastAct = u.c;
   var G = B.G;
   B.sel = u.id; B.view = null; B.preview = null;
   B.reach = (u.f === G.player && u.mp > 0) ? reach(G, u) : null;
@@ -694,6 +695,7 @@ function tapCell(ci) {
   // hareket
   if (sel && B.reach && B.reach[ci] && ci !== sel.c && !u) {
     var path = act(function () { return moveUnit(G, sel, ci); });
+    if (path) B.lastAct = ci;
     if (path) {
       SFX.step();
       playLog(function () { selectUnit(unitById(G, sel.id)); updateHud(); });
@@ -711,6 +713,7 @@ function tapCell(ci) {
 function doAttack() {
   var G = B.G, a = unitById(G, B.sel), d = unitById(G, B.preview);
   if (!a || !d || !canAttack(G, a, d)) return;
+  B.lastAct = a.c;
   attack(G, a, d, Math.random);
   if (B.undo.length) toast('Saldırılar geri alınamaz; önceki hamleler de kilitlendi.');
   B.undo = [];
@@ -796,7 +799,11 @@ function animEvent(e, sp) {
 function act(fn) {
   var snap = JSON.stringify(B.G);
   var r = fn();
-  if (r) { B.undo.push(snap); if (B.undo.length > 30) B.undo.shift(); }
+  if (r) {
+    B.undo.push(snap); if (B.undo.length > 30) B.undo.shift();
+    var su = B.sel ? unitById(B.G, B.sel) : null;
+    if (B.view !== null && B.view !== undefined) B.lastAct = B.view; else if (su) B.lastAct = su.c;
+  }
   return r;
 }
 function undoLast() {
@@ -808,6 +815,7 @@ function undoLast() {
   toast('Son hamle geri alındı');
 }
 function endPlayerTurn() {
+  if (B) B.camMem = { x: B.cam.x, y: B.cam.y, s: B.cam.s };
   var G = B.G;
   B.undo = [];
   if (B.phase !== 'player' || playing) return;
@@ -827,6 +835,10 @@ function runAI() {
     if (!B || checkOver()) return;
     if (G.cur === G.player) {
       B.phase = 'player'; B.skip = false; $('#aiBar').hidden = true;
+      // kamerayı oyuncunun son hamlesinin olduğu yere geri getir
+      var lc = B.lastAct !== undefined ? G.cells[B.lastAct] : null;
+      if (B.camMem) B.cam.s = B.camMem.s;
+      if (lc) B.camT = { x: lc.x, y: lc.y }; else if (B.camMem) B.camT = { x: B.camMem.x, y: B.camMem.y };
       G.log.length = 0;
       SFX.turn(); banner('Tur ' + G.turn + ' · Senin sıran', 1300);
       updateHud(); persistGame(); renderPanel(); dirty = true;
@@ -1163,5 +1175,5 @@ for (var lv = 1; lv <= 6; lv++) { ART.bImg('city', lv).onload = function () { di
 renderHelp();
 show('home');
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { dirty = true; if (cur === 'home') renderHome(); });
-window.__sancak = { save: function () { return save; }, B: function () { return B; }, startGame: startGame, openEra: openEra, show: show, endPlayerTurn: endPlayerTurn, tapCell: tapCell };
+window.__sancak = { clamp: function () { clampCam(B); }, save: function () { return save; }, B: function () { return B; }, startGame: startGame, openEra: openEra, show: show, endPlayerTurn: endPlayerTurn, tapCell: tapCell };
 })();

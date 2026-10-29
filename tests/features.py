@@ -59,6 +59,10 @@ async def main():
                 if await pg.evaluate('()=>__sancak.B().phase') != 'ai': break
         b = await pg.evaluate(f'()=>{{const u=__sancak.B().G.units.find(u=>u.c=={ci});return u&&[u.type,u.build]}}')
         print('kule durumu', b)
+        # tur başında kamera son hamleye döner
+        await pg.wait_for_timeout(900)
+        far = await pg.evaluate('''()=>{const B=__sancak.B(),G=B.G;const c=G.cells[B.lastAct];const t={x:B.cam.x,y:B.cam.y};B.cam.x=c.x;B.cam.y=c.y;__sancak.clamp();const d=Math.hypot(t.x-B.cam.x,t.y-B.cam.y);B.cam.x=t.x;B.cam.y=t.y;return d}''')
+        print('kamera uzaklığı', round(far, 2)); assert far < 1.5, 'kamera son hamleye dönmedi'
         await pg.evaluate(f'()=>{{const B=__sancak.B(),G=B.G,c=G.cells[{ci}];B.cam.x=c.x;B.cam.y=c.y;__sancak.tapCell({ci})}}'); await pg.wait_for_timeout(400); await shot('t5-tower')
         print('HATALAR', errs); assert not errs
         assert b is None or b[1] == 0, 'kule 2 turda bitmedi'
