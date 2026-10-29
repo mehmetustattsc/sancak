@@ -285,6 +285,69 @@ var ART = (function () {
     return dropEl(FIG['atli@1'](C, D, L), ['M27.5 12l.5-9h8l.5 9z', 'M28 4h8', 'M32 3V0']) +
       '<path d="M26.5 12q-.5-8 5.5-8.5 6 .5 5.5 8.5z" fill="#2a221c" stroke="' + OUT + '" stroke-width="1.2"/><path d="M28 6q4-2 8 0" stroke="#4a3d32" stroke-width="1.2" fill="none"/><path d="M30 4.5h4v2.5h-4z" fill="' + C + '"/>';
   };
+  /* ---- Modern Çağ figürleri ---- */
+  FIG['kilic@2'] = function (C, D, L) {   // mekanize piyade: kask, kamuflaj, tüfek
+    return '<ellipse cx="32" cy="58" rx="16" ry="4.5" fill="rgba(0,0,0,.35)"/>' +
+      '<path d="M25 44h6v12h-6zM33 44h6v12h-6z" fill="#4d5a3a" stroke="' + OUT + '" stroke-width="1.5"/>' +
+      '<path d="M23.5 54.5h8.5v4.5h-8.5zM32 54.5h8.5v4.5H32z" fill="#2a2620" stroke="' + OUT + '" stroke-width="1"/>' +
+      '<path d="M21 26q11-5 22 0l2 19H19z" fill="#5d6b45" stroke="' + OUT + '" stroke-width="1.5"/>' +
+      '<path d="M23 30l5 3-3 4zM36 29l5 2-2 5zM27 39l6-1-1 4z" fill="#3e4a2d"/>' +
+      // yelek ve kol bandı (ülke rengi)
+      '<path d="M23 28h18l1 12H22z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1.2"/><path d="M25 32h5v4h-5zM34 32h5v4h-5z" fill="' + D + '"/>' +
+      '<path d="M19 30l-1 6h4l1-5z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1"/>' +
+      // tüfek
+      '<path d="M16 38l30-11" stroke="#1e1f22" stroke-width="3.6" stroke-linecap="round"/><path d="M38 30l12-4" stroke="#2b2d31" stroke-width="2"/><path d="M28 36l2 6" stroke="#1e1f22" stroke-width="3"/>' +
+      '<path d="M43 28l-6 2M22 31l-4 5" stroke="#5d6b45" stroke-width="5" stroke-linecap="round"/>' +
+      // baş ve kask
+      '<circle cx="32" cy="18" r="6.5" fill="#d9a67a" stroke="' + OUT + '" stroke-width="1.5"/>' +
+      '<path d="M24 18q-1-11 8-11t8 11q-8-3-16 0z" fill="#56633f" stroke="' + OUT + '" stroke-width="1.4"/><path d="M26 13q6-3 12 0" stroke="#3e4a2d" stroke-width="1.4" fill="none"/>' +
+      '<path d="M27.5 20h9" stroke="#1d1712" stroke-width="2.2"/>';
+  };
+  FIG['okcu@2'] = function (C, D, L) {   // roketatar kamyonu
+    return '<ellipse cx="32" cy="57" rx="28" ry="4.5" fill="rgba(0,0,0,.35)"/>' +
+      '<path d="M4 46h52l2 6H4z" fill="#3e4a2d" stroke="' + OUT + '" stroke-width="1.6"/>' +
+      '<path d="M44 34h12l4 8v6H44z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1.6"/><path d="M47 36h7l3 6h-10z" fill="#9fb4c2" stroke="' + OUT + '" stroke-width="1"/>' +
+      '<path d="M45 44h6" stroke="' + C + '" stroke-width="3"/>' +
+      // roket kutusu
+      '<path d="M8 41l30-14 3 7-30 14z" fill="#5d6b45" stroke="' + OUT + '" stroke-width="1.6"/>' +
+      '<g fill="#22251f"><circle cx="35" cy="30.5" r="1.4"/><circle cx="38.5" cy="31.5" r="1.4"/><circle cx="35.8" cy="33.6" r="1.4"/><circle cx="39.2" cy="34.6" r="1.4"/></g>' +
+      '<path d="M18 46l4-8M30 46l2-8" stroke="#2b3020" stroke-width="2.4"/>' +
+      '<g fill="#1d1d1f" stroke="#555" stroke-width="1.4"><circle cx="12" cy="52" r="4.6"/><circle cx="24" cy="52" r="4.6"/><circle cx="36" cy="52" r="4.6"/><circle cx="51" cy="52" r="4.6"/></g>';
+  };
+  FIG['atli@2'] = function (C, D, L) {   // ana muharebe tankı
+    return '<ellipse cx="32" cy="57" rx="29" ry="4.5" fill="rgba(0,0,0,.35)"/>' +
+      '<path d="M5 46q0-5 5-5h44q5 0 5 5v4q0 5-5 5H10q-5 0-5-5z" fill="#2b2f26" stroke="' + OUT + '" stroke-width="1.6"/>' +
+      '<g fill="#4a4f44" stroke="#1a1c18" stroke-width="1"><circle cx="13" cy="49" r="3.2"/><circle cx="22" cy="49" r="3.2"/><circle cx="31" cy="49" r="3.2"/><circle cx="40" cy="49" r="3.2"/><circle cx="49" cy="49" r="3.2"/></g>' +
+      '<path d="M7 40l4-6h42l5 6z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1.6"/>' +
+      '<path d="M8 40h50" stroke="' + D + '" stroke-width="2.2"/>' +
+      // kule ve namlu
+      '<path d="M20 34l3-8h18l5 8z" fill="#66744d" stroke="' + OUT + '" stroke-width="1.6"/>' +
+      '<path d="M44 29h18" stroke="#3a4230" stroke-width="3.4" stroke-linecap="round"/><path d="M58 29h4" stroke="#2a2f22" stroke-width="4.4"/>' +
+      '<path d="M27 26v-4h6v4" fill="#4d5a3a" stroke="' + OUT + '" stroke-width="1.2"/><path d="M36 26V16" stroke="#2a2f22" stroke-width="1.4"/><path d="M36 17l8 2.5-8 2.5z" fill="' + C + '"/>';
+  };
+  FIG['kule@2'] = function (C, D, L) {   // beton sığınak
+    return '<ellipse cx="32" cy="58" rx="26" ry="4.5" fill="rgba(0,0,0,.35)"/>' +
+      '<path d="M6 56q2-24 26-26 24 2 26 26z" fill="#9a9a90" stroke="' + OUT + '" stroke-width="2"/>' +
+      '<path d="M14 44q18-6 36 0" fill="none" stroke="#6e6e66" stroke-width="1.4"/><path d="M20 41h24v5H20z" fill="#2b2b28"/>' +
+      '<path d="M32 30V8" stroke="#3a3a36" stroke-width="2"/><path d="M32 9l13 4-13 4z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1"/>' +
+      '<g fill="#7a6b48" stroke="' + OUT + '" stroke-width="1"><rect x="4" y="51" width="8" height="5" rx="2"/><rect x="52" y="51" width="8" height="5" rx="2"/></g>';
+  };
+  FIG['kadirga@2'] = function (C, D, L) {   // fırkateyn
+    return '<ellipse cx="32" cy="57" rx="29" ry="4" fill="rgba(0,0,0,.3)"/>' +
+      '<path d="M2 44h60l-6 9H8z" fill="#6f7a84" stroke="' + OUT + '" stroke-width="1.8"/>' +
+      '<path d="M4 47h56" stroke="' + C + '" stroke-width="2.4"/>' +
+      '<path d="M18 44V32h22v12z" fill="#8c97a1" stroke="' + OUT + '" stroke-width="1.5"/><path d="M21 35h4M28 35h4" stroke="#2b3238" stroke-width="2"/>' +
+      '<path d="M26 32l4-12h4l2 12z" fill="#9aa5ae" stroke="' + OUT + '" stroke-width="1.3"/><path d="M31 20V10M27 13h8" stroke="#2b3238" stroke-width="1.6"/>' +
+      '<path d="M44 44v-5h8v5z" fill="#7c8791" stroke="' + OUT + '" stroke-width="1.2"/><path d="M50 40l9-3" stroke="#2b3238" stroke-width="2.4"/>' +
+      '<path d="M8 44v-4h6v4z" fill="#7c8791" stroke="' + OUT + '" stroke-width="1.1"/>';
+  };
+  FIG['nakliye@2'] = function (C, D, L) {   // çıkarma gemisi
+    return '<ellipse cx="32" cy="57" rx="24" ry="4" fill="rgba(0,0,0,.3)"/>' +
+      '<path d="M8 42h48l-4 12H12z" fill="#5d6870" stroke="' + OUT + '" stroke-width="1.8"/>' +
+      '<path d="M10 46h44" stroke="' + C + '" stroke-width="2.4"/><path d="M8 42l-2-8h6l2 8z" fill="#6f7a84" stroke="' + OUT + '" stroke-width="1.3"/>' +
+      '<path d="M42 42V30h10v12z" fill="#7c8791" stroke="' + OUT + '" stroke-width="1.4"/><path d="M44 33h6" stroke="#2b3238" stroke-width="2"/>' +
+      '<path d="M20 42v-5h16v5z" fill="#4d5a3a" stroke="' + OUT + '" stroke-width="1.2"/>';
+  };
   var IMG = {};
   function curEra() { return typeof ERA_CUR !== 'undefined' ? ERA_CUR : 0; }
   function figFn(type, era, col) { var st = STYLE_BY_COL[col]; return (st && FIG[type + '#' + st + (era ? '@' + era : '')]) || FIG[type + '@' + era] || FIG[type]; }
@@ -488,6 +551,7 @@ var ART = (function () {
     mUp: '<svg viewBox="0 0 24 24"><path d="M12 3l8 9h-5v9H9v-9H4z" fill="#f2c230" stroke="#6b4f00" stroke-width="1.2" stroke-linejoin="round"/></svg>',
     mDown: '<svg viewBox="0 0 24 24"><path d="M12 21l8-9h-5V3H9v9H4z" fill="#3d8bf0" stroke="#0c2f66" stroke-width="1.2" stroke-linejoin="round"/></svg>',
     mDown2: '<svg viewBox="0 0 30 24"><path d="M8 21l6.5-8.5h-4V3h-5v9.5h-4zM22 21l6.5-8.5h-4V3h-5v9.5h-4z" fill="#3d8bf0" stroke="#0c2f66" stroke-width="1.1" stroke-linejoin="round"/></svg>',
+    jet: '<svg viewBox="0 0 24 24"><path d="M21 12l-7-2-3-7H9l1 7-5 1-2-3H1l1 4-1 4h2l2-3 5 1-1 7h2l3-7z" fill="currentColor"/></svg>',
     pincer: '<svg viewBox="0 0 24 24"><path d="M3 6l6 6-6 6M21 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
     hourglass: '<svg viewBox="0 0 24 24"><path d="M6 3h12M6 21h12M7 3c0 5 10 6 10 9s-10 4-10 9M17 3c0 5-10 6-10 9s10 4 10 9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>',
     ff: '<svg viewBox="0 0 24 24"><path d="M3 6l8 6-8 6zM12 6l8 6-8 6z" fill="currentColor"/></svg>',

@@ -107,6 +107,20 @@ var AUDIO = (function () {
       tone(t + 0.34, 140, 0.08, 'sine', 0.2);
     },
     // top ateşi: gemiden saldırı
+    // tüfek atışı: kısa çatırtılar
+    rifle: function (t) {
+      for (var i = 0; i < 5; i++) {
+        var tt = t + i * 0.09 + Math.random() * 0.04;
+        var g = noise(tt, 0.06, 'highpass', 900, 0.7, 0.55, 0.05); send(g, 0.4);
+        tone(tt, 120, 0.05, 'sine', 0.25);
+      }
+    },
+    // jet geçişi ve bomba
+    jet: function (t) {
+      var g = noise(t, 1.4, 'bandpass', 600, 0.8, 0.35, 1.3, null, 2600); send(g, 0.5);
+      noise(t + 0.2, 1.0, 'lowpass', 400, 0.5, 0.25, 0.9);
+      FX.cannon(t + 0.9);
+    },
     cannon: function (t) {
       var g = noise(t, 1.6, 'lowpass', 900, 0.7, 1.0, 1.4, null, 60); send(g, 0.7);
       tone(t, 85, 0.9, 'sine', 0.9, null, 32);

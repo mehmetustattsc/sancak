@@ -26,8 +26,8 @@ var ERAS = [
     blurb: 'Tüfekli piyade, sahra topları ve süvari. Ordular ikmal hattına bağlı.',
     land: ['kilic', 'okcu', 'atli'],
     ranks: ['Albay', 'Tuğgeneral', 'Tümgeneral', 'Korgeneral', 'Mareşal'] },
-  { id: 'modern', name: 'Modern Çağ', years: '1990 – bugün', suffix: 'Cumhuriyet', ready: false,
-    blurb: 'Tank tümenleri, taarruz helikopterleri ve hava gücü.',
+  { id: 'modern', name: 'Modern Çağ', years: '1990 – bugün', suffix: 'Cumhuriyet', ready: true,
+    blurb: 'Tank tümenleri, roketatarlar ve hava gücü. Her tur bir hava saldırısı.',
     land: ['kilic', 'okcu', 'atli'],
     ranks: ['Albay', 'Tuğgeneral', 'Tümgeneral', 'Korgeneral', 'Orgeneral'] }
 ];
@@ -50,8 +50,14 @@ var UT_ERA = [{}, {
   atli:    { name: 'Süvari', atk: 36, def: 28, mv: 3, desc: '3 hücre gider. Düşmanı yok ederse 1 hücre daha ilerler. Topçuya karşı üstün. Demirci ister.' },
   kule:    { name: 'Tabya', atk: 26, def: 46, desc: 'Toprak tabya. Boş araziye kurulur, 2 turda biter. Saldırmaz ama karşılık verir.' },
   kadirga: { name: 'Zırhlı', atk: 36, def: 32, mv: 4, rng: 2, cost: { g: 70, i: 3 }, desc: 'Buharlı zırhlı gemi. 4 hücre gider, 2 hücre uzağa top atar. Liman ister.' }
-}, {}];
-var TRANSPORT_ERA = [{}, { name: 'Vapur', mv: 3, def: 10 }, {}];
+}, {
+  kilic:   { name: 'Piyade', atk: 30, def: 36, mv: 2, desc: 'Mekanize piyade. Tanksavar füzeleriyle tankı durdurur, şehirde sağlam savunur. 2 hücre gider.' },
+  okcu:    { name: 'Roketatar', atk: 36, def: 14, mv: 2, rng: 3, cost: { g: 45, i: 2 }, desc: '3 hücre uzağa roket atar; uzaktan vurunca karşılık almaz. Yakın dövüşte çok zayıf.' },
+  atli:    { name: 'Tank', atk: 42, def: 34, mv: 3, cost: { g: 60, i: 3 }, desc: 'Zırhlı tümen. 3 hücre gider, düşmanı yok ederse 1 hücre daha ilerler. Roketatarı ezer. Demirci (fabrika) ister.' },
+  kule:    { name: 'Sığınak', atk: 28, def: 50, desc: 'Beton sığınak. Boş araziye kurulur, 2 turda biter. Saldırmaz ama karşılık verir.' },
+  kadirga: { name: 'Fırkateyn', atk: 38, def: 34, mv: 5, rng: 3, cost: { g: 80, i: 3 }, desc: 'Füzeli savaş gemisi. 5 hücre gider, 3 hücre uzağa atış yapar. Liman ister.' }
+}];
+var TRANSPORT_ERA = [{}, { name: 'Vapur', mv: 3, def: 10 }, { name: 'Çıkarma gemisi', mv: 4, def: 14 }];
 var ERA_CUR = 0;
 function setEra(e) {
   e = e || 0; ERA_CUR = e;
@@ -181,7 +187,14 @@ var ENEMY_GENS_ERA = [null, [
   { name: 'Yaşlı Kurmay', spec: 'kilic', look: { skin: '#ecc7a3', hair: '#bdbdbd', beard: 2, hat: 'peaked' } },
   { name: 'Tilki Paşa', spec: 'okcu', look: { skin: '#c99872', hair: '#3b2a1e', beard: 2, hat: 'cap' } },
   { name: 'Çelik Dük', spec: 'atli', look: { skin: '#dcae88', hair: '#3e2b1f', beard: 0, hat: 'bicorne' } }
-], null];
+], [
+  { name: 'Demir Yumruk', spec: 'atli', look: { skin: '#e3b28a', hair: '#3b2a1e', beard: 0, hat: 'beret', coat: '#3d4a33' } },
+  { name: 'Sessiz Albay', spec: 'kilic', look: { skin: '#cf9e78', hair: '#1f1813', beard: 1, hat: 'helmetm', coat: '#4a5238' } },
+  { name: 'Kartal Pilot', spec: 'okcu', look: { skin: '#e8bd96', hair: '#6b4a2c', beard: 0, hat: 'pilot', coat: '#3a4a5c' } },
+  { name: 'Yaşlı General', spec: 'kilic', look: { skin: '#ecc7a3', hair: '#cfcfcf', beard: 1, hat: 'peaked', coat: '#3b4c3a' } },
+  { name: 'Çöl Tilkisi', spec: 'atli', look: { skin: '#c99872', hair: '#2b2018', beard: 2, hat: 'beret', coat: '#6b5a3a' } },
+  { name: 'Gölge', spec: 'okcu', look: { skin: '#d6a57c', hair: '#111', beard: 1, hat: 'cap', coat: '#2f3a2a' } }
+]];
 var RANK_XP = [0, 120, 320, 650, 1100];
 function rankOf(xp) { var r = 1; for (var i = 1; i < RANK_XP.length; i++) if (xp >= RANK_XP[i]) r = i + 1; return r; }
 
@@ -201,7 +214,10 @@ var ERA_LEVELS = [[
     story: 'Demiryolları, fabrikalar ve büyük ordular. Kanal’ın iki yakasında sekiz devlet. Ordun ikmal hattından kopmasın: şehirden ve kaleden 3 hücreden uzaklaşan birlik zayıflar ve iyileşmez.' },
   { map: 4, par: 45, limit: 95, aiEco: 0.85, grace: 3,
     story: 'Uçsuz bozkırlar, bataklıklar ve Karadeniz. Mesafeler uzun, ikmal her şey: şehirden şehre ilerle. Baltık’tan Kafkas eteklerine sekiz devlet.' }
-], []];
+], [
+  { map: 5, par: 40, limit: 100, aiEco: 0.85, grace: 3,
+    story: 'Lizbon’dan Anadolu’ya on devlet. Tanklar hızlı, roketler uzağa vurur. Her tur bir hava saldırın var: şehirlerinin 4 hücre çevresindeki bir düşmanı vur.' }
+]];
 var LEVELS = ERA_LEVELS[0];
 function levelsOf(e) { return ERA_LEVELS[e || 0] || []; }
 
@@ -648,13 +664,13 @@ function aiOffer(G, R) {
 var MORALE = { kiskac: { m: 0.8, name: 'Kıskaç' }, agir: { m: 0.7, name: 'Ağır kıskaç' }, cevrili: { m: 0.55, name: 'Çevrili' } };
 // moral yükselişi: yanında en az iki dost birlik (destek), son turda düşman yok etti (zafer coşkusu)
 /* Yakın Çağ ve sonrası: ikmal. Kendi (ya da müttefik) şehir veya kalesinden 3 hücreden uzak kara birliği zayıflar ve iyileşmez. */
-var SUPPLY_RANGE = 3;
+var SUPPLY_RANGE = 3, SUPPLY_BY_ERA = [0, 3, 4];
 function supplied(G, u) {
   if (!G.era || u.emb || UT[u.type].naval || UT[u.type].tower || u.f < 0) return true;
   var c = G.cells[u.c];
   for (var i = 0; i < G.cells.length; i++) {
     var o = G.cells[i];
-    if ((o.t === 3 || o.t === 4) && (o.f === u.f || isAlly(G, o.f, u.f)) && hd(o, c) <= SUPPLY_RANGE) return true;
+    if ((o.t === 3 || o.t === 4) && (o.f === u.f || isAlly(G, o.f, u.f)) && hd(o, c) <= (SUPPLY_BY_ERA[G.era] || SUPPLY_RANGE)) return true;
   }
   return false;
 }
@@ -788,6 +804,36 @@ function removeUnit(G, u) {
   if (g) { g.unit = 0; g.rest = G.turn + (g.legend ? LEGEND_REST : GEN_REST); G.log.push({ t: 'wounded', f: u.f, gen: g.id, c: u.c }); }
   if (UT[u.type].tower) G.log.push({ t: 'towerDown', c: u.c, f: u.f });
   if (u.f === G.player) G.stats.lost++;
+}
+
+/* ---------- Modern Çağ: hava saldırısı ----------
+   Her ülke turda bir kez, kendi şehrinin AIR_RANGE hücre çevresindeki bir düşman birliğini vurur. Karşılık yoktur. */
+var AIR_RANGE = 4, AIR_DMG = 22;
+function airReady(G, fi) { return G.era === 2 && fi >= 0 && (!G.airUsed || G.airUsed[fi] !== G.turn); }
+function canAir(G, fi, d) {
+  if (!airReady(G, fi) || !d || d.f === fi || !foe(G, d.f, fi)) return false;
+  var cd = G.cells[d.c];
+  return G.cells.some(function (c) { return c.t === 3 && c.f === fi && hd(c, cd) <= AIR_RANGE; });
+}
+function airDmg(G, d) { return Math.round(AIR_DMG * (UT[d.type].tower ? 0.5 : 1) * (G.cells[d.c].mt ? 0.8 : 1)); }
+function airStrike(G, fi, did) {
+  var d = unitById(G, did); if (!canAir(G, fi, d)) return null;
+  G.airUsed = G.airUsed || []; G.airUsed[fi] = G.turn;
+  var dmg = airDmg(G, d); d.hp -= dmg;
+  var ev = { t: 'air', f: fi, d: d.id, dc: d.c, dmg: dmg, killD: d.hp <= 0, df: d.f, dtype: d.type, dhp: d.hp };
+  G.log.push(ev);
+  if (d.hp <= 0) { removeUnit(G, d); if (fi === G.player) G.stats.kills++; }
+  return ev;
+}
+function aiAir(G, fi) {
+  if (!airReady(G, fi)) return null;
+  var best = null;
+  G.units.forEach(function (d) {
+    if (!canAir(G, fi, d)) return;
+    var dm = airDmg(G, d), sc = Math.min(dm, d.hp) + (d.hp <= dm ? 40 : 0) + (UT[d.type].atk > 35 ? 5 : 0) + (d.gen ? 8 : 0);
+    if (!best || sc > best.sc) best = { sc: sc, id: d.id };
+  });
+  return best ? airStrike(G, fi, best.id) : null;
 }
 
 /* ---------- inşa ve asker alma ---------- */
@@ -950,6 +996,7 @@ function* aiTurn(G, fi, R) {
   // 1) ekonomi
   aiEconomy(G, fi);
   yield 'eco';
+  if (aiAir(G, fi)) yield 'air';
   // 2) generaller
   freeGenerals(G, fi).forEach(function (g) {
     var best = null;
@@ -1126,5 +1173,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
 };

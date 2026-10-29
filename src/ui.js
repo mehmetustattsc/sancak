@@ -162,7 +162,7 @@ function openEra(e) {
         '<div class="meta">' + M.factions.length + ' ülke · ' + nc + ' şehir · ' + nk + ' kale' + (M.navy ? ' · deniz' : '') + '</div>' +
         '<div class="meta">★★★ ' + L.par + ' turda · sınır ' + L.limit + ' tur</div></div>' +
         (un ? '<div class="st">' + [1, 2, 3].map(function (k) { return k <= st ? '<b>★</b>' : '★'; }).join('') + '</div>' : I.lock) + '</button>';
-    }).join('') + '<div class="lvl soon"><div class="ph">?</div><div><div class="nm">' + (e === 0 ? 'Britanya Adaları, Kuzey Denizleri…' : 'Doğu Cephesi, Balkanlar, Kafkasya…') + '</div><div class="meta">Yeni seferler geliyor</div></div></div></div>';
+    }).join('') + '<div class="lvl soon"><div class="ph">?</div><div><div class="nm">' + (['Britanya Adaları, Kuzey Denizleri…', 'Balkanlar, Kafkasya, Kuzey Afrika…', 'İskandinavya, Akdeniz, Atlantik…'][e] || '') + '</div><div class="meta">Yeni seferler geliyor</div></div></div></div>';
   $('#eraBack').onclick = function () { SFX.tap(); show('home'); };
   el.querySelectorAll('.lvl[data-l]').forEach(function (b) {
     drawMini(b.querySelector('canvas'), levelsOf(e)[+b.dataset.l].map);
@@ -596,6 +596,7 @@ function unitHTML(u) {
   } else if (mine && !UT[u.type].tower && freeGenerals(G, G.player).length) {
     acts += '<button class="ibtn gold" id="uAssign" aria-label="General ata">' + I.genplus + '</button>';
   }
+  if (!mine && canAir(G, G.player, u)) acts += '<button class="ibtn gold" id="uAir" aria-label="Hava saldırısı">' + I.jet + '<em>−' + airDmg(G, u) + '</em></button>';
   if (mine) {
     var c = G.cells[u.c];
     if (c.f === G.player && c.t >= 2) acts += '<button class="ibtn" id="uCell" aria-label="Yapı">' + (c.t === 3 ? I.city : c.t === 4 ? I.castle : I.wheat) + '</button>';
@@ -682,6 +683,11 @@ function renderPanel() {
   if ($('#uCell')) $('#uCell').onclick = function () { var u = unitById(G, B.sel); B.view = u.c; B.sel = 0; B.reach = null; B.targets = []; renderPanel(); dirty = true; };
   if ($('#uAssign')) $('#uAssign').onclick = assignMenu;
   if ($('#uGen')) $('#uGen').onclick = genMenu;
+  if ($('#uAir')) $('#uAir').onclick = function () {
+    var d = unitById(G, B.sel); if (!d) return;
+    B.lastAct = d.c; airStrike(G, G.player, d.id); B.undo = []; updateHud();
+    playLog(function () { var d2 = unitById(G, d.id); if (d2) selectUnit(d2); else deselect(); updateHud(); checkOver(); });
+  };
   el.querySelectorAll('[data-up]:not(.off)').forEach(function (b) { b.onclick = function () {
     var what = b.dataset.up;
     if (act(function () { return upgrade(G, B.view, what); })) { SFX.build(); fx({ k: 'text', c: B.view, txt: UP_FX[what], col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; }
@@ -919,13 +925,21 @@ function animEvent(e, sp) {
     if (B.phase === 'ai') ensureVisible(e.dc);
     var dur = 650 / sp;
     B.anim.push({ k: 'atk', e: e, t0: performance.now(), dur: dur });
-    if (e.naval) AUDIO.play('cannon'); else if (e.ranged) AUDIO.play('arrow'); else AUDIO.play('clash');
+    if (e.naval || (G.era && e.ranged)) AUDIO.play('cannon'); else if (e.ranged) AUDIO.play('arrow'); else if (G.era) AUDIO.play('rifle'); else AUDIO.play('clash');
     setTimeout(function () {
       fx({ k: 'text', c: e.dc, txt: '−' + e.dmg, col: '#ff8a6a' });
       if (e.back) fx({ k: 'text', c: e.ac, txt: '−' + e.back, col: '#ff8a6a' });
       if (e.killD || e.killA) { SFX.kill(); fx({ k: 'boom', c: e.killD ? e.dc : e.ac }); }
     }, dur * 0.55);
     d = dur + 150 / sp;
+  } else if (e.t === 'air') {
+    if (B.phase === 'ai') ensureVisible(e.dc);
+    AUDIO.play('jet'); fx({ k: 'jet', c: e.dc, dur: 1100 });
+    setTimeout(function () {
+      fx({ k: 'boom', c: e.dc }); fx({ k: 'text', c: e.dc, txt: '−' + e.dmg, col: '#ff8a6a' });
+      if (e.killD) SFX.kill();
+    }, 900 / sp);
+    d = 1300 / sp;
   } else if (e.t === 'capture') {
     var c = G.cells[e.c];
     fx({ k: 'ring', c: e.c, col: e.to >= 0 ? FACTIONS[G.factions[e.to].id].col : '#ccc' });
@@ -1322,6 +1336,14 @@ function render(now) {
   FX = FX.filter(function (f) { return now - f.t0 < f.dur; });
   FX.forEach(function (f) {
     var k = Math.max(0, (now - f.t0) / f.dur), c = G.cells[f.c], p = w2s(c.x, c.y);
+    if (f.k === 'jet') {   // jet izi: sol üstten hedefe, sonra yukarı
+      var jx = p.x - s * 6 + s * 12 * k, jy = p.y - s * 3 + Math.pow(k - 0.5, 2) * s * 8;
+      ctx.save(); ctx.globalAlpha = 1 - k * 0.6; ctx.strokeStyle = 'rgba(255,255,255,.7)'; ctx.lineWidth = Math.max(2, s * 0.06);
+      ctx.beginPath(); ctx.moveTo(jx - s * 2.2, jy - s * 0.2); ctx.lineTo(jx, jy); ctx.stroke();
+      ctx.translate(jx, jy); ctx.fillStyle = '#3b4148';
+      ctx.beginPath(); ctx.moveTo(s * 0.45, 0); ctx.lineTo(-s * 0.35, -s * 0.12); ctx.lineTo(-s * 0.15, -s * 0.4); ctx.lineTo(-s * 0.05, -s * 0.08); ctx.lineTo(-s * 0.35, s * 0.12); ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
     if (f.k === 'ring') { ctx.beginPath(); ctx.arc(p.x, p.y, s * (0.4 + k * 0.9), 0, 7); ctx.strokeStyle = f.col; ctx.globalAlpha = 1 - k; ctx.lineWidth = 3; ctx.stroke(); ctx.globalAlpha = 1; }
     if (f.k === 'boom') { for (var q = 0; q < 8; q++) { var an = q * 0.8; ctx.beginPath(); ctx.arc(p.x + Math.cos(an) * s * k * 0.7, p.y + Math.sin(an) * s * k * 0.7, s * 0.2 * (1 - k), 0, 7); ctx.fillStyle = q % 2 ? '#ffb347' : '#ff6b3d'; ctx.fill(); } }
     if (f.k === 'text') { ctx.globalAlpha = Math.min(1, 2 - 2 * k); ctx.font = '700 ' + Math.max(15, s * 0.42) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,.7)'; ctx.strokeText(f.txt, p.x, p.y - s * 0.7 - k * s * 0.7); ctx.fillStyle = f.col; ctx.fillText(f.txt, p.x, p.y - s * 0.7 - k * s * 0.7); ctx.globalAlpha = 1; }

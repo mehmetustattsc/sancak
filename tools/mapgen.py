@@ -222,7 +222,7 @@ ITALY = {
     ('Roma', 12.50, 41.90, 3, 'city'), ('Milano', 9.19, 45.46, 3, 'city'), ('Napoli', 14.25, 40.85, 3, 'city'),
     ('Marsilya', 5.37, 43.30, 3, 'city'), ('Innsbruck', 11.40, 47.27, 3, 'city'), ('Zagreb', 15.98, 45.81, 3, 'city'),
     ('Venedik', 12.33, 45.44, 2, 'city'), ('Cenova', 8.93, 44.41, 2, 'city'), ('Floransa', 11.25, 43.77, 2, 'city'),
-    ('Palermo', 13.36, 38.12, 2, 'city'), ('Bari', 16.87, 41.12, 1, 'city'), ('Torino', 7.68, 45.07, 1, 'city'),
+    ('Palermo', 13.36, 38.12, 2, 'city'), ('Bari', 16.87, 41.12, 1, 'city', 'yesil'), ('Torino', 7.68, 45.07, 1, 'city'),
     ('Ancona', 13.50, 43.60, 1, 'city'), ('Siraküza', 15.29, 37.07, 1, 'city'), ('Cagliari', 9.11, 39.22, 1, 'city'),
     ('Sassari', 8.56, 40.73, 1, 'city'), ('Ajaccio', 8.74, 41.92, 1, 'city'), ('Nice', 7.27, 43.70, 1, 'city'),
     ('Zürih', 8.54, 47.37, 2, 'city'), ('Ljubljana', 14.50, 46.05, 1, 'city'), ('Split', 16.44, 43.51, 1, 'city'),
@@ -296,7 +296,7 @@ WEST = {
     ('Dresden', 13.74, 51.05, 2, 'city'), ('Breslau', 17.04, 51.11, 1, 'city'), ('Stettin', 14.55, 53.43, 1, 'city'),
     ('Nürnberg', 11.08, 49.45, 1, 'city'), ('Stuttgart', 9.18, 48.78, 2, 'city', 'sari'),
     ('Prag', 14.42, 50.08, 2, 'city'), ('Graz', 15.44, 47.07, 1, 'city'), ('Trieste', 13.78, 45.65, 1, 'city'),
-    ('Milano', 9.19, 45.46, 2, 'city'), ('Venedik', 12.33, 45.44, 1, 'city'), ('Cenova', 8.93, 44.41, 1, 'city'),
+    ('Milano', 9.19, 45.46, 2, 'city', 'yesil'), ('Venedik', 12.33, 45.44, 1, 'city'), ('Cenova', 8.93, 44.41, 1, 'city'),
     ('Zürih', 8.54, 47.37, 2, 'city'), ('Cenevre', 6.14, 46.20, 1, 'city', 'n'),
     ('Verdun', 5.39, 49.16, 2, 'castle'), ('Belfort', 6.86, 47.64, 1, 'castle'), ('Brest', -4.49, 48.39, 1, 'castle'),
     ('Dover', 1.31, 51.13, 1, 'castle', 'buz'), ('York', -1.08, 53.96, 1, 'castle'), ('Namur', 4.87, 50.47, 1, 'castle'), ('Lüksemburg', 6.13, 49.61, 1, 'castle', 'turuncu'),
@@ -339,7 +339,42 @@ EAST = {
     ('Brăila', 27.97, 45.27, 1, 'castle'), ('Çatalca', 28.46, 41.14, 1, 'castle', 'kirmizi'), ('Sinop', 35.15, 42.02, 1, 'castle'), ('Kars', 43.10, 40.60, 2, 'castle'),
     ('Sivastopol', 33.52, 44.60, 2, 'castle'), ('Jitomir', 28.66, 50.25, 1, 'castle'), ('Kaunas', 23.90, 54.90, 1, 'castle', 'kahve'), ('Brest-Litovsk', 23.69, 52.10, 1, 'castle'),
   ]}
-maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST)]
+def europe_owner(c, lon, lat):
+    return {'ESP': 'sari', 'PRT': 'sari', 'FRA': 'mavi', 'GBR': 'buz', 'IRL': 'buz', 'DEU': 'siyah', 'POL': 'turuncu',
+            'AUT': 'bordo', 'CZE': 'bordo', 'SVK': 'bordo', 'HUN': 'bordo', 'SVN': 'bordo', 'ITA': 'yesil',
+            'HRV': 'mor', 'BIH': 'mor', 'SRB': 'mor', 'MNE': 'mor', 'KOS': 'mor', 'MKD': 'turkuaz', 'ALB': 'turkuaz',
+            'GRC': 'turkuaz', 'ROU': 'kahve', 'BGR': 'kahve', 'TUR': 'kirmizi'}.get(c, 'n')
+EUROPE = {
+  'name': 'Avrupa', 'navy': True, 'box': (-10.6, 34.8, 36.4, 56.2), 'target': 255, 'seed': 6, 'island_min': 2, 'foreign_void': True,
+  'straits': ['İstanbul'], 'sea_at': [(28.0, 40.7), (26.2, 39.9), (25.4, 38.9), (25.6, 37.6)],
+  'styles': {'kirmizi': 'turk'},
+  'countries': ['ESP', 'PRT', 'FRA', 'GBR', 'IRL', 'DEU', 'POL', 'AUT', 'CZE', 'SVK', 'HUN', 'SVN', 'ITA', 'HRV', 'BIH', 'SRB', 'MNE', 'KOS', 'MKD', 'ALB',
+                'GRC', 'ROU', 'BGR', 'TUR', 'BEL', 'NLD', 'LUX', 'CHE', 'DNK'],
+  'owner': europe_owner,
+  'factions': ['mavi', 'siyah', 'buz', 'sari', 'yesil', 'kirmizi', 'turuncu', 'bordo', 'mor', 'turkuaz', 'kahve'],
+  'caps': {'sari': 'Madrid', 'mavi': 'Paris', 'buz': 'Londra', 'siyah': 'Berlin', 'turuncu': 'Varşova', 'bordo': 'Viyana', 'yesil': 'Roma',
+           'mor': 'Belgrad', 'turkuaz': 'Atina', 'kahve': 'Bükreş', 'kirmizi': 'Ankara'},
+  'places': [
+    ('Madrid', -3.70, 40.42, 3, 'city'), ('Paris', 2.35, 48.86, 3, 'city'), ('Londra', -0.13, 51.51, 3, 'city'), ('Berlin', 13.40, 52.52, 3, 'city'),
+    ('Varşova', 21.01, 52.23, 3, 'city'), ('Viyana', 16.37, 48.21, 3, 'city'), ('Roma', 12.50, 41.90, 3, 'city'), ('Belgrad', 20.46, 44.82, 3, 'city'),
+    ('Atina', 23.73, 37.98, 3, 'city'), ('Bükreş', 26.10, 44.43, 3, 'city'), ('Ankara', 32.85, 39.93, 3, 'city'),
+    ('Barselona', 2.17, 41.39, 2, 'city'), ('Sevilla', -5.98, 37.39, 1, 'city'), ('Lizbon', -9.14, 38.72, 2, 'city'), ('Bilbao', -2.93, 43.26, 1, 'city'), ('Valensiya', -0.38, 39.47, 1, 'city'),
+    ('Lyon', 4.84, 45.76, 2, 'city'), ('Marsilya', 5.37, 43.30, 2, 'city'), ('Bordeaux', -0.58, 44.84, 1, 'city'), ('Nantes', -1.55, 47.22, 1, 'city'), ('Strazburg', 7.75, 48.58, 1, 'city', 'mavi'),
+    ('Manchester', -2.24, 53.48, 2, 'city'), ('Dublin', -6.26, 53.35, 2, 'city'), ('Glasgow', -4.25, 55.86, 1, 'city'), ('Bristol', -2.59, 51.45, 1, 'city'),
+    ('Hamburg', 9.99, 53.55, 2, 'city'), ('Münih', 11.58, 48.14, 2, 'city'), ('Köln', 6.96, 50.94, 2, 'city'), ('Frankfurt', 8.68, 50.11, 1, 'city'), ('Dresden', 13.74, 51.05, 1, 'city'),
+    ('Krakov', 19.94, 50.06, 2, 'city'), ('Gdańsk', 18.65, 54.35, 2, 'city'), ('Poznań', 16.93, 52.41, 1, 'city'), ('Wrocław', 17.04, 51.11, 1, 'city'),
+    ('Prag', 14.42, 50.08, 2, 'city'), ('Budapeşte', 19.04, 47.50, 2, 'city'), ('Graz', 15.44, 47.07, 1, 'city'),
+    ('Milano', 9.19, 45.46, 2, 'city', 'yesil'), ('Napoli', 14.25, 40.85, 2, 'city'), ('Torino', 7.69, 45.07, 1, 'city'), ('Venedik', 12.33, 45.44, 1, 'city'), ('Palermo', 13.36, 38.12, 1, 'city'), ('Bari', 16.87, 41.12, 1, 'city', 'yesil'),
+    ('Zagreb', 15.98, 45.81, 2, 'city'), ('Saraybosna', 18.41, 43.86, 1, 'city'), ('Üsküp', 21.43, 42.00, 1, 'city'), ('Tiran', 19.82, 41.33, 1, 'city'),
+    ('Selanik', 22.94, 40.64, 2, 'city'), ('Kandiye', 25.13, 35.34, 1, 'city'),
+    ('Sofya', 23.32, 42.70, 2, 'city'), ('Kluj', 23.60, 46.77, 1, 'city'), ('Yaş', 27.60, 47.16, 1, 'city'), ('Varna', 27.91, 43.21, 1, 'city'),
+    ('İstanbul', 28.97, 41.01, 3, 'city'), ('İzmir', 27.14, 38.42, 2, 'city'), ('Bursa', 29.06, 40.19, 1, 'city'), ('Antalya', 30.71, 36.89, 1, 'city'), ('Adana', 35.32, 37.00, 1, 'city'),
+    ('Amsterdam', 4.90, 52.37, 2, 'city'), ('Brüksel', 4.35, 50.85, 2, 'city', 'n'), ('Kopenhag', 12.57, 55.68, 2, 'city'), ('Zürih', 8.54, 47.37, 2, 'city'),
+    ('Zaragoza', -0.88, 41.65, 1, 'castle'), ('Portsmouth', -1.09, 50.80, 1, 'castle'), ('Hannover', 9.73, 52.37, 1, 'castle'),
+    ('Lublin', 22.57, 51.25, 1, 'castle'), ('Brno', 16.61, 49.20, 1, 'castle'), ('Floransa', 11.25, 43.77, 1, 'castle'), ('Split', 16.44, 43.51, 1, 'castle'),
+    ('Yanya', 20.85, 39.66, 1, 'castle'), ('Plovdiv', 24.75, 42.14, 1, 'castle'), ('Çanakkale', 26.40, 40.15, 1, 'castle'), ('Erzurum', 41.27, 39.90, 1, 'castle'),
+  ]}
+maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST), build(EUROPE)]
 out = os.path.join(os.path.dirname(__file__), '..', 'src', 'maps.json')
 json.dump(maps, open(out, 'w'), ensure_ascii=False, separators=(',', ':'))
 print('wrote', out, os.path.getsize(out), file=sys.stderr)
