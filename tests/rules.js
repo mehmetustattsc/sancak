@@ -68,4 +68,13 @@ const withGen = E.predict(G, k1, e1).dmg;
 console.log('  general etkisi: hasar', base.toFixed(1), '->', withGen.toFixed(1));
 assert(withGen > base * 1.2, 'general belirgin fark yaratmalı');
 console.log('✓ general');
+// 7) kalede asker
+G = fresh(); const cas = G.cells.find(x => x.t === 4 && x.f === P);
+if (cas) {
+  G.factions[P].gold = 500; G.factions[P].iron = 9;
+  assert(E.recruitInfo(G, cas, 'kilic').ok, 'kalede kılıçlı alınmalı');
+  cas.lv = 1; assert(!E.recruitInfo(G, cas, 'atli').ok, 'düşük kalede atlı yok');
+  cas.lv = 3; assert(E.recruitInfo(G, cas, 'atli').ok, '3. seviye kalede atlı');
+  console.log('✓ kalede asker');
+}
 console.log('KURAL TESTLERİ TAMAM');

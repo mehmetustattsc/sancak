@@ -477,8 +477,10 @@ function upgrade(G, ci, what) {
 function recruitInfo(G, c, type) {
   var f = G.factions[c.f], T = UT[type];
   var r = { g: T.cost.g, i: T.cost.i, ok: true, why: '' };
-  if (c.t !== 3) { r.ok = false; r.why = 'Sadece şehirde'; return r; }
-  if (T.req === 'smith' && c.smith < 1) { r.ok = false; r.why = 'Demirci gerekir'; }
+  if (c.t !== 3 && c.t !== 4) { r.ok = false; r.why = 'Şehirde ya da kalede'; return r; }
+  if (c.t === 4 && T.naval) { r.ok = false; r.why = 'Kalede gemi olmaz'; return r; }
+  if (T.req === 'smith' && c.t === 3 && c.smith < 1) { r.ok = false; r.why = 'Demirci gerekir'; }
+  if (T.req === 'smith' && c.t === 4 && c.lv < 3) { r.ok = false; r.why = 'Kale seviyesi 3 olmalı'; }
   if (T.req === 'port' && c.port < 1) { r.ok = false; r.why = 'Liman gerekir'; }
   if (T.naval && !G.navy) { r.ok = false; r.why = 'Bu haritada deniz yok'; }
   r.at = spawnCell(G, c, T.naval);
@@ -615,12 +617,13 @@ function* aiTurn(G, fi, R) {
 function aiEconomy(G, fi) {
   var f = G.factions[fi], inc = income(G, fi);
   var cities = G.cells.filter(function (c) { return c.t === 3 && c.f === fi; });
+  var castles = G.cells.filter(function (c) { return c.t === 4 && c.f === fi; });
   var myUnits = G.units.filter(function (u) { return u.f === fi && !UT[u.type].tower; }).length;
   var foodNet = inc.food - inc.up;
   var threatened = function (c) { return G.units.some(function (u) { return u.f !== fi && u.f >= 0 && hd(G.cells[u.c], c) <= 2; }); };
   // asker: yiyecek ve sınır dahilinde
   var cap = cities.length * 3 + 3;
-  var order = cities.slice().sort(function (a, b) { return threatened(b) - threatened(a) || b.lv - a.lv; });
+  var order = cities.concat(castles.filter(threatened)).sort(function (a, b) { return threatened(b) - threatened(a) || b.lv - a.lv; });
   order.forEach(function (c) {
     if (myUnits >= cap) return;
     if (foodNet < 0 && f.food < 3 && !threatened(c)) return;

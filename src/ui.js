@@ -276,7 +276,7 @@ function renderHelp() {
     '<div class="card"><h3>Yapılar</h3><ul>' +
     '<li><b>Şehir (6 seviye):</b> gelir, savunma ve iyileşme artar. Ele geçirilen şehir 1 seviye düşer.</li>' +
     '<li><b>Demirci (3 seviye):</b> demir üretir. 1. seviye atlıyı açar; 2. ve 3. seviyede yeni birlikler daha tecrübeli doğar.</li>' +
-    '<li><b>Kale (4 seviye):</b> içindeki birliğin savunması %30’dan %90’a kadar artar.</li>' +
+    '<li><b>Kale (4 seviye):</b> içindeki birliğin savunması %30’dan %90’a kadar artar. Kalede kılıçlı ve okçu alınır; 3. seviyeden itibaren atlı da.</li>' +
     '<li><b>Tarla (2 seviye):</b> 2 ya da 4 gıda. Düşman alırsa 1. seviyeye düşer.</li>' +
     '<li><b>Liman (2 seviye, denizli haritalar):</b> kadırga yapar. Kara birliği limandan denize çıkınca nakliyeye biner; nakliye savunmasızdır.</li></ul></div>' +
     '<div class="card"><h3>Savaş</h3><ul>' +
@@ -516,6 +516,12 @@ function cellHTML(c) {
     var si = upgradeInfo(G, c, 'smith'); if (si) up('smith', c.smith ? 'Demirci' : 'Demirci kur', si, si.next === 1 ? 'Atlı açılır, +1 demir' : 'Seviye ' + si.next + ' birlik, +1 demir');
     var pi = upgradeInfo(G, c, 'port'); if (pi) up('port', c.port ? 'Liman' : 'Liman kur', pi, pi.next === 1 ? 'Kadırga, nakliye, +2 altın' : 'Tecrübeli gemi, +2 altın');
     s += '<div class="rec">' + ['kilic', 'okcu', 'atli', 'kadirga'].filter(function (t) { return !UT[t].naval || G.navy; }).map(function (t) {
+      var r = recruitInfo(G, c, t);
+      return '<button class="recb" data-rec="' + t + '"' + (r.ok ? '' : ' disabled') + '><span class="rf">' + ART.figInline(t, FACTIONS[G.factions[f].id].col) + '</span><span class="rn">' + UT[t].name + '</span>' + costTag(r.g, r.i) + (r.ok ? '' : '<span class="why">' + r.why + '</span>') + '</button>';
+    }).join('') + '</div>';
+  }
+  if (c.t === 4) {
+    s += '<div class="rec">' + ['kilic', 'okcu', 'atli'].map(function (t) {
       var r = recruitInfo(G, c, t);
       return '<button class="recb" data-rec="' + t + '"' + (r.ok ? '' : ' disabled') + '><span class="rf">' + ART.figInline(t, FACTIONS[G.factions[f].id].col) + '</span><span class="rn">' + UT[t].name + '</span>' + costTag(r.g, r.i) + (r.ok ? '' : '<span class="why">' + r.why + '</span>') + '</button>';
     }).join('') + '</div>';

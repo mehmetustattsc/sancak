@@ -20,7 +20,7 @@ Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, i
 | Ticaret | Başkentte tur başına 3 takas: 10 gıda→12 altın, 18 altın→10 gıda, 25 altın→2 demir, 2 demir→14 altın |
 | Kaynak | Altın (şehir), Gıda (tarla + şehir; her birlik 1 yer), Demir (demirci) |
 | Şehir | 6 seviye; gelir, savunma (+%8/sv), iyileşme. Ele geçirilen şehir 1 seviye düşer |
-| Kale | 4 seviye; savunma +%30 … +%90 |
+| Kale | 4 seviye; savunma +%30 … +%90; kılıçlı ve okçu alınır, 3. seviyeden itibaren atlı |
 | Demirci | 3 seviye; demir üretir, atlıyı açar, 2–3. seviyede tecrübeli birlik |
 | Tarla | 2 seviye; 2 / 4 gıda |
 | Liman | 2 seviye; kadırga üretir. Kara birliği limandan denize çıkınca nakliyeye biner |
