@@ -735,6 +735,7 @@ function annexHTML(fi) {
     '<span><b>Bağlı krallık yap</b><i>' + (a.ok ? a.cities + ' şehir ve ' + a.units + ' birlik krallığına katılır' : esc(a.why)) + '</i></span>' + costTag(a.cost) + '</button>';
 }
 function offerPopup() {
+  if (window.__sancakNoOffers) return; // testler için
   var G = B.G, o = aiOffer(G, Math.random);
   if (!o) return;
   var g = o.deal.give;

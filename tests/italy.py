@@ -10,6 +10,7 @@ async def main():
         pg = await ctx.new_page(); errs = []
         pg.on('pageerror', lambda e: errs.append(str(e) + ' ' + (e.stack or '')[:600]))
         await pg.route('**/fonts.googleapis.com/**', lambda r: r.abort())
+        await pg.add_init_script('window.__sancakNoOffers = true')
         async def shot(n):
             if len(sys.argv) > 1: await pg.screenshot(path=os.path.join(sys.argv[1], n + '.png'))
         await pg.goto('file://' + os.path.join(ROOT, 'web', 'index.html')); await pg.wait_for_timeout(400)
