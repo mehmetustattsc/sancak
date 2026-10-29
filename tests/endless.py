@@ -38,6 +38,10 @@ async def main():
             await pg.wait_for_timeout(150)
             if await pg.evaluate('()=>__sancak.B().phase') != 'ai': break
         ov = await pg.evaluate('()=>__sancak.B().G.over'); print('sınırdan sonra over', ov); assert ov in (0, 1)
+        # istediğin yerde bırak: menüden 'Fethi burada bitir' (sadece düğme ve ödül metni kontrolü)
+        await pg.click('#hPause'); await pg.wait_for_timeout(200)
+        assert await pg.locator('#pStop').count(), 'bitir düğmesi yok'
+        await shot('E1b-stop'); await pg.click('#pRes'); await pg.wait_for_timeout(200)
         # bütün rakipleri yık
         await pg.evaluate('''()=>{const B=__sancak.B(),G=B.G,P=G.player;G.cells.forEach(c=>{if(c.t===3&&c.f!==P)c.f=P});G.units=G.units.filter(u=>u.f===P);
           const t=G.cells.find(c=>c.t===4&&c.f!==P)||G.cells.find(c=>c.t===1&&c.f!==P);G.factions.forEach((f,i)=>{if(i!==P)f.alive=true});

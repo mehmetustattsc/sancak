@@ -336,7 +336,7 @@ function renderHelp() {
     '<li>Şehirlerin %35’ini geçersen rakipler sana karşı birleşmeye başlar. Müttefik şehirleri zafer için sayılmaz.</li></ul></div>' +
     '<div class="card"><h3>Kule</h3><p>Her tur kendi boş arazine bir kule kurabilirsin (tarla, şehir ve kaleye olmaz). Kule 2 turda biter; inşaat sırasında savunması yarıdır ve karşılık veremez. Hasar alan inşaat bitince kule o canla başlar. Kule saldırmaz ama saldırana karşılık verir. Yıkılırsa arazi boşalır.</p></div>' +
     '<div class="card"><h3>Ticaret</h3><p>Başkentinde her tur en fazla 3 takas: 10 gıda → 12 altın, 18 altın → 10 gıda, 25 altın → 2 demir, 2 demir → 14 altın.</p></div>' +
-    '<div class="card"><h3>Kazanmak</h3><p>Haritadaki şehirlerin %60’ını ele geçir (üstteki şehir sayacı) ya da bütün rakipleri yık. Zaferden sonra istersen tur sınırı olmadan bütün haritayı fethetmeye devam edebilirsin; tam fetih ek madalya getirir. Bütün şehirlerini kaybeden ülke yıkılır. Tur sınırını geçersen sefer kaybedilir. Yıldızlar kaç turda bitirdiğine göre verilir.</p></div>';
+    '<div class="card"><h3>Kazanmak</h3><p>Haritadaki şehirlerin %60’ını ele geçir (üstteki şehir sayacı) ya da bütün rakipleri yık. Zaferden sonra istersen tur sınırı olmadan bütün haritayı fethetmeye devam edebilirsin: o andan sonra aldığın her şehir 4, yok ettiğin her düşman 1 madalya. İstediğin an menüden “Fethi burada bitir” ile kazandıklarını alıp çıkarsın; tam fetih ek madalya getirir. Bütün şehirlerini kaybeden ülke yıkılır. Tur sınırını geçersen sefer kaybedilir. Yıldızlar kaç turda bitirdiğine göre verilir.</p></div>';
 }
 function renderSettings() {
   $('#scr-set .wrap').innerHTML = '<div class="topbar"><h2>Ayarlar</h2></div>' +
@@ -1008,19 +1008,30 @@ function pauseMenu() {
       var cities = G.cells.filter(function (c) { return c.t === 3 && c.f === i; }).length, units = G.units.filter(function (u) { return u.f === i; }).length;
       return '<div class="frow' + (f.alive ? '' : ' dead') + '">' + ART.flag(f.id) + '<span>' + factionName(G, i) + (i === G.player ? ' (sen)' : '') + '</span><span class="muted">' + (f.alive ? cities + ' şehir · ' + units + ' birlik' : 'yıkıldı') + '</span></div>';
     }).join('') + '</div>' +
-    '<div class="row"><button class="btn" id="pRes">Devam et</button></div><div class="row"><button class="btn ghost" id="pRe">Yeniden başla</button><button class="btn ghost" id="pQuit">Kaydet ve çık</button></div>');
+    '<div class="row"><button class="btn" id="pRes">Devam et</button></div>' +
+    (G.endless ? '<div class="row"><button class="btn ghost" id="pStop">' + I.flag + ' Fethi burada bitir · +' + conquestMedals(G).medals + ' madalya</button></div>' : '') +
+    '<div class="row"><button class="btn ghost" id="pRe">Yeniden başla</button><button class="btn ghost" id="pQuit">Kaydet ve çık</button></div>');
+  if ($('#pStop')) $('#pStop').onclick = function () { closeModal(); B.phase = 'done'; renderPanel(); finish(true, false, true); };
   $('#pRes').onclick = closeModal;
   $('#pRe').onclick = function () { closeModal(); var e = G.era, l = G.level, f = G.factions[G.player].id; store(GAME_KEY, null); B = null; startGame(e, l, f); };
   $('#pQuit').onclick = function () { closeModal(); if (B.phase === 'player') persistGame(); var e = G.era; B = null; $('#scr-battle').hidden = true; openEra(e); };
 }
-function finish(win, timeout) {
+/* fetih modunda ilerleme ödülü: zaferden sonra alınan her şehir 4, her yok edilen düşman 1 madalya */
+function conquestMedals(G) {
+  var extraCities = Math.max(0, cityShare(G, G.player).mine - (G.cities0 || 0)), extraKills = Math.max(0, G.stats.kills - (G.kills0 || 0));
+  return { cities: extraCities, kills: extraKills, medals: 4 * extraCities + extraKills };
+}
+function finish(win, timeout, stopped) {
   var G = B.G, key = G.era + '-' + G.level, prev = save.stars[key] || 0;
-  var full = win && !!G.endless; // %60 zaferinden sonra bütün haritayı fethetti
+  var full = win && !!G.endless && !stopped; // %60 zaferinden sonra bütün haritayı fethetti
+  var cq = G.endless ? conquestMedals(G) : null;
+  if (stopped) win = true;
   var st = win ? (full ? G.stars0 : starsFor(G)) : 0;
-  var medals = full ? 30 + 10 * G.level : win ? 20 + 10 * st + 10 * G.level : (G.endless ? 0 : 10);
-  if (win && !full && st > prev) { medals += 10 * (st - prev); save.stars[key] = st; }
-  var canGoOn = win && !full && G.factions.some(function (f, i) { return i !== G.player && f.alive; });
-  var before = eraStars(G.era) - (win && st > prev ? st - prev : 0);
+  var medals = stopped ? cq.medals : full ? 30 + 10 * G.level + cq.medals : win ? 20 + 10 * st + 10 * G.level : (G.endless ? 0 : 10);
+  if (stopped || full) st = G.stars0;
+  if (win && !full && !stopped && st > prev) { medals += 10 * (st - prev); save.stars[key] = st; }
+  var canGoOn = win && !full && !stopped && G.factions.some(function (f, i) { return i !== G.player && f.alive; });
+  var before = eraStars(G.era) - (win && !full && !stopped && st > prev ? st - prev : 0);
   var gens = G.factions[G.player].generals, ups = [];
   gens.forEach(function (g) {
     var add = g.gained + (win && g.gained > 0 ? 40 : 0);
@@ -1034,8 +1045,9 @@ function finish(win, timeout) {
   var hasNext = G.level + 1 < LEVELS.length;
   modal('<div class="result">' +
     '<div class="eyebrow">' + MAPS[G.mapIdx].name + ' · ' + G.turn + '. tur</div>' +
-    '<h2 class="' + (win ? 'w' : 'l') + '">' + (full ? 'TAM FETİH' : win ? 'ZAFER' : 'YENİLGİ') + '</h2>' +
+    '<h2 class="' + (win ? 'w' : 'l') + '">' + (full ? 'TAM FETİH' : stopped ? 'SEFER TAMAM' : win ? 'ZAFER' : 'YENİLGİ') + '</h2>' +
     (full ? '<p class="muted">Haritadaki bütün ülkeler senin sancağın altında.</p>' : '') +
+    (cq ? '<p class="muted">Zaferden sonra: ' + cq.cities + ' şehir alındı, ' + cq.kills + ' düşman yok edildi.</p>' : '') +
     (win ? '<div class="big">' + [1, 2, 3].map(function (k) { return k <= st ? '<b>★</b>' : '★'; }).join('') + '</div>' :
       '<p class="muted">' + (timeout ? 'Tur sınırı doldu. Daha hızlı ilerlemek için asker üretimini artır ve zayıf komşuya yüklen.' : 'Bütün şehirlerini kaybettin. Şehirlerini boş bırakma, kaleleri ve dağları savunmada kullan.') + '</p>') +
     '<div class="rewards"><span class="pill">' + I.medal + '+' + medals + ' madalya</span></div>' +
@@ -1052,6 +1064,7 @@ function finish(win, timeout) {
   if ($('#rCont')) $('#rCont').onclick = function () {
     // ödüller verildi; tur sınırı kalkar, bütün rakipler yıkılınca sefer biter
     closeModal(); G.endless = true; G.stars0 = st; G.over = 0;
+    G.cities0 = cityShare(G, G.player).mine; G.kills0 = G.stats.kills;
     B.phase = G.cur === G.player ? 'player' : 'ai';
     updateHud(); renderPanel(); dirty = true; persistGame();
     banner('Fetih sürüyor: bütün rakipleri yık', 1800);
