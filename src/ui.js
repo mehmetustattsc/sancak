@@ -397,7 +397,7 @@ function renderHelp() {
 function renderSettings() {
   $('#scr-set .wrap').innerHTML = '<div class="topbar"><h2>Ayarlar</h2></div>' +
     '<div class="card"><div class="setrow"><div><h3>Ses efektleri</h3><p class="muted">Yürüyüş, nal, kılıç, ok, top, boru</p></div><button class="switch' + (save.sound ? ' on' : '') + '" id="swSound" aria-label="Ses efektleri"></button></div>' +
-    '<div class="setrow"><div><h3>Müzik</h3><p class="muted">Menüde ud ve ney, savaşta davullu hicaz</p></div><button class="switch' + (save.music ? ' on' : '') + '" id="swMusic" aria-label="Müzik"></button></div></div>' +
+    '<div class="setrow"><div><h3>Müzik</h3><p class="muted">Sakin ud ve ney, parçalar arasında sessizlik</p></div><button class="switch' + (save.music ? ' on' : '') + '" id="swMusic" aria-label="Müzik"></button></div></div>' +
     '<div class="card"><div class="setrow"><div><h3>Eğitim ipuçları</h3><p class="muted">İlk seferdeki ipuçlarını yeniden göster</p></div><button class="btn small ghost" id="tutAgain">Sıfırla</button></div></div>' +
     '<div class="card"><h3>İlerlemeyi sil</h3><p class="muted">Yıldızlar, madalyalar, general rütbeleri ve yarım kalan sefer silinir.</p><div class="row" id="resetRow"><button class="btn small ghost" id="resetBtn">İlerlemeyi sil</button></div></div>' +
     '<p class="muted" style="text-align:center">Sancak · sürüm 0.8 · Harita verisi: Natural Earth (kamu malı)</p>';

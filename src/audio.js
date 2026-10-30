@@ -213,56 +213,61 @@ var AUDIO = (function () {
   function startDrone(root, vol) {
     stopDrone();
     var t = now(), nodes = [], g = AC.createGain(), f = AC.createBiquadFilter();
-    f.type = 'lowpass'; f.frequency.value = 420; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 3);
-    [root, root * 1.5, root * 2.003].forEach(function (fr, i) { var o = AC.createOscillator(); o.type = i === 2 ? 'triangle' : 'sawtooth'; o.frequency.value = fr; o.connect(f); o.start(t); nodes.push(o); });
-    var lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 0.07; lg.gain.value = 140; lfo.connect(lg); lg.connect(f.frequency); lfo.start(t); nodes.push(lfo);
+    f.type = 'lowpass'; f.frequency.value = 320; g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(vol, t + 6);
+    [root, root * 1.5, root * 2.003].forEach(function (fr, i) { var o = AC.createOscillator(); o.type = i === 2 ? 'sine' : 'triangle'; o.frequency.value = fr; o.connect(f); o.start(t); nodes.push(o); });
+    var lfo = AC.createOscillator(), lg = AC.createGain(); lfo.frequency.value = 0.07; lg.gain.value = 60; lfo.connect(lg); lg.connect(f.frequency); lfo.start(t); nodes.push(lfo);
     f.connect(g); g.connect(musBus); send(g, 0.5);
     drone = { nodes: nodes, g: g };
   }
   function stopDrone() {
     if (!drone) return; var t = now(), d = drone; drone = null;
-    d.g.gain.cancelScheduledValues(t); d.g.gain.setValueAtTime(d.g.gain.value, t); d.g.gain.linearRampToValueAtTime(0.0001, t + 1.5);
-    setTimeout(function () { d.nodes.forEach(function (n) { try { n.stop(); } catch (e) {} }); }, 1700);
+    d.g.gain.cancelScheduledValues(t); d.g.gain.setValueAtTime(d.g.gain.value, t); d.g.gain.linearRampToValueAtTime(0.0001, t + 5);
+    setTimeout(function () { d.nodes.forEach(function (n) { try { n.stop(); } catch (e) {} }); }, 5300);
   }
 
   /* ---------- müzik bestecisi ---------- */
+  /* Müzik: uzun dinlemede yormasın diye seyrek ve nefes alan bir yapı.
+     Strateji oyunlarında sevilen yaklaşım: yavaş tempo, geniş aralıklı uzun notalar, tekrar etmeyen cümleler,
+     parçalar arasında sessizlik (Civilization ve Total War'da müzik çalar, susar, sonra yeniden başlar).
+     Her parça 40–70 sn sürer, ardından 25–45 sn sessizlik gelir; bordon yalnız parça boyunca ve çok kısık. */
   var THEMES = {
-    // Ana menü: Re Dorian, ağır ve geniş
-    menu: { root: 146.83, scale: [0, 2, 3, 5, 7, 9, 10], bpm: 66, drone: 0.05, drum: null,
-      motifs: [[0, 2, 4, 2, 0, -1], [4, 3, 2, 0, 1, 2], [0, 4, 7, 6, 4, 2], [2, 3, 4, 5, 4, 2, 0]], ney: true },
-    // Savaş: Mi Hicaz, davullu ve gergin
-    battle: { root: 164.81, scale: [0, 1, 4, 5, 7, 8, 10], bpm: 92, drone: 0.045, drum: 'sofyan',
-      motifs: [[0, 1, 2, 1, 0, 1, 2, 3], [4, 3, 2, 1, 2, 1, 0], [0, 2, 4, 3, 2, 1, 0, 0], [2, 3, 4, 5, 4, 3, 2, 1]], ney: false }
+    // ana menü: Re Dorian, ud ve ney, çok sakin
+    menu: { roots: [146.83, 130.81, 164.81], scale: [0, 2, 3, 5, 7, 9, 10], bpm: 52, density: 0.42, drum: false, lead: ['ney', 'ud', 'ud'] },
+    // savaş: Mi Hicaz, biraz daha hareketli ama yine seyrek; uzaktan ara sıra davul
+    battle: { roots: [164.81, 146.83, 196.0], scale: [0, 1, 4, 5, 7, 8, 10], bpm: 60, density: 0.5, drum: true, lead: ['ud', 'ney', 'ud'] }
   };
-  var mus = { theme: null, nextT: 0, beat: 0, timer: 0, bar: 0, motif: 0 };
-  function note(th, deg, oct) {
-    var n = th.scale.length, o = Math.floor(deg / n), i = ((deg % n) + n) % n;
-    return th.root * Math.pow(2, (th.scale[i] + 12 * (o + (oct || 0))) / 12);
+  var mus = { theme: null, nextT: 0, beat: 0, timer: 0, piece: null, restUntil: 0 };
+  function note(root, scale, deg, oct) {
+    var n = scale.length, o = Math.floor(deg / n), i = ((deg % n) + n) % n;
+    return root * Math.pow(2, (scale[i] + 12 * (o + (oct || 0))) / 12);
+  }
+  function newPiece(th) {
+    var len = 40 + Math.random() * 30;
+    return { root: th.roots[Math.floor(Math.random() * th.roots.length)], lead: th.lead[Math.floor(Math.random() * th.lead.length)],
+      end: now() + len, deg: 0, phraseBeat: 0, phraseLen: 16 + 8 * Math.floor(Math.random() * 2) };
   }
   function schedule() {
-    if (!mus.theme || !AC) return;
-    var th = THEMES[mus.theme], spb = 60 / th.bpm / 2; // sekizlik
-    while (mus.nextT < now() + 0.5) {
-      var t = mus.nextT, b = mus.beat % 16;
-      if (b === 0) { mus.bar++; mus.motif = Math.floor(Math.random() * th.motifs.length); }
-      var m = th.motifs[mus.motif];
-      // ud: motif notaları her sekizlikte ya da çeyrekte
-      var step = th.bpm > 80 ? 1 : 2;
-      if (b % step === 0) {
-        var deg = m[(b / step) % m.length];
-        if (deg !== undefined) pluckAt(t, note(th, deg, 0), 0.36 + (b % 4 === 0 ? 0.1 : 0));
-        if (b % 8 === 0) pluckAt(t, note(th, 0, -1), 0.3);   // bas teli
+    if (!mus.theme || !AC || !enabled.music) return;
+    var th = THEMES[mus.theme], spb = 60 / th.bpm;   // çeyrek
+    if (!mus.piece) {
+      if (now() < mus.restUntil) return;                                    // sessizlik
+      mus.piece = newPiece(th); mus.nextT = now() + 0.2; mus.beat = 0;
+      startDrone(mus.piece.root / 2, 0.012);
+    }
+    var P = mus.piece;
+    while (mus.nextT < now() + 0.6) {
+      var t = mus.nextT, b = mus.beat, inPhrase = (b % (P.phraseLen + 4)) < P.phraseLen;   // her cümleden sonra 1 ölçü nefes
+      if (t > P.end) { stopDrone(); mus.piece = null; mus.restUntil = now() + 25 + Math.random() * 20; return; }
+      if (inPhrase && Math.random() < th.density) {
+        // ezgi: adım adım yürür, ara sıra sıçrar, kök sese doğru çekilir
+        var step = Math.random() < 0.75 ? (Math.random() < 0.5 ? -1 : 1) : (Math.random() < 0.5 ? -2 : 2);
+        P.deg = Math.max(-2, Math.min(7, P.deg + step + (P.deg > 4 ? -1 : 0)));
+        var dur = spb * (Math.random() < 0.4 ? 2 : 1);
+        if (P.lead === 'ney') neyAt(t, note(P.root, th.scale, P.deg, 1), dur * 1.6, 0.03);
+        else pluckAt(t, note(P.root, th.scale, P.deg, 0), 0.22);
       }
-      // savaş davulu: düm-tek-tek-düm-tek
-      if (th.drum && mus.bar > 1) {
-        var pat = { 0: 'D', 4: 't', 6: 't', 8: 'D', 10: 'D', 12: 't' };
-        if (pat[b] === 'D') dum(t, 1); else if (pat[b] === 't') tek(t, 0.8);
-      }
-      // ney: menüde her iki ölçüde bir uzun cümle
-      if (th.ney && b === 0 && mus.bar % 2 === 0) {
-        var phrase = th.motifs[(mus.bar / 2) % th.motifs.length];
-        for (var k = 0; k < 3; k++) neyAt(t + k * spb * 4, note(th, phrase[k * 2] + 7, 0), spb * 4 - 0.05, 0.05);
-      }
+      if (b % 8 === 0 && inPhrase) pluckAt(t, note(P.root, th.scale, 0, -1), 0.16);   // seyrek bas
+      if (th.drum && b % 16 === 0 && Math.random() < 0.5) { dum(t, 0.35); if (Math.random() < 0.6) tek(t + spb * 1.5, 0.25); }
       mus.nextT += spb; mus.beat++;
     }
   }
@@ -274,8 +279,7 @@ var AUDIO = (function () {
     if (!enabled.music) { mus.theme = name; return; }
     musBus.gain.linearRampToValueAtTime(0.0001, t + 0.6);
     setTimeout(function () {
-      mus.theme = name; mus.beat = 0; mus.bar = 0; mus.nextT = now() + 0.1;
-      var th = THEMES[name]; startDrone(th.root / 2, th.drone);
+      mus.theme = name; mus.beat = 0; mus.piece = null; mus.restUntil = 0; stopDrone();
       var t2 = now(); musBus.gain.cancelScheduledValues(t2); musBus.gain.setValueAtTime(0.0001, t2); musBus.gain.linearRampToValueAtTime(MUS_VOL, t2 + 2);
     }, 650);
     if (!mus.timer) mus.timer = setInterval(schedule, 120);
@@ -284,8 +288,7 @@ var AUDIO = (function () {
     enabled.music = on; if (!AC) return;
     var t = now(); musBus.gain.cancelScheduledValues(t); musBus.gain.setValueAtTime(musBus.gain.value, t);
     musBus.gain.linearRampToValueAtTime(on ? MUS_VOL : 0.0001, t + 0.5);
-    if (on && mus.theme && !drone) { var th = THEMES[mus.theme]; startDrone(th.root / 2, th.drone); mus.nextT = now() + 0.1; }
-    if (!on) stopDrone();
+    if (!on) { stopDrone(); mus.piece = null; }
   }
   function setSfx(on) { enabled.sfx = on; if (sfxBus) sfxBus.gain.value = on ? 1 : 0; }
   function play(name, delay, arg) {
