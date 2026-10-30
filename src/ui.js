@@ -189,28 +189,33 @@ function openSetup(e, l) {
   var dfc = save.diff == null ? 1 : save.diff, noDip = !!save.noDip;
   var legs = LEGENDS.filter(function (L) { return legUnlocked(L.id); }), gsel = chosenGens(e);
   function draw() {
-    modal('<div><div class="eyebrow">' + ERAS[e].name + ' · Sefer ' + (l + 1) + '</div><h2>' + M.name + '</h2>' + (L.story ? '<p class="story">' + L.story + '</p>' : '') + '</div>' +
-      '<div class="eyebrow">Ülkeni seç</div><div class="choices">' + M.factions.map(function (fid) {
+    var sc = $('#modal .mbox') ? $('#modal .mbox').scrollTop : 0;
+    // generaller: portre kutuları; seçilen altın çerçeve ve onay işaretiyle, seçilmeyen soluk
+    var gtile = function (id, por, name, sub, on, locked, leg) {
+      return '<button class="gt' + (on ? ' on' : '') + (locked ? ' lock' : '') + (leg ? ' leg' : '') + '"' + (locked ? '' : ' data-gs="' + id + '"') + ' aria-pressed="' + (on ? 'true' : 'false') + '">' +
+        '<span class="gp">' + por + (on ? '<i class="ck">✓</i>' : '') + (locked ? '<i class="lk">' + I.lock + '</i>' : '') + '</span><span class="gn">' + name + '</span><span class="gs">' + sub + '</span></button>';
+    };
+    modal('<div class="shead"><div class="eyebrow">' + ERAS[e].name + ' · ' + (L.bonus ? 'Bonus sefer' : 'Sefer ' + (l + 1)) + '</div><h2>' + M.name + '</h2>' + (L.story ? '<p class="story">' + L.story + '</p>' : '') + '</div>' +
+      '<div class="eyebrow">Ülkeni seç</div><div class="choices fc">' + M.factions.map(function (fid) {
         var n = cnt(fid), c = land.filter(function (x) { return x[3] === fid && x[2] === 3; }).length;
         var cap = land.filter(function (x) { return x[3] === fid && x[7]; })[0];
         return '<button class="choice' + (sel === fid ? ' on' : '') + '" data-f="' + fid + '">' + ART.flag(fid) + '<div style="min-width:0"><div class="t">' + fname(fid, e, L.map) + '</div>' +
-          '<div class="s">' + (cap ? esc(cap[6]) + ' · ' : '') + n + ' bölge · ' + c + ' şehir · <span class="diff-' + diff(n) + '">' + diff(n) + '</span></div></div></button>';
+          '<div class="s">' + (cap ? esc(cap[6]) + ' · ' : '') + c + ' şehir · <span class="diff-' + diff(n) + '">' + diff(n) + '</span></div></div></button>';
       }).join('') + '</div>' +
-      '<div class="eyebrow">Yanındaki generaller · ' + gsel.length + '/' + MAX_GENS + '</div><div class="choices">' + gens.map(function (g) {
-        var un = genUnlocked(g), r = rankOf(genXP(g.id)), on = gsel.indexOf(g.id) >= 0;
-        return '<button class="choice' + (on ? ' on' : '') + '"' + (un ? ' data-gs="' + g.id + '"' : ' style="opacity:.45"') + '><span class="por">' + ART.portrait(g, e) + '</span><div style="min-width:0"><div class="t">' + g.name + '</div>' +
-          '<div class="s">' + (un ? ERAS[e].ranks[r - 1] + ' ' + insignia(r) : '★ ' + g.unlock + ' yıldızla açılır') + '</div></div></button>';
-      }).join('') + legs.map(function (L) {
-        var on = gsel.indexOf(L.id) >= 0;
-        return '<button class="choice leg' + (on ? ' on' : '') + '" data-gs="' + L.id + '"><span class="por">' + ART.portrait({ look: L.look, spec: ROLE_TYPE[L.role][e] }, e) + '</span><div style="min-width:0"><div class="t">' + L.name + '</div>' +
-          '<div class="s">Efsane · ' + SKILLS[L.skill].name + '</div></div></button>';
+      '<div class="eyebrow">Generaller <span class="gcount">' + gsel.length + ' / ' + MAX_GENS + ' seçili</span></div><div class="gtiles">' +
+      gens.map(function (g) {
+        var un = genUnlocked(g), r = rankOf(genXP(g.id));
+        return gtile(g.id, ART.portrait(g, e), g.name, un ? ERAS[e].ranks[r - 1] : '★' + g.unlock, gsel.indexOf(g.id) >= 0, !un, false);
+      }).join('') + legs.map(function (Lg) {
+        return gtile(Lg.id, ART.portrait({ look: Lg.look, spec: ROLE_TYPE[Lg.role][e] }, e), Lg.name, 'Efsane', gsel.indexOf(Lg.id) >= 0, false, true);
       }).join('') + '</div>' +
-      '<div class="eyebrow">Zorluk</div><div class="seg" id="sDiff">' + ['Kolay', 'Normal', 'Zor'].map(function (n, i) {
+      '<div class="srow"><div><div class="eyebrow">Zorluk</div><div class="seg" id="sDiff">' + ['Kolay', 'Normal', 'Zor'].map(function (n, i) {
         return '<button class="' + (dfc === i ? 'on' : '') + '" data-d="' + i + '">' + n + '<small>' + I.medal.replace('<svg', '<svg width="12" height="12"') + '×' + DIFF_MEDAL[i] + '</small></button>';
-      }).join('') + '</div>' +
-      '<div class="eyebrow">Diplomasi</div><div class="seg" id="sDip"><button class="' + (noDip ? '' : 'on') + '" data-n="0">' + I.handshake + 'Açık</button><button class="' + (noDip ? 'on' : '') + '" data-n="1">' + I.sword + 'Saf savaş</button></div>' +
-      '<div class="goals"><span>Hedef: <b>şehirlerin %60’ını al</b> ya da bütün rakipleri yık</span><span>★★★ <b>' + L.par + '</b> tur</span><span>★★ <b>' + Math.round(L.par * 1.4) + '</b> tur</span><span>Sınır <b>' + L.limit + '</b> tur</span></div>' +
-      '<div class="row"><button class="btn ghost" id="sCancel">Vazgeç</button><button class="btn" id="sGo">Sefere çık</button></div>');
+      }).join('') + '</div></div>' +
+      '<div><div class="eyebrow">Diplomasi</div><div class="seg" id="sDip"><button class="' + (noDip ? '' : 'on') + '" data-n="0">' + I.handshake + 'Açık</button><button class="' + (noDip ? 'on' : '') + '" data-n="1">' + I.sword + 'Savaş</button></div></div></div>' +
+      '<div class="sfoot"><div class="sgoal">Hedef: şehirlerin <b>%60</b>’ı · ★★★ <b>' + L.par + '</b> tur · sınır <b>' + L.limit + '</b></div>' +
+      '<div class="row"><button class="btn ghost" id="sCancel">Vazgeç</button><button class="btn" id="sGo">Sefere çık</button></div></div>', 'setup');
+    $('#modal .mbox').scrollTop = sc;
     document.querySelectorAll('[data-f]').forEach(function (b) { b.onclick = function () { SFX.tap(); sel = b.dataset.f; draw(); }; });
     document.querySelectorAll('[data-gs]').forEach(function (b) { b.onclick = function () {
       var id = b.dataset.gs, k = gsel.indexOf(id);
