@@ -605,6 +605,39 @@ function dealCheck(G, p, t, deal) {
   if (!deal.ally && !bundleValue(G, deal.give) && !bundleValue(G, deal.get)) return 'Boş teklif';
   return '';
 }
+/* bir şehrin komşularının ne kadarı p'nin elinde: içeride kalmış şehri vermek kolaydır */
+function enclaved(G, ci, p) {
+  var c = G.cells[ci], land = c.nb.filter(function (j) { return G.cells[j].t; });
+  var mine = land.filter(function (j) { var n = G.cells[j]; var u = unitAt(G, j); return n.f === p || (u && u.f === p); }).length;
+  return land.length ? mine / land.length : 0;
+}
+/* karşı tarafın sana ne kadar ihtiyacı var: müttefiklik, güç farkı, yakın kayıp ve elinde tutamayacağı şehirler */
+function dealNeed(G, p, t, deal) {
+  var need = 0, ratio = power(G, p) / Math.max(1, power(G, t));
+  if (isAlly(G, p, t)) need += 12;
+  need += Math.max(0, Math.min(30, (ratio - 1) * 15));
+  if (G.recentLoss && G.recentLoss[t] >= G.turn - 3) need += 10;
+  (deal.get.cells || []).forEach(function (ci) { var e = enclaved(G, ci, p); if (e >= 0.5) need += cellValue(G, G.cells[ci]) * e * 0.6; });
+  return Math.round(need);
+}
+/* teklife cevap: yeterliyse kabul; biraz eksikse ihtiyaca göre şans; çok eksikse ret. Aynı tur aynı ülkeye en fazla 3 teklif. */
+function answerDeal(G, p, t, deal, R) {
+  var r = proposeDeal(G, p, t, deal);
+  if (r.why && r.score === undefined) return { ok: false, why: r.why };
+  G.dealTries = G.dealTries || {};
+  var key = t + ':' + G.turn; G.dealTries[key] = (G.dealTries[key] || 0) + 1;
+  if (G.dealTries[key] > 3) return { ok: false, why: 'Bu tur artık seninle pazarlık etmiyor' };
+  if (r.score >= 0) return { ok: true };
+  var need = dealNeed(G, p, t, deal);
+  if (-r.score <= need) { var chance = 1 - (-r.score / Math.max(1, need)) * 0.8; if ((R || Math.random)() < chance) return { ok: true, grudging: true }; }
+  return { ok: false, why: -r.score > need * 1.5 + 20 ? 'Teklifini hakaret saydı' : 'Kabul etmedi' };
+}
+function dealHint(G, p, t, deal) {
+  var r = proposeDeal(G, p, t, deal); if (r.why && r.score === undefined) return { lvl: -2, why: r.why };
+  if (r.score >= 0) return { lvl: 1 };
+  var need = dealNeed(G, p, t, deal);
+  return { lvl: -r.score <= need * 0.5 ? 0 : -r.score <= need ? -1 : -2 };
+}
 function dealScore(G, p, t, deal) {
   var gain = bundleValue(G, deal.give), loss = bundleValue(G, deal.get) * 1.3, want = 0;
   if (deal.ally && !isAlly(G, p, t)) {
@@ -1212,5 +1245,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
 };

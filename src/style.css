@@ -610,3 +610,18 @@ p.bad { color: #ff8a6a; }
 .sgoal { font: 600 13px var(--f-num); color: var(--muted); text-align: center; letter-spacing: .03em; }
 .sgoal b { color: var(--brass2); }
 .row.three > .btn { padding-left: 6px; padding-right: 6px; font-size: 15px; min-width: 0; } .row.three > .btn svg { width: 18px; height: 18px; vertical-align: -3px; }
+/* diplomasi: ekonomi ve küçük harita */
+.dstat { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--line); }
+.dstat canvas { width: 96px; height: 72px; border-radius: 8px; background: var(--sea2); flex: none; cursor: zoom-in; }
+.dstat canvas.big { width: 100%; height: 220px; }
+.dstat:has(canvas.big) { flex-direction: column; }
+.dres { display: flex; flex-wrap: wrap; gap: 4px 12px; font-family: var(--f-num); }
+.dres span { display: inline-flex; align-items: center; gap: 3px; }
+.dres b { font-size: 16px; } .dres i { font-style: normal; font-size: 12px; color: var(--muted); }
+.verdict.mid { color: #f2c230; }
+/* kayıt yerleri */
+.resume { padding: 0; gap: 0; overflow: hidden; }
+.resume .rgo { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 10px 12px; text-align: left; background: none; border: 0; color: inherit; }
+.resume .rdel { width: 44px; align-self: stretch; border: 0; border-left: 1px solid rgba(201,162,74,.35); background: none; color: var(--muted); font: 700 15px var(--f-num); }
+.resume .rdel.sure { width: 56px; color: #ff8a6a; }
+.resume + .resume { margin-top: -6px; }

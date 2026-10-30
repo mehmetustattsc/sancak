@@ -8,6 +8,15 @@ var I = ART.UI;
 /* ---------------- kayıt ---------------- */
 var SAVE_KEY = 'sancak-v2';
 var GAME_KEY = 'sancak-v2-game';
+/* 3 kayıt yeri: 0 eski anahtar (geriye uyum), 1 ve 2 yeni */
+var SLOTS = 3;
+function slotKey(i) { return i ? GAME_KEY + '-' + i : GAME_KEY; }
+function loadSlots() { var a = []; for (var i = 0; i < SLOTS; i++) { var g = load(slotKey(i)); a.push(g && !g.over ? g : null); } return a; }
+function freeSlot() {
+  var a = loadSlots(), best = 0, old = Infinity;
+  for (var i = 0; i < SLOTS; i++) { if (!a[i]) return i; if ((a[i].savedAt || 0) < old) { old = a[i].savedAt || 0; best = i; } }
+  toast('Kayıt yerleri dolu: en eski kayıt yerine yazıldı'); return best;
+}
 var save = { medals: 0, stars: {}, gx: {}, sound: true, tut: false, speed: 1 };
 function load(k) { try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : null; } catch (e) { return null; } }
 function store(k, v) { try { if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
@@ -103,12 +112,17 @@ function drawMini(cv, mi, owners) {
 var heroAnim = null;
 function renderHome() {
   var el = $('#scr-home .wrap');
-  var g = load(GAME_KEY);
-  ART.setMapStyle(g && !g.over ? MAPS[g.mapIdx] : null);
+  var slots = loadSlots(), g = null;
+  ART.setMapStyle(null);
   el.innerHTML =
     '<div class="topbar"><span class="brand">SANCAK</span>' + medalsPill() + '</div>' +
     '<div class="hero"><div class="hscene">' + ART.scene().replace('xMidYMid slice', 'xMidYMax slice') + '</div><canvas id="heroCv" class="heromap"></canvas><div class="title"><h1>Sancak</h1><p class="sub">Avrupa haritasında sıra tabanlı strateji. Şehirlerini büyüt, ordunu kur, generallerinle fethet.</p></div></div>' +
-    (g && !g.over ? '<button class="resume" id="resume"><span>' + ART.flag(g.factions[g.player].id) + '</span><span style="min-width:0;flex:1"><b>Kaldığın yerden devam et</b><br><span class="muted">' + MAPS[g.mapIdx].name + ' · Tur ' + g.turn + ' · ' + fname(g.factions[g.player].id, g.era, g.mapIdx) + '</span></span><span class="go">▶</span></button>' : '') +
+    slots.map(function (g, si) {
+      if (!g) return '';
+      ART.setMapStyle(MAPS[g.mapIdx]);
+      return '<div class="resume"><button class="rgo" data-slot="' + si + '"><span>' + ART.flag(g.factions[g.player].id) + '</span><span style="min-width:0;flex:1"><b>' + MAPS[g.mapIdx].name + '</b><br><span class="muted">' + ERAS[g.era].name + ' · Tur ' + g.turn + ' · ' + fname(g.factions[g.player].id, g.era, g.mapIdx) + '</span></span><span class="go">▶</span></button>' +
+        '<button class="rdel" data-del="' + si + '" aria-label="Kaydı sil">✕</button></div>';
+    }).join('') + (ART.setMapStyle(null) || '') +
     '<div class="eyebrow">Çağ seç</div>' +
     '<div class="eras">' + ERAS.map(function (E, i) {
       var st = eraStars(i), max = Math.max(1, levelsOf(i).length * 3);
@@ -122,7 +136,11 @@ function renderHome() {
     if (!ERAS[e].ready) { toast(ERAS[e].name + ' yakında geliyor. Önce Orta Çağ dengesini oturtalım.'); return; }
     SFX.tap(); openEra(e);
   }; });
-  if ($('#resume')) $('#resume').onclick = function () { SFX.tap(); resumeGame(g); };
+  el.querySelectorAll('[data-slot]').forEach(function (b) { b.onclick = function () { SFX.tap(); var si = +b.dataset.slot; resumeGame(load(slotKey(si)), si); }; });
+  el.querySelectorAll('[data-del]').forEach(function (b) { b.onclick = function () {
+    if (b.dataset.sure) { store(slotKey(+b.dataset.del), null); SFX.tap(); renderHome(); return; }
+    b.dataset.sure = 1; b.textContent = 'Sil?'; b.classList.add('sure');
+  }; });
   startHero();
 }
 function startHero() {
@@ -389,7 +407,7 @@ function renderSettings() {
   $('#resetBtn').onclick = function () {
     $('#resetRow').innerHTML = '<span class="muted" style="align-self:center">Emin misin?</span><button class="btn small ghost" id="rNo">Hayır</button><button class="btn small" id="rYes">Evet, sil</button>';
     $('#rNo').onclick = renderSettings;
-    $('#rYes').onclick = function () { save = { medals: 0, stars: {}, gx: {}, sound: save.sound, tut: false, speed: 1 }; persist(); store(GAME_KEY, null); toast('İlerleme silindi.'); renderSettings(); };
+    $('#rYes').onclick = function () { save = { medals: 0, stars: {}, gx: {}, sound: save.sound, tut: false, speed: 1 }; persist(); for (var si = 0; si < SLOTS; si++) store(slotKey(si), null); toast('İlerleme silindi.'); renderSettings(); };
   };
 }
 
@@ -420,12 +438,12 @@ function startGame(e, l, fid) {
     return g ? { id: g.id, name: g.name, spec: g.spec, skill: g.skill, xp: genXP(g.id), look: g.look } : { id: id };
   });
   var G = newGame({ era: e, level: l, player: fid, generals: gens, diff: save.diff == null ? 1 : save.diff, noDip: !!save.noDip, upgrades: Object.assign({}, save.upg || {}), seed: (Date.now() & 0x7fffffff) | 1 });
-  enterBattle(G);
+  enterBattle(G, freeSlot());
 }
-function resumeGame(G) { setEra(G.era); enterBattle(G); }
-function enterBattle(G) {
+function resumeGame(G, slot) { setEra(G.era); enterBattle(G, slot); }
+function enterBattle(G, slot) {
   ART.setMapStyle(MAPS[G.mapIdx]);
-  B = { G: G, undo: [], sel: 0, view: null, reach: null, targets: [], preview: null, anim: [], phase: 'player', fast: 1, skip: false, tut: (!save.tut && G.level === 0 && G.turn === 1) ? 1 : 0 };
+  B = { G: G, slot: slot || 0, undo: [], sel: 0, view: null, reach: null, targets: [], preview: null, anim: [], phase: 'player', fast: 1, skip: false, tut: (!save.tut && G.level === 0 && G.turn === 1) ? 1 : 0 };
   $('#tabbar').hidden = true;
   ['home', 'era', 'hq', 'gen', 'help', 'set'].forEach(function (s) { $('#scr-' + s).hidden = true; });
   $('#scr-battle').hidden = false;
@@ -437,7 +455,7 @@ function enterBattle(G) {
   renderPanel();
   requestAnimationFrame(loop);
 }
-function persistGame() { if (B && !B.G.over) store(GAME_KEY, B.G); }
+function persistGame() { if (B && !B.G.over) { B.G.savedAt = Date.now(); store(slotKey(B.slot || 0), B.G); } }
 
 /* ---------- kamera ---------- */
 var SIDE_MQ = window.matchMedia ? window.matchMedia('(orientation: landscape) and (max-height: 600px)') : { matches: false };
@@ -720,6 +738,23 @@ function relTag(G, fi) {
   if (isAlly(G, G.player, fi)) return '<span class="tag good">' + I.handshake + allyLeft(G, G.player, fi) + '</span>';
   return '<span class="tag bad">' + I.sword + '</span>';
 }
+/* diplomasi ve tekliflerde: kendi ekonomin ve haritanın güncel hali (dokununca büyür) */
+function statusHTML() {
+  var G = B.G, P = G.player, f = G.factions[P], inc = income(G, P), cs = cityShare(G, P);
+  var sm = function (ic) { return ic.replace('<svg', '<svg width="16" height="16"'); };
+  return '<div class="dstat"><canvas id="dMini" aria-label="Harita"></canvas><div class="dres">' +
+    '<span>' + sm(I.coin) + '<b>' + Math.floor(f.gold) + '</b><i>+' + Math.round(inc.g) + '</i></span>' +
+    '<span>' + sm(I.food) + '<b>' + Math.floor(f.food) + '</b><i>' + ((inc.food - inc.up) >= 0 ? '+' : '') + Math.round(inc.food - inc.up) + '</i></span>' +
+    '<span>' + sm(I.iron) + '<b>' + Math.floor(f.iron) + '</b><i>+' + Math.round(inc.iron) + '</i></span>' +
+    '<span>' + sm(I.city) + '<b>' + cs.mine + '</b><i>/' + cs.all + '</i></span>' +
+    '<span>' + sm(I.sword) + '<b>' + armySize(G, P) + '</b><i>/' + armyCap(G, P) + '</i></span></div></div>';
+}
+function wireStatus() {
+  var cv = $('#dMini'); if (!cv) return;
+  var G = B.G, own = G.cells.map(function (c) { return c.t ? (c.f >= 0 ? G.factions[c.f].id : 'n') : null; });
+  drawMini(cv, G.mapIdx, own);
+  cv.onclick = function () { cv.classList.toggle('big'); drawMini(cv, G.mapIdx, own); };
+}
 function dipMenu() {
   var G = B.G, P = G.player, pp = power(G, P);
   var rows = G.factions.map(function (f, fi) {
@@ -729,10 +764,11 @@ function dipMenu() {
       '<span class="dm"><span>' + I.city + cities + '</span><span class="pw"><i style="width:' + Math.min(100, Math.round(rel * 50)) + '%"></i></span></span>' + relTag(G, fi) +
       (G.distrust[fi] > G.turn ? '<span class="tag bad" title="İhanet etti">!</span>' : '') + (annexInfo(G, P, fi).ok || /altın/.test(annexInfo(G, P, fi).why) ? '<span class="tag gold">' + I.crown + '</span>' : '') + '</button>';
   }).join('');
-  modal('<div class="topbar"><h2>Diplomasi</h2><span class="tag ' + (allyCount(G, P) >= MAX_ALLIES ? 'bad' : '') + '">' + I.handshake + allyCount(G, P) + '/' + MAX_ALLIES + '</span></div>' +
+  modal('<div class="topbar"><h2>Diplomasi</h2><span class="tag ' + (allyCount(G, P) >= MAX_ALLIES ? 'bad' : '') + '">' + I.handshake + allyCount(G, P) + '/' + MAX_ALLIES + '</span></div>' + statusHTML() +
     (G.distrust[P] > G.turn ? '<p class="bad">İhanetin yüzünden ' + (G.distrust[P] - G.turn) + ' tur kimse ittifak kurmaz.</p>' : '') +
     '<div class="drows">' + rows + '</div><p class="muted small">Çubuk, ülkenin gücünün seninkine oranı. Bir ülkeye dokun: pazarlık masası açılır.</p>' +
     '<div class="row"><button class="btn ghost" id="dClose">Kapat</button></div>');
+  wireStatus();
   $('#dClose').onclick = closeModal;
   document.querySelectorAll('[data-fi]').forEach(function (b) { b.onclick = function () { SFX.tap(); dealTable(+b.dataset.fi); }; });
 }
@@ -753,14 +789,16 @@ function dealTable(fi, preset) {
     return res + (cells ? '<div class="cchips">' + cells + '</div>' : '<p class="muted small">Verilebilecek şehir yok</p>');
   }
   function draw() {
-    var r = proposeDeal(G, P, fi, deal), ally = isAlly(G, P, fi);
-    modal('<div class="topbar"><button class="back" id="tBack" aria-label="Geri">' + I.back + '</button><div class="dh">' + ART.flag(G.factions[fi].id) + '<b>' + factionName(G, fi) + '</b></div>' + relTag(G, fi) + '</div>' +
+    var r = proposeDeal(G, P, fi, deal), ally = isAlly(G, P, fi), h = dealHint(G, P, fi, deal);
+    var blocked = r.why && r.score === undefined;   // kaynak yetmiyor ya da başkent gibi verilemez şey
+    modal('<div class="topbar"><button class="back" id="tBack" aria-label="Geri">' + I.back + '</button><div class="dh">' + ART.flag(G.factions[fi].id) + '<b>' + factionName(G, fi) + '</b></div>' + relTag(G, fi) + '</div>' + statusHTML() +
       '<label class="atog' + (deal.ally ? ' on' : '') + '" id="tAlly">' + I.handshake + '<span>' + (ally ? 'İttifakı uzat (' + ALLY_TURNS + ' tur)' : 'İttifak kur (' + ALLY_TURNS + ' tur)') + '</span><i></i></label>' +
       annexHTML(fi) +
       '<div class="dcols"><div class="dcol"><div class="eyebrow">Sen verirsin</div>' + side('give', P) + '</div>' +
       '<div class="dcol"><div class="eyebrow">O verir</div>' + side('get', fi) + '</div></div>' +
-      '<div class="verdict ' + (r.ok ? 'good' : 'bad') + '">' + (r.ok ? '✓ Kabul eder' : '✕ ' + esc(r.why || 'Kabul etmez')) + '</div>' +
-      '<div class="row"><button class="btn ghost" id="tClear">Temizle</button><button class="btn" id="tGo"' + (r.ok ? '' : ' disabled') + '>Teklif et</button></div>', 'deal');
+      '<div class="verdict ' + (blocked ? 'bad' : ['bad', 'bad', 'mid', 'good'][h.lvl + 2]) + '">' + (blocked ? '✕ ' + esc(r.why) : ['Çok düşük, büyük ihtimalle reddeder', 'Zor, ama ihtiyacı varsa düşünür', 'Pazarlığa açık', '✓ Büyük ihtimalle kabul eder'][h.lvl + 2]) + '</div>' +
+      '<div class="row"><button class="btn ghost" id="tClear">Temizle</button><button class="btn" id="tGo"' + (blocked ? ' disabled' : '') + '>Teklif et</button></div>', 'deal');
+    wireStatus();
     $('#tBack').onclick = function () { dipMenu(); };
     $('#tAlly').onclick = function () { deal.ally = !deal.ally; draw(); };
     if ($('#tAnnex')) $('#tAnnex').onclick = function () {
@@ -780,12 +818,16 @@ function dealTable(fi, preset) {
       if (i >= 0) arr.splice(i, 1); else arr.push(ci); SFX.tap(); draw();
     }; });
     $('#tGo').onclick = function () {
-      var r2 = proposeDeal(G, P, fi, deal); if (!r2.ok) return;
-      act(function () { applyDeal(G, P, fi, deal); return true; });
-      B.undo = []; updateHud(); // anlaşmalar geri alınmaz
-      closeModal(); SFX.city();
-      playLog(function () { updateHud(); renderPanel(); checkOver(); });
-      dirty = true;
+      var btn = $('#tGo'); btn.disabled = true; btn.textContent = 'Düşünüyor…';
+      setTimeout(function () {
+        var a = answerDeal(G, P, fi, deal, Math.random);
+        if (!a.ok) { SFX.lost(); toast(factionName(G, fi) + ': ' + a.why); draw(); return; }
+        act(function () { applyDeal(G, P, fi, deal); return true; });
+        B.undo = []; updateHud(); // anlaşmalar geri alınmaz
+        closeModal(); SFX.city(); if (a.grudging) toast(factionName(G, fi) + ' istemeye istemeye kabul etti');
+        playLog(function () { updateHud(); renderPanel(); checkOver(); });
+        dirty = true;
+      }, 900);
     };
   }
   draw();
@@ -800,9 +842,10 @@ function offerPopup(forced) {
   var G = B.G, o = forced || aiOffer(G, Math.random);
   if (!o) return;
   var g = o.deal.give;
-  modal('<div class="dh">' + ART.flag(G.factions[o.from].id) + '<b>' + factionName(G, o.from) + '</b></div>' +
+  modal('<div class="dh">' + ART.flag(G.factions[o.from].id) + '<b>' + factionName(G, o.from) + '</b></div>' + statusHTML() +
     '<p>İttifak teklif ediyor (' + ALLY_TURNS + ' tur)' + (g.gold ? ' ve karşılığında <b>' + I.coin.replace('<svg', '<svg width="18" height="18" style="vertical-align:-3px"') + g.gold + ' altın</b> veriyor.' : '.') + '</p>' +
     '<div class="row three"><button class="btn ghost" id="oNo">Reddet</button><button class="btn ghost" id="oBar">' + I.scale + ' Pazarlık</button><button class="btn" id="oYes">' + I.handshake + ' Kabul et</button></div>');
+  wireStatus();
   $('#oNo').onclick = closeModal;
   // pazarlık: teklif masası onun teklifiyle dolu açılır; istediğini artır, kabul edip etmeyeceğini canlı gör
   $('#oBar').onclick = function () {
@@ -1086,7 +1129,7 @@ function pauseMenu() {
     '<div class="row"><button class="btn ghost" id="pRe">Yeniden başla</button><button class="btn ghost" id="pQuit">Kaydet ve çık</button></div>');
   if ($('#pStop')) $('#pStop').onclick = function () { closeModal(); B.phase = 'done'; renderPanel(); finish(true, false, true); };
   $('#pRes').onclick = closeModal;
-  $('#pRe').onclick = function () { closeModal(); var e = G.era, l = G.level, f = G.factions[G.player].id; store(GAME_KEY, null); B = null; startGame(e, l, f); };
+  $('#pRe').onclick = function () { closeModal(); var e = G.era, l = G.level, f = G.factions[G.player].id; store(slotKey(B.slot || 0), null); B = null; startGame(e, l, f); };
   $('#pQuit').onclick = function () { closeModal(); if (B.phase === 'player') persistGame(); var e = G.era; B = null; $('#scr-battle').hidden = true; openEra(e); };
 }
 /* fetih modunda ilerleme ödülü: zaferden sonra alınan her şehir 4, her yok edilen düşman 1 madalya */
@@ -1116,7 +1159,7 @@ function finish(win, timeout, stopped) {
     g.add = add; if (r1 > r0) ups.push(g.name + ' terfi etti: ' + ERAS[G.era].ranks[r1 - 1] + ' ' + insignia(r1));
   });
   var newGens = GENERALS.filter(function (x) { return x.era === G.era && x.unlock > before && x.unlock <= eraStars(G.era); });
-  save.medals += medals; persist(); store(GAME_KEY, null);
+  save.medals += medals; persist(); store(slotKey(B.slot || 0), null);
   (win ? SFX.win : SFX.lose)();
   var hasNext = G.level + 1 < levelsOf(G.era).length && levelUnlocked(G.era, G.level + 1);
   modal('<div class="result">' +

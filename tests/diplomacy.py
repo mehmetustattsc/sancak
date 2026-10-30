@@ -22,7 +22,7 @@ async def main():
         await pg.click(f'[data-fi="{fi}"]'); await pg.wait_for_timeout(300); await shot('D2-table')
         # ittifak + altın artır, kabul edene kadar
         for i in range(30):
-            if await pg.locator('#tGo:not([disabled])').count(): break
+            if 'kabul eder' in (await pg.evaluate('()=>document.querySelector(".verdict").textContent')): break
             await pg.click('[data-k="give"][data-r="gold"][data-d="1"]'); await pg.wait_for_timeout(40)
         await shot('D3-ready')
         await pg.click('#tGo'); await pg.wait_for_timeout(1200)
@@ -35,7 +35,7 @@ async def main():
         await pg.click('#tAlly'); await pg.wait_for_timeout(100)
         await pg.click('[data-k="get"].cchip'); await pg.wait_for_timeout(100)
         for i in range(60):
-            if await pg.locator('#tGo:not([disabled])').count(): break
+            if 'kabul eder' in (await pg.evaluate('()=>document.querySelector(".verdict").textContent')): break
             await pg.click('[data-k="give"][data-r="gold"][data-d="1"]'); await pg.wait_for_timeout(30)
         n0 = await pg.evaluate('()=>__sancak.B().G.cells.filter(c=>c.t===3&&c.f===__sancak.B().G.player).length')
         await pg.click('#tGo'); await pg.wait_for_timeout(1200)
