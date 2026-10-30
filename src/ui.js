@@ -795,15 +795,20 @@ function annexHTML(fi) {
   return '<button class="annex' + (a.ok ? '' : ' off') + '" id="tAnnex"' + (a.ok ? '' : ' disabled') + '>' + I.crown +
     '<span><b>Bağlı krallık yap</b><i>' + (a.ok ? a.cities + ' şehir ve ' + a.units + ' birlik krallığına katılır' : esc(a.why)) + '</i></span>' + costTag(a.cost) + '</button>';
 }
-function offerPopup() {
-  if (window.__sancakNoOffers) return; // testler için
-  var G = B.G, o = aiOffer(G, Math.random);
+function offerPopup(forced) {
+  if (window.__sancakNoOffers && !forced) return; // testler için
+  var G = B.G, o = forced || aiOffer(G, Math.random);
   if (!o) return;
   var g = o.deal.give;
   modal('<div class="dh">' + ART.flag(G.factions[o.from].id) + '<b>' + factionName(G, o.from) + '</b></div>' +
-    '<p>İttifak teklif ediyor (' + ALLY_TURNS + ' tur)' + (g.gold ? ' ve karşılığında <b>' + I.coin + g.gold + ' altın</b> veriyor.' : '.') + '</p>' +
-    '<div class="row"><button class="btn ghost" id="oNo">Reddet</button><button class="btn" id="oYes">' + I.handshake + ' Kabul et</button></div>');
+    '<p>İttifak teklif ediyor (' + ALLY_TURNS + ' tur)' + (g.gold ? ' ve karşılığında <b>' + I.coin.replace('<svg', '<svg width="18" height="18" style="vertical-align:-3px"') + g.gold + ' altın</b> veriyor.' : '.') + '</p>' +
+    '<div class="row three"><button class="btn ghost" id="oNo">Reddet</button><button class="btn ghost" id="oBar">' + I.scale + ' Pazarlık</button><button class="btn" id="oYes">' + I.handshake + ' Kabul et</button></div>');
   $('#oNo').onclick = closeModal;
+  // pazarlık: teklif masası onun teklifiyle dolu açılır; istediğini artır, kabul edip etmeyeceğini canlı gör
+  $('#oBar').onclick = function () {
+    function cp(b) { return { gold: b.gold || 0, food: b.food || 0, iron: b.iron || 0, cells: (b.cells || []).slice() }; }
+    dealTable(o.from, { give: cp(o.deal.get || {}), get: cp(o.deal.give || {}), ally: true });
+  };
   $('#oYes').onclick = function () {
     closeModal(); applyDeal(G, o.from, G.player, o.deal); B.undo = []; updateHud();
     playLog(function () { updateHud(); renderPanel(); }); dirty = true;
@@ -1482,5 +1487,5 @@ for (var lv = 1; lv <= 6; lv++) { ART.bImg('city', lv).onload = function () { di
 renderHelp();
 show('home');
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { dirty = true; if (cur === 'home') renderHome(); });
-window.__sancak = { clamp: function () { clampCam(B); }, save: function () { return save; }, B: function () { return B; }, startGame: startGame, openEra: openEra, show: show, endPlayerTurn: endPlayerTurn, tapCell: tapCell, finish: finish, openSetup: openSetup, renderGenerals: renderGenerals };
+window.__sancak = { clamp: function () { clampCam(B); }, save: function () { return save; }, B: function () { return B; }, startGame: startGame, openEra: openEra, show: show, endPlayerTurn: endPlayerTurn, tapCell: tapCell, finish: finish, openSetup: openSetup, renderGenerals: renderGenerals, offerPopup: offerPopup };
 })();

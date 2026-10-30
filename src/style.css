@@ -609,3 +609,4 @@ p.bad { color: #ff8a6a; }
 .sfoot { position: sticky; bottom: 0; margin: 0 -16px; padding: 10px 16px calc(12px + env(safe-area-inset-bottom)); background: linear-gradient(rgba(27,33,40,.85), var(--panel) 30%); border-top: 1px solid var(--line); display: grid; gap: 8px; }
 .sgoal { font: 600 13px var(--f-num); color: var(--muted); text-align: center; letter-spacing: .03em; }
 .sgoal b { color: var(--brass2); }
+.row.three > .btn { padding-left: 6px; padding-right: 6px; font-size: 15px; min-width: 0; } .row.three > .btn svg { width: 18px; height: 18px; vertical-align: -3px; }
