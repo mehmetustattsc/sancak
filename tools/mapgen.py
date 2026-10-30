@@ -82,7 +82,7 @@ def build(spec):
     land = {k for k, c in cells.items() if c['land']}
     if os.environ.get('DUMP') == spec['name']:   # hata ayıklama: DUMP='Harita adı' ile hücre koordinatları
         for k, c in sorted(cells.items()):
-            if (-8 < c['lon'] < -3 and 54 < c['lat'] < 56.5) or (8.5 < c['lon'] < 14 and 54.3 < c['lat'] < 57.8): print('  dump', k, round(c['lon'], 2), round(c['lat'], 2), c['land'], c.get('c'), file=sys.stderr)
+            if (-8 < c['lon'] < -2 and 34.5 < c['lat'] < 37.8) or (24.5 < c['lon'] < 31.5 and 38 < c['lat'] < 42): print('  dump', k, round(c['lon'], 2), round(c['lat'], 2), c['land'], c.get('c'), file=sys.stderr)
     # drop tiny land components that are not wanted (or all islands on land-only maps)
     comp = {}; cid = 0
     for k in land:
@@ -468,7 +468,61 @@ AFRICA = {
     ('Süveyş', 32.55, 29.97, 1, 'castle'), ('Tobruk', 23.96, 32.08, 1, 'castle'), ('Bizerte', 9.87, 37.27, 1, 'castle'), ('Mistra', 22.37, 37.07, 1, 'castle'),
     ('Siraküza', 15.29, 37.07, 1, 'castle'), ('Valletta', 14.51, 35.90, 1, 'castle'), ('Rodos', 28.22, 36.43, 1, 'castle'),
   ]}
-maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST), build(EUROPE), build(NORTH), build(AFRICA)]
+def nordic_owner(c, lon, lat):
+    return {'NOR': 'turkuaz', 'SWE': 'sari', 'FIN': 'buz', 'DNK': 'kirmizi', 'DEU': 'siyah', 'POL': 'turuncu',
+            'EST': 'yesil', 'LVA': 'yesil', 'LTU': 'yesil'}.get(c, 'n')
+NORDIC = {
+  'name': 'İskandinavya ve Baltık', 'navy': True, 'box': (4.4, 51.9, 31.0, 63.6), 'klat': 57, 'target': 185, 'seed': 9, 'island_min': 1, 'foreign_void': True,
+  'sea_at': [(12.43, 56.03)], 'links': [((11.7, 55.34), (13.15, 56.72))],          # Øresund
+  'countries': ['NOR', 'SWE', 'FIN', 'DNK', 'DEU', 'POL', 'EST', 'LVA', 'LTU'],
+  'mt': [(6.0, 59.5, 12.5, 65.6), (12.5, 62.0, 14.5, 65.6)],
+  'owner': nordic_owner,
+  'factions': ['turkuaz', 'sari', 'buz', 'kirmizi', 'siyah', 'turuncu', 'yesil'],
+  'titles': {'turkuaz': 'Krallık', 'sari': 'Krallık', 'kirmizi': 'Krallık', 'yesil': 'Birlik'},
+  'caps': {'turkuaz': 'Oslo', 'sari': 'Stokholm', 'buz': 'Helsinki', 'kirmizi': 'Kopenhag', 'siyah': 'Berlin', 'turuncu': 'Varşova', 'yesil': 'Riga'},
+  'places': [
+    ('Oslo', 10.75, 59.91, 3, 'city'), ('Stokholm', 18.07, 59.33, 3, 'city'), ('Helsinki', 24.94, 60.17, 3, 'city'), ('Kopenhag', 12.57, 55.68, 3, 'city'),
+    ('Berlin', 13.40, 52.52, 3, 'city'), ('Varşova', 21.01, 52.23, 3, 'city'), ('Hamburg', 9.99, 53.55, 2, 'city'), ('Gdańsk', 18.65, 54.35, 2, 'city'), ('Hannover', 9.73, 52.37, 1, 'city'), ('Riga', 24.10, 56.95, 3, 'city'),
+    ('Bergen', 5.32, 60.39, 2, 'city'), ('Trondheim', 10.40, 63.43, 2, 'city'), ('Stavanger', 5.73, 58.97, 1, 'city'),
+    ('Göteborg', 11.97, 57.71, 2, 'city'), ('Malmö', 13.00, 55.60, 1, 'city'), ('Sundsvall', 17.31, 62.39, 1, 'city'), ('Örebro', 15.21, 59.27, 1, 'city'),
+    ('Turku', 22.27, 60.45, 2, 'city'), ('Tampere', 23.76, 61.50, 1, 'city'), ('Kuopio', 27.68, 62.89, 1, 'city'),
+    ('Aarhus', 10.20, 56.16, 2, 'city'), ('Aalborg', 9.92, 57.05, 1, 'city'), ('Odense', 10.39, 55.40, 1, 'city', 'kirmizi'),
+    ('Kiel', 10.13, 54.32, 1, 'city'), ('Rostock', 12.10, 54.09, 1, 'city'), ('Bremen', 8.80, 53.08, 1, 'city'),
+    ('Szczecin', 14.55, 53.43, 2, 'city'), ('Olsztyn', 20.49, 53.78, 1, 'city'),
+    ('Tallinn', 24.75, 59.44, 2, 'city'), ('Vilnius', 25.28, 54.69, 2, 'city'), ('Kaunas', 23.90, 54.90, 1, 'city'), ('Tartu', 26.72, 58.38, 1, 'city'),
+    ('Kristiansand', 7.99, 58.15, 1, 'castle'), ('Linköping', 15.62, 58.41, 1, 'castle'), ('Visby', 18.29, 57.64, 1, 'castle'), ('Vaasa', 21.62, 63.10, 1, 'castle'),
+    ('Esbjerg', 8.45, 55.47, 1, 'castle'), ('Schwerin', 11.41, 53.63, 1, 'castle'), ('Koszalin', 16.18, 54.19, 1, 'castle'), ('Klaipėda', 21.14, 55.71, 1, 'castle'),
+    ('Lahti', 25.66, 60.98, 1, 'castle'), ('Białystok', 23.16, 53.13, 1, 'castle'), ('Magdeburg', 11.63, 52.12, 1, 'castle'),
+  ]}
+def med_owner(c, lon, lat):
+    return {'ESP': 'sari', 'PRT': 'sari', 'FRA': 'mavi', 'ITA': 'yesil', 'GRC': 'turkuaz', 'ALB': 'turkuaz', 'MKD': 'turkuaz', 'TUR': 'kirmizi',
+            'MAR': 'turuncu', 'DZA': 'kahve', 'TUN': 'mor', 'LBY': 'mor' if lon < 18.5 else 'siyah', 'EGY': 'siyah'}.get(c, 'n')
+MED = {
+  'name': 'Akdeniz', 'navy': True, 'box': (-10.2, 29.8, 36.2, 45.6), 'klat': 38, 'target': 225, 'seed': 10, 'island_min': 1, 'foreign_void': True,
+  'straits': ['İstanbul'], 'sea_at': [(-5.24, 36.57), (-4.41, 35.44), (28.66, 39.96), (27.01, 39.96)], 'links': [((-3.59, 36.57), (-6.07, 35.44))],   # Cebelitarık
+  'countries': ['ESP', 'PRT', 'FRA', 'ITA', 'GRC', 'ALB', 'MKD', 'TUR', 'MAR', 'DZA', 'TUN', 'LBY', 'EGY', 'HRV', 'BIH', 'MNE', 'CYP', 'MLT', 'BGR'],
+  'mt': [(-5.5, 30.5, -2.0, 33.5), (2.5, 35.2, 7.5, 36.6), (-1.5, 42.4, 2.8, 43.0), (7.0, 44.0, 8.0, 45.6), (30.0, 36.6, 34.0, 37.6)],
+  'owner': med_owner, 'styles': {'kirmizi': 'turk'},
+  'factions': ['sari', 'mavi', 'yesil', 'turkuaz', 'kirmizi', 'turuncu', 'kahve', 'mor', 'siyah'],
+  'caps': {'sari': 'Madrid', 'mavi': 'Marsilya', 'yesil': 'Roma', 'turkuaz': 'Atina', 'kirmizi': 'Ankara', 'turuncu': 'Rabat', 'kahve': 'Cezayir', 'mor': 'Tunus', 'siyah': 'Kahire'},
+  'places': [
+    ('Madrid', -3.70, 40.42, 3, 'city'), ('Marsilya', 5.37, 43.30, 3, 'city'), ('Roma', 12.50, 41.90, 3, 'city'), ('Atina', 23.73, 37.98, 3, 'city'),
+    ('Ankara', 32.85, 39.93, 3, 'city'), ('Rabat', -6.84, 34.02, 3, 'city'), ('Cezayir', 3.06, 36.75, 3, 'city'), ('Tunus', 10.18, 36.81, 3, 'city'), ('Kahire', 31.24, 30.04, 3, 'city'),
+    ('Barselona', 2.17, 41.39, 2, 'city'), ('Sevilla', -5.98, 37.39, 2, 'city'), ('Valensiya', -0.38, 39.47, 1, 'city'), ('Lizbon', -9.14, 38.72, 2, 'city'), ('Bilbao', -2.93, 43.26, 1, 'city'),
+    ('Lyon', 4.84, 45.76, 2, 'city'), ('Bordeaux', -0.58, 44.84, 1, 'city'), ('Toulouse', 1.44, 43.60, 1, 'city'), ('Ajaccio', 8.74, 41.92, 1, 'city'),
+    ('Milano', 9.19, 45.46, 2, 'city'), ('Napoli', 14.25, 40.85, 2, 'city'), ('Palermo', 13.36, 38.12, 1, 'city'), ('Bari', 16.87, 41.12, 1, 'city'), ('Cagliari', 9.11, 39.22, 1, 'city'), ('Venedik', 12.33, 45.44, 1, 'city'),
+    ('Selanik', 22.94, 40.64, 2, 'city'), ('Kandiye', 25.13, 35.34, 1, 'city'), ('Patras', 21.73, 38.25, 1, 'city'), ('Tiran', 19.82, 41.33, 1, 'city'),
+    ('İstanbul', 28.97, 41.01, 3, 'city'), ('İzmir', 27.14, 38.42, 2, 'city'), ('Antalya', 30.71, 36.89, 1, 'city'), ('Adana', 35.32, 37.00, 1, 'city'), ('Samsun', 36.33, 41.29, 1, 'city'),
+    ('Kazablanka', -7.59, 33.57, 2, 'city'), ('Fes', -5.00, 34.03, 2, 'city'), ('Marakeş', -7.99, 31.63, 1, 'city'),
+    ('Oran', -0.63, 35.70, 2, 'city'), ('Konstantin', 6.61, 36.36, 1, 'city'), ('Biskra', 5.73, 34.85, 1, 'city'),
+    ('Trablus', 13.19, 32.89, 2, 'city'), ('Sfaks', 10.76, 34.74, 1, 'city'), ('Bingazi', 20.07, 32.12, 1, 'city'),
+    ('İskenderiye', 29.92, 31.20, 2, 'city'), ('Port Said', 32.30, 31.26, 1, 'city'),
+    ('Zagreb', 15.98, 45.81, 1, 'city'), ('Lefkoşa', 33.36, 35.17, 1, 'city'), ('Sofya', 23.32, 42.70, 1, 'city'),
+    ('Cebelitarık', -5.35, 36.14, 1, 'castle'), ('Nice', 7.27, 43.70, 1, 'castle'), ('Messina', 15.55, 38.19, 1, 'castle'), ('Rodos', 28.22, 36.43, 1, 'castle'),
+    ('Çanakkale', 26.40, 40.15, 1, 'castle', 'kirmizi'), ('Tanca', -5.81, 35.76, 1, 'castle'), ('Annaba', 7.77, 36.90, 1, 'castle'), ('Bizerte', 9.87, 37.27, 1, 'castle'),
+    ('Mersa Matruh', 27.24, 31.35, 1, 'castle'), ('Split', 16.44, 43.51, 1, 'castle'), ('Valletta', 14.51, 35.90, 1, 'castle'), ('Zaragoza', -0.88, 41.65, 1, 'castle'),
+  ]}
+maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST), build(EUROPE), build(NORTH), build(AFRICA), build(NORDIC), build(MED)]
 out = os.path.join(os.path.dirname(__file__), '..', 'src', 'maps.json')
 json.dump(maps, open(out, 'w'), ensure_ascii=False, separators=(',', ':'))
 print('wrote', out, os.path.getsize(out), file=sys.stderr)

@@ -219,6 +219,10 @@ var ERA_LEVELS = [[
   { map: 7, par: 50, limit: 100, aiEco: 0.85, grace: 3,
     story: 'Nil, çöl kıyıları ve Doğu Akdeniz. Şehirler kıyıda, aralarında uzun yollar var: ikmal hattını denizle ve şehirlerle kur. Yedi devlet, tek deniz.' }
 ], [
+  { map: 8, par: 40, limit: 90, aiEco: 0.85, grace: 3,
+    story: 'Fiyortlar, ormanlar ve Baltık. Yedi devlet, dar boğazlar ve uzun kıyılar. Donanma ile hava gücü bu kuzey denizinde kilit.' },
+  { map: 9, par: 50, limit: 110, aiEco: 0.85, grace: 3,
+    story: 'Cebelitarık’tan Boğaz’a dokuz devlet ve tek deniz. Donanma, hava saldırısı ve çıkarma birlikte kullanılmalı. Yeşil oklar dar boğazdan karadan geçişi gösterir.' },
   { map: 5, par: 40, limit: 100, aiEco: 0.85, grace: 3,
     story: 'Lizbon’dan Anadolu’ya on devlet. Tanklar hızlı, roketler uzağa vurur. Her tur bir hava saldırın var: şehirlerinin 4 hücre çevresindeki bir düşmanı vur.' }
 ]];
