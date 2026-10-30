@@ -120,6 +120,29 @@ def build(spec):
                 if v in sea and v not in seen: seen.add(v); st.append(v); part.append(v)
         if len(part) < 8:
             for v in part: del cells[v]
+    # haritanın içinde kalan boşlukları doldur: denize değen boşluk deniz olur (gemi gidebilsin), karayla çevrili boşluk tarafsız kara
+    w_, h_ = math.sqrt(3) * s, 1.5 * s
+    def ll(q, r): return box[0] + (q * w_ + (w_ / 2 if r % 2 else 0)) / K, box[3] - r * h_
+    missing = {(q, r) for q in range(cols) for r in range(rows) if (q, r) not in cells}
+    outside, st = set(), [k for k in missing if k[0] == 0 or k[1] == 0 or k[0] == cols - 1 or k[1] == rows - 1]
+    outside.update(st)
+    while st:
+        u = st.pop()
+        for v in neigh(*u):
+            if v in missing and v not in outside: outside.add(v); st.append(v)
+    holes = missing - outside; seen = set()
+    for k in sorted(holes):
+        if k in seen: continue
+        part, st = [k], [k]; seen.add(k)
+        while st:
+            u = st.pop()
+            for v in neigh(*u):
+                if v in holes and v not in seen: seen.add(v); st.append(v); part.append(v)
+        wet = any(v in cells and not cells[v]['land'] for u in part for v in neigh(*u))
+        for v in part:
+            lon, lat = ll(*v)
+            if wet: cells[v] = {'land': 0, 'lon': lon, 'lat': lat}
+            else: cells[v] = {'land': 1, 'c': 'XXX', 'lon': lon, 'lat': lat}; land.add(v)
     # owners
     for k, c in cells.items():
         if c['land']: c['f'] = spec['owner'](c['c'], c['lon'], c['lat'])

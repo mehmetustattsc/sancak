@@ -37,7 +37,9 @@ var UT = {
   kilic:   { name: 'Kılıçlı',  atk: 28, def: 32, mv: 1, rng: 1, cost: { g: 30, i: 0 }, beats: 'atli', desc: 'Kalkan duvarı. Atlı hücumunu durdurur, sağlam savunur.' },
   okcu:    { name: 'Okçu',     atk: 30, def: 20, mv: 1, rng: 2, cost: { g: 30, i: 0 }, beats: 'kilic', desc: '2 hücre uzağa ok atar. Uzaktan vurunca karşılık almaz.' },
   atli:    { name: 'Atlı',     atk: 36, def: 30, mv: 2, rng: 1, cost: { g: 50, i: 2 }, beats: 'okcu', req: 'smith', pursue: true, desc: '2 hücre gider, düşman hattında durmaz. Düşmanı yok ederse 1 hücre daha ilerler. Demirci ister.' },
-  kule:    { name: 'Kule',     atk: 24, def: 40, mv: 0, rng: 1, cost: { g: 40, i: 1 }, tower: true, desc: 'Boş araziye kurulur, 2 turda biter. Saldırmaz ama saldırana karşılık verir.' },
+  kule:    { name: 'Kule',     atk: 24, def: 40, mv: 0, rng: 1, cost: { g: 40, i: 1 }, tower: true, build: 2, desc: 'Boş araziye kurulur, 2 turda biter. Saldırmaz ama saldırana karşılık verir.' },
+  kule2:   { name: 'Savaş kulesi', atk: 30, def: 34, mv: 0, rng: 1, cost: { g: 55, i: 2 }, tower: true, tAtk: true, build: 2, desc: 'Yanındaki düşmana her tur saldırır. 2 turda biter.' },
+  kule3:   { name: 'Ok kulesi', atk: 30, def: 24, mv: 0, rng: 2, cost: { g: 70, i: 3 }, tower: true, tAtk: true, build: 3, desc: '2 hücre uzağa ok atar; uzaktan vurunca karşılık almaz. 3 turda biter.' },
   kadirga: { name: 'Kadırga',  atk: 32, def: 26, mv: 3, rng: 2, cost: { g: 60, i: 2 }, naval: true, req: 'port', desc: 'Savaş gemisi. 2 hücre uzağa atış yapar; uzaktan vurunca karşılık almaz. Nakliyeleri batırır, kıyıyı vurur. Liman ister.' }
 };
 /* Çağlar aynı rol iskeletini kullanır (yaya, menzilli, atlı, kule, gemi); her çağ isim, değer ve çizimi değiştirir.
@@ -49,12 +51,16 @@ var UT_ERA = [{}, {
   okcu:    { name: 'Topçu', atk: 33, def: 16, rng: 3, cost: { g: 40, i: 1 }, desc: '3 hücre uzağa top atar; uzaktan vurunca karşılık almaz. Yakın dövüşte zayıftır.' },
   atli:    { name: 'Süvari', atk: 36, def: 28, mv: 3, desc: '3 hücre gider. Düşmanı yok ederse 1 hücre daha ilerler. Topçuya karşı üstün. Demirci ister.' },
   kule:    { name: 'Tabya', atk: 26, def: 46, desc: 'Toprak tabya. Boş araziye kurulur, 2 turda biter. Saldırmaz ama karşılık verir.' },
+  kule2:   { name: 'Makineli yuva', atk: 32, def: 36, desc: 'Yanındaki düşmana her tur ateş eder. 2 turda biter.' },
+  kule3:   { name: 'Top tabyası', atk: 32, def: 24, rng: 2, desc: '2 hücre uzağa top atar; karşılık almaz. 3 turda biter.' },
   kadirga: { name: 'Zırhlı', atk: 36, def: 32, mv: 4, rng: 2, cost: { g: 70, i: 3 }, desc: 'Buharlı zırhlı gemi. 4 hücre gider, 2 hücre uzağa top atar. Liman ister.' }
 }, {
   kilic:   { name: 'Piyade', atk: 30, def: 36, mv: 2, desc: 'Mekanize piyade. Tanksavar füzeleriyle tankı durdurur, şehirde sağlam savunur. 2 hücre gider.' },
   okcu:    { name: 'Roketatar', atk: 36, def: 14, mv: 2, rng: 3, cost: { g: 45, i: 2 }, desc: '3 hücre uzağa roket atar; uzaktan vurunca karşılık almaz. Yakın dövüşte çok zayıf.' },
   atli:    { name: 'Tank', atk: 42, def: 34, mv: 3, cost: { g: 60, i: 3 }, desc: 'Zırhlı tümen. 3 hücre gider, düşmanı yok ederse 1 hücre daha ilerler. Roketatarı ezer. Demirci (fabrika) ister.' },
   kule:    { name: 'Sığınak', atk: 28, def: 50, desc: 'Beton sığınak. Boş araziye kurulur, 2 turda biter. Saldırmaz ama karşılık verir.' },
+  kule2:   { name: 'Ağır makineli mevzi', atk: 34, def: 38, desc: 'Yanındaki düşmana her tur ateş eder. 2 turda biter.' },
+  kule3:   { name: 'Füze bataryası', atk: 36, def: 24, rng: 2, desc: '2 hücre uzağa füze atar; karşılık almaz. 3 turda biter.' },
   kadirga: { name: 'Fırkateyn', atk: 38, def: 34, mv: 5, rng: 3, cost: { g: 80, i: 3 }, desc: 'Füzeli savaş gemisi. 5 hücre gider, 3 hücre uzağa atış yapar. Liman ister.' }
 }];
 var TRANSPORT_ERA = [{}, { name: 'Vapur', mv: 3, def: 10 }, { name: 'Çıkarma gemisi', mv: 4, def: 14 }];
@@ -92,7 +98,7 @@ var UPGRADES = [
   { id: 'tarim', kind: 'eco', name: 'Tarım', max: 2, cost: [40, 90], per: 1 },
   { id: 'baslangic', kind: 'eco', name: 'Savaş sandığı', max: 3, cost: [30, 60, 100], per: 40 }
 ];
-function upg(G, fi, id) { var f = fi >= 0 ? G.factions[fi] : null; return f && f.upg && f.upg[id] || 0; }
+function upg(G, fi, id) { var f = fi >= 0 ? G.factions[fi] : null; if (id === 'kule2' || id === 'kule3') id = 'kule'; return f && f.upg && f.upg[id] || 0; }
 function armyCap(G, fi) {
   var n = 2;
   G.cells.forEach(function (c) { if (c.f === fi) { if (c.t === 3) n += 2; if (c.t === 4) n += 1; } });
@@ -375,7 +381,7 @@ function startTurn(G, fi, first) {
       if (genOf(G, u)) heal += 10;
       u.hp = Math.min(100, u.hp + heal);
     }
-    u.mp = unitMv(G, u); u.acted = !!UT[u.type].tower; u.moved = false; u.chase = 0;
+    u.mp = unitMv(G, u); u.acted = !!UT[u.type].tower && !UT[u.type].tAtk; u.moved = false; u.chase = 0;
   });
   f.generals.forEach(function (g) { if (g.rest && g.rest <= G.turn) g.rest = 0; });
 }
@@ -787,7 +793,7 @@ function terrainMul(G, c, u) {
   return m;
 }
 function canAttack(G, a, d) {
-  if (!d || d.f === a.f || a.acted || UT[a.type].tower || isAlly(G, a.f, d.f)) return false;
+  if (!d || d.f === a.f || a.acted || (UT[a.type].tower && !UT[a.type].tAtk) || a.build || isAlly(G, a.f, d.f)) return false;
   var ca = G.cells[a.c], cd = G.cells[d.c], dist = linkDist(ca, cd);
   if (dist < 1 || dist > unitRange(G, a)) return false;
   var ranged = UT[a.type].rng > 1;
@@ -971,20 +977,22 @@ function recallGeneral(G, fi, uid) {
   u.gen = 0; g.unit = 0; g.rest = G.turn + 1;
   return true;
 }
-function towerInfo(G, c, fi) {
-  var f = G.factions[fi], T = UT.kule, r = { g: T.cost.g, i: T.cost.i, ok: true, why: '' };
+var TOWERS = ['kule', 'kule2', 'kule3'];
+function towerInfo(G, c, fi, type) {
+  var f = G.factions[fi], T = UT[type || 'kule'], r = { g: T.cost.g, i: T.cost.i, ok: true, why: '' };
   if (c.t !== 1 || c.f !== fi) { r.ok = false; r.why = 'Sadece kendi boş arazinde'; return r; }
   if (unitAt(G, c.i)) { r.ok = false; r.why = 'Hücre dolu'; }
   else if (f.towerBuilt) { r.ok = false; r.why = 'Her tur bir kule'; }
   else if (!canPay(f, r.g, r.i)) { r.ok = false; r.why = 'Yetersiz kaynak'; }
   return r;
 }
-function buildTower(G, ci, fi) {
-  var c = G.cells[ci], r = towerInfo(G, c, fi);
+function buildTower(G, ci, fi, type) {
+  type = type || 'kule';
+  var c = G.cells[ci], r = towerInfo(G, c, fi, type);
   if (!r.ok) return null;
   pay(G.factions[fi], r.g, r.i);
-  var u = addUnit(G, fi, 'kule', ci, 1);
-  u.build = TOWER_TURNS; u.hp = 100;
+  var u = addUnit(G, fi, type, ci, 1);
+  u.build = UT[type].build || TOWER_TURNS; u.hp = 100; u.acted = true;
   G.factions[fi].towerBuilt = 1;
   G.log.push({ t: 'recruit', u: u.id, c: ci, f: fi, tower: 1 });
   return u;
@@ -1112,7 +1120,7 @@ function aiEconomy(G, fi) {
       var front = G.units.some(function (u) { return foe(G, u.f, fi) && u.f >= 0 && hd(G.cells[u.c], c) <= 2; });
       if (nearCity && front && (!spot || c.mt > spot.mt)) spot = c;
     });
-    if (spot) buildTower(G, spot.i, fi);
+    if (spot) buildTower(G, spot.i, fi, f.gold > 150 && f.iron >= 3 ? 'kule3' : f.gold > 110 && f.iron >= 2 ? 'kule2' : 'kule');
   }
   // yiyecek: tarla geliştir
   if (foodNet < 1) {
@@ -1133,7 +1141,13 @@ function aiEconomy(G, fi) {
 }
 function aiUnit(G, u, DM, DMn, R) {
   var fi = u.f, c0 = G.cells[u.c];
-  if (UT[u.type].tower) return null;
+  if (UT[u.type].tower) {
+    if (!UT[u.type].tAtk || u.acted || u.build) return null;
+    var tb = null;
+    G.units.forEach(function (e) { if (canAttack(G, u, e)) { var p = predict(G, u, e); var v = p.dmg - p.back * 1.2 + (p.kill ? 30 : 0); if (!tb || v > tb.v) tb = { v: v, e: e }; } });
+    if (tb && tb.v > 0) { attack(G, u, tb.e, R); return 'attack'; }
+    return null;
+  }
   var res = reach(G, u);
   // önce boş düşman şehri / kalesi: içeri gir
   var grab = takeEmpty(G, u, res);
@@ -1245,5 +1259,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, TOWERS: TOWERS, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
 };

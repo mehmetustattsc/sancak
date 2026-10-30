@@ -592,7 +592,7 @@ function panelHTML() {
   if (B.view !== null && B.view !== undefined) return cellHTML(G.cells[B.view]);
   return '';
 }
-function hasMoves(u) { return !UT[u.type].tower && (u.mp > 0 || (!u.acted && hasTarget(u))); }
+function hasMoves(u) { return UT[u.type].tower ? (!!UT[u.type].tAtk && !u.acted && !u.build && hasTarget(u)) : (u.mp > 0 || (!u.acted && hasTarget(u))); }
 function hasTarget(u) { var G = B.G; return G.units.some(function (e) { return canAttack(G, u, e); }); }
 function statChips(G, u) {
   return '<span>' + I.sword + Math.round(stat(G, Object.assign({}, u, { hp: 100 }), 'atk', null, G.cells[u.c], true)) + '</span>' +
@@ -600,7 +600,7 @@ function statChips(G, u) {
     (UT[u.type].tower ? '' : '<span>' + I.boot + (u.mp > 0 ? u.mp : 0) + '/' + unitMv(G, u) + '</span>') + (unitRange(G, u) > 1 ? '<span>' + I.bow + unitRange(G, u) + '</span>' : '');
 }
 function unitName(u) { return u.emb ? UT[u.type].name : u.build ? 'İnşaat' : UT[u.type].name; }
-function figType(u) { return u.emb ? 'nakliye' : u.type === 'kule' ? (u.build ? 'insaat' : 'kule') : u.type; }
+function figType(u) { return u.emb ? 'nakliye' : UT[u.type].tower ? (u.build ? 'insaat' : u.type) : u.type; }
 function hpBar(hp, to) {
   var c = hp > 60 ? '#6dbb6f' : hp > 30 ? '#e0b322' : '#d0453a';
   return '<div class="hpb"><i style="width:' + Math.max(0, hp) + '%;background:' + c + '"></i>' + (to !== undefined ? '<u style="left:' + Math.max(0, to) + '%;width:' + Math.max(0, hp - Math.max(0, to)) + '%"></u>' : '') + '<span>' + Math.max(0, Math.round(hp)) + (to !== undefined ? ' → ' + Math.max(0, Math.round(to)) : '') + '</span></div>';
@@ -685,7 +685,7 @@ function cellHTML(c) {
   }
   if (c.t === 4) up('castle', I.castle, 'Kale', upgradeInfo(G, c, 'castle'));
   if (c.t === 2) up('farm', I.wheat, 'Sulama', upgradeInfo(G, c, 'farm'));
-  if (c.t === 1 && !unitAt(G, c.i)) { var ti = towerInfo(G, c, f); tiles.push(tile('data-tower="1"', '<span class="rf">' + ART.figInline('kule', cols) + '</span>', 'Kule', costTag(ti.g, ti.i), ti)); }
+  if (c.t === 1 && !unitAt(G, c.i)) TOWERS.forEach(function (tt) { var ti = towerInfo(G, c, f, tt); tiles.push(tile('data-tower="' + tt + '"', '<span class="rf">' + ART.figInline(tt, cols) + '</span>', UT[tt].name, costTag(ti.g, ti.i) + '<em class="bt">' + I.hourglass.replace('<svg', '<svg width="12" height="12"') + UT[tt].build + '</em>', ti)); });
   if (tiles.length) s += '<div class="tiles">' + tiles.join('') + '</div>';
   if (c.t === 3 && c.cap) {
     s += '<div class="trades"><span class="tl">' + I.scale + '<em>' + (TRADE_MAX - (G.factions[f].trades || 0)) + '</em></span>' + TRADES.map(function (t) {
@@ -724,7 +724,7 @@ function renderPanel() {
     if (act(function () { return trade(G, G.player, b.dataset.tr); })) { SFX.coin(); G.log.length = 0; updateHud(); renderPanel(); }
   }; });
   el.querySelectorAll('[data-tower]:not(.off)').forEach(function (b) { b.onclick = function () {
-    var u = act(function () { return buildTower(G, B.view, G.player); });
+    var u = act(function () { return buildTower(G, B.view, G.player, b.dataset.tower); });
     if (u) { SFX.build(); G.log.length = 0; fx({ k: 'ring', c: u.c, col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; }
   }; });
   el.querySelectorAll('[data-rec]:not(.off)').forEach(function (b) { b.onclick = function () {
@@ -1523,7 +1523,7 @@ function loop(now) {
   requestAnimationFrame(loop);
 }
 // figürler yüklenince yeniden çiz
-['kilic', 'okcu', 'atli', 'kadirga', 'nakliye', 'kule', 'insaat'].forEach(function (t) { Object.keys(FACTIONS).concat(['n']).forEach(function (f) { var im = ART.fig(t, f === 'n' ? NEUTRAL_COL : FACTIONS[f].col); im.onload = function () { dirty = true; }; }); });
+['kilic', 'okcu', 'atli', 'kadirga', 'nakliye', 'kule', 'kule2', 'kule3', 'insaat'].forEach(function (t) { Object.keys(FACTIONS).concat(['n']).forEach(function (f) { var im = ART.fig(t, f === 'n' ? NEUTRAL_COL : FACTIONS[f].col); im.onload = function () { dirty = true; }; }); });
 for (var lv = 1; lv <= 6; lv++) { ART.bImg('city', lv).onload = function () { dirty = true; }; if (lv <= 4) ART.bImg('castle', lv).onload = function () { dirty = true; }; }
 
 /* ---------- açılış ---------- */

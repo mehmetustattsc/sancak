@@ -242,7 +242,7 @@ var AUDIO = (function () {
     return root * Math.pow(2, (scale[i] + 12 * (o + (oct || 0))) / 12);
   }
   function newPiece(th) {
-    var len = 40 + Math.random() * 30;
+    var len = 55 + Math.random() * 30;
     return { root: th.roots[Math.floor(Math.random() * th.roots.length)], lead: th.lead[Math.floor(Math.random() * th.lead.length)],
       end: now() + len, deg: 0, phraseBeat: 0, phraseLen: 16 + 8 * Math.floor(Math.random() * 2) };
   }
@@ -257,7 +257,7 @@ var AUDIO = (function () {
     var P = mus.piece;
     while (mus.nextT < now() + 0.6) {
       var t = mus.nextT, b = mus.beat, inPhrase = (b % (P.phraseLen + 4)) < P.phraseLen;   // her cümleden sonra 1 ölçü nefes
-      if (t > P.end) { stopDrone(); mus.piece = null; mus.restUntil = now() + 25 + Math.random() * 20; return; }
+      if (t > P.end) { stopDrone(); mus.piece = null; mus.restUntil = now() + 12 + Math.random() * 10; return; }
       if (inPhrase && Math.random() < th.density) {
         // ezgi: adım adım yürür, ara sıra sıçrar, kök sese doğru çekilir
         var step = Math.random() < 0.75 ? (Math.random() < 0.5 ? -1 : 1) : (Math.random() < 0.5 ? -2 : 2);
@@ -297,9 +297,17 @@ var AUDIO = (function () {
     try { FX[name](now() + 0.01 + (delay || 0), arg); } catch (e) {}
   }
   // ilk dokunuşta sesi aç (tarayıcı kuralı)
-  function unlock() { if (ctx() && AC.state === 'suspended') AC.resume(); }
-  ['pointerdown', 'keydown', 'touchstart'].forEach(function (ev) { window.addEventListener(ev, unlock, { passive: true }); });
-  document.addEventListener('visibilitychange', function () { if (!AC) return; if (document.hidden) AC.suspend(); else AC.resume(); });
+  // iPhone: ses oturumunu medya oynatma olarak işaretle (sessiz düğmesi ve kesintilerden sonra sesin kaybolmasını azaltır),
+  // her dokunuşta bağlam çalışmıyorsa (askıda ya da 'interrupted') yeniden başlat ve sessiz bir arabellek çal
+  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  function unlock() {
+    if (!ctx()) return;
+    if (AC.state !== 'running') AC.resume();
+    if (!unlock.done) { try { var b = AC.createBuffer(1, 1, 22050), src = AC.createBufferSource(); src.buffer = b; src.connect(AC.destination); src.start(0); unlock.done = true; } catch (e) {} }
+  }
+  ['pointerdown', 'keydown', 'touchstart', 'touchend', 'click'].forEach(function (ev) { window.addEventListener(ev, unlock, { passive: true }); });
+  document.addEventListener('visibilitychange', function () { if (!AC) return; if (document.hidden) AC.suspend(); else { AC.resume(); mus.nextT = Math.max(mus.nextT, AC.currentTime + 0.1); } });
+  window.addEventListener('pageshow', function () { if (AC && AC.state !== 'running') AC.resume(); });
 
   return { play: play, playTheme: playTheme, setMusic: setMusic, setSfx: setSfx, verb: null, _fx: FX };
 })();

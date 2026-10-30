@@ -358,6 +358,22 @@ var ART = (function () {
       '<path d="M42 42V30h10v12z" fill="#7c8791" stroke="' + OUT + '" stroke-width="1.4"/><path d="M44 33h6" stroke="#2b3238" stroke-width="2"/>' +
       '<path d="M20 42v-5h16v5z" fill="#4d5a3a" stroke="' + OUT + '" stroke-width="1.2"/>';
   };
+  /* ---- saldıran kuleler: çağın kule figürünün üstüne silah ---- */
+  function towerTop(type, era, C) {
+    if (type === 'kule2') {   // yakın savunma: mızrak / makineli / ağır makineli
+      if (!era) return '<path d="M20 22 44 6M44 22 20 6" stroke="#8a6234" stroke-width="2.4" stroke-linecap="round"/><path d="M43 6l3-3-1 4zM21 6l-3-3 1 4z" fill="#d6dbe0"/>';
+      return '<path d="M24 22h16v-5H24z" fill="#3b4148" stroke="' + OUT + '" stroke-width="1.2"/><path d="M38 19h16" stroke="#2a2e33" stroke-width="3" stroke-linecap="round"/><path d="M28 22l-3 5M36 22l3 5" stroke="#2a2e33" stroke-width="1.6"/>';
+    }
+    // menzil: yay / top / füze
+    if (!era) return '<path d="M26 4q-8 10 0 20" fill="none" stroke="#6b3f1a" stroke-width="2.6" stroke-linecap="round"/><path d="M26 4l6 10-6 10" fill="none" stroke="#efe6d2" stroke-width="1"/><path d="M22 14h20" stroke="#d8cfb8" stroke-width="1.6"/><path d="M44 14l-4-2v4z" fill="#9aa0a6"/>';
+    if (era === 1) return '<path d="M22 22l24-10 2 4-24 9z" fill="#3b4148" stroke="' + OUT + '" stroke-width="1.3"/><circle cx="26" cy="23" r="4" fill="none" stroke="#5a3a1c" stroke-width="2"/>';
+    return '<path d="M22 24l20-16 3 3-20 16z" fill="#c9cfd4" stroke="' + OUT + '" stroke-width="1.2"/><path d="M42 8l5-4-1 6z" fill="#c0281f"/><path d="M20 26h14v-4H20z" fill="#56633f" stroke="' + OUT + '" stroke-width="1"/>';
+  }
+  ['kule2', 'kule3'].forEach(function (tt) {
+    [0, 1, 2].forEach(function (e) {
+      FIG[tt + (e ? '@' + e : '')] = function (C, D, L) { return (FIG['kule' + (e ? '@' + e : '')] || FIG.kule)(C, D, L) + towerTop(tt, e, C); };
+    });
+  });
   var IMG = {};
   function curEra() { return typeof ERA_CUR !== 'undefined' ? ERA_CUR : 0; }
   var STYLE_FIG = { bozkir: 'turk' };   // bozkır boyları Türk figürleriyle çizilir

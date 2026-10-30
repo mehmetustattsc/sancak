@@ -625,3 +625,4 @@ p.bad { color: #ff8a6a; }
 .resume .rdel { width: 44px; align-self: stretch; border: 0; border-left: 1px solid rgba(201,162,74,.35); background: none; color: var(--muted); font: 700 15px var(--f-num); }
 .resume .rdel.sure { width: 56px; color: #ff8a6a; }
 .resume + .resume { margin-top: -6px; }
+.bt { font: 600 12px var(--f-num); font-style: normal; color: var(--muted); margin-left: 4px; display: inline-flex; align-items: center; gap: 1px; }

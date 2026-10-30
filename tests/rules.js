@@ -215,4 +215,15 @@ console.log('✓ senaryo seçenekleri');
   g.units.push(e); assert(E.canAttack(g, u, e), 'geçit üzerinden saldırı');
   E.setEra(0);
   console.log('✓ geçit'); }
+// 17) kuleler: savunma kulesi saldırmaz, savaş kulesi yanındakine, ok kulesi 2 hücre uzağa saldırır
+{ E.setEra(0); const g = fresh(); const P = g.player, en = g.factions.findIndex((f, i) => i !== P);
+  const mid = g.cells.find(x => x.t && x.nb.length === 6 && x.nb.every(j => g.cells[j].t));
+  const n1 = g.cells[mid.nb[0]], far = g.cells.find(x => x.t && !mid.nb.includes(x.i) && x !== mid && x.nb.some(j => mid.nb.includes(j)));
+  const mk = (type, c, f) => { const u = { id: g.nextId++, f, type, c: c.i, hp: 100, lvl: 1, mp: 0, acted: false, kills: 0, gen: 0, emb: 0 }; g.units.push(u); return u; };
+  const e1 = mk('kilic', n1, en), e2 = mk('kilic', far, en);
+  const t1 = mk('kule', mid, P); assert(!E.canAttack(g, t1, e1), 'savunma kulesi saldırmaz');
+  t1.type = 'kule2'; assert(E.canAttack(g, t1, e1) && !E.canAttack(g, t1, e2), 'savaş kulesi yalnız yanındakine');
+  t1.type = 'kule3'; assert(E.canAttack(g, t1, e2), 'ok kulesi 2 hücre');
+  assert(E.predict(g, t1, e2).back === 0, 'uzaktan atışa karşılık yok');
+  console.log('✓ kuleler'); }
 console.log('KURAL TESTLERİ TAMAM');

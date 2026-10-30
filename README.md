@@ -25,7 +25,7 @@ Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, i
 | Saldırı | Saldıran yerinde kalır; boşalan hücreye başka birlik sürülür. Atlı düşmanı yok ettikçe yeniden saldırır ve 1 hücre daha gider. Nakliyedeki birlik karaya %60 güçle çıkarma saldırısı yapar |
 | Ordu sınırı | 2 + şehir başına 2 + kale başına 1 (kuleler hariç) |
 | Karargâh | Madalyayla kalıcı geliştirme: birlik türleri (+%6/sv), kule (+%8/sv), hazine (+%10 altın/sv), tarım (+1 gıda/tarla), savaş sandığı (+40 altın/sv). Sadece oyuncuya |
-| Kule | Her tur bir tane, kendi boş araziye; 2 turda biter, inşaatta yarı savunma; saldırmaz, karşılık verir |
+| Kule | Her tur bir tane, kendi boş araziye; inşaatta yarı savunma. Üç çeşit: savunma kulesi (40 altın, 2 tur; saldırmaz, karşılık verir), savaş kulesi (55, 2 tur; yanındakine saldırır), ok kulesi / top tabyası / füze bataryası (70, 3 tur; 2 hücre uzağa) |
 | Ticaret | Başkentte tur başına 3 takas: 10 gıda→12 altın, 18 altın→10 gıda, 25 altın→2 demir, 2 demir→14 altın |
 | Kaynak | Altın (şehir), Gıda (tarla + şehir; her birlik 1 yer), Demir (demirci) |
 | Şehir | 6 seviye (gelir 8→38 altın); savunma (+%8/sv), iyileşme. Ele geçirilen şehir 1 seviye düşer |
