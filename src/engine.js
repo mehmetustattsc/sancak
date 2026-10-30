@@ -112,7 +112,7 @@ var TRADES = [
   { id: 'buyIron',  give: { gold: 25 }, get: { iron: 2 },  name: 'Demir al' },
   { id: 'sellIron', give: { iron: 2 },  get: { gold: 14 }, name: 'Demir sat' }
 ];
-var TRADE_MAX = 3;
+var TRADE_MAX = 8, TRADE_FAIR = 3;   // ilk 3 takas adil; sonra her takasta tüccar %25 daha pahalı
 
 var GENERALS = [
   { id: 'demirpence', era: 0, name: 'Demir Pençe', epithet: 'Kılıçların efendisi', spec: 'kilic', skill: 'kalkan', unlock: 0,
@@ -998,7 +998,10 @@ function buildTower(G, ci, fi, type) {
   return u;
 }
 function tradeInfo(G, fi, id) {
-  var f = G.factions[fi], t = TRADES.filter(function (x) { return x.id === id; })[0], ok = true, why = '';
+  var f = G.factions[fi], base = TRADES.filter(function (x) { return x.id === id; })[0], ok = true, why = '';
+  var n = f.trades || 0, k = 1 + 0.25 * Math.max(0, n - TRADE_FAIR + 1);
+  var t = { id: base.id, name: base.name, give: Object.assign({}, base.give), get: Object.assign({}, base.get), worse: n >= TRADE_FAIR };
+  if (t.worse) { if (t.give.gold) t.give.gold = Math.round(t.give.gold * k); if (t.get.gold) t.get.gold = Math.max(1, Math.round(t.get.gold / k)); }
   var hasCap = G.cells.some(function (c) { return c.cap && c.f === fi; });
   if (!hasCap) { ok = false; why = 'Başkent gerekir'; }
   else if ((f.trades || 0) >= TRADE_MAX) { ok = false; why = 'Bu tur takas hakkı bitti'; }
@@ -1105,7 +1108,9 @@ function aiEconomy(G, fi) {
   if (G.navy && f.gold > 120) {
     var ports = cities.filter(function (c) { return c.port; });
     var ships = G.units.filter(function (u) { return u.f === fi && isNaval(u); }).length;
-    if (ports.length && ships < 1) { var pc = ports[0]; if (recruitInfo(G, pc, 'kadirga').ok) recruit(G, pc.i, 'kadirga'); }
+    // deniz aşırı hedefe gidenler varsa iki savaş gemisi tut (çıkarmaya eşlik)
+    var embN = G.units.filter(function (u) { return u.f === fi && u.emb; }).length;
+    if (ports.length && ships < (embN ? 2 : 1)) { var pc = ports[0]; if (recruitInfo(G, pc, 'kadirga').ok) recruit(G, pc.i, 'kadirga'); }
   }
   // ticaret
   if (foodNet < 0 && f.food + foodNet < 2) { trade(G, fi, 'buyFood'); }
@@ -1209,6 +1214,20 @@ function aiUnit(G, u, DM, DMn, R) {
     if (safe !== null && safe !== u.c) { moveUnit(G, u, safe); return 'move'; }
     if (safe === u.c) return null;
   }
+  // çıkarma: denizdeki nakliye tek başına karaya atılmasın; bir tur yakındaki dost gemileri beklesin
+  if (u.emb) {
+    u.sea = (u.sea || 0) + 1;
+    var nearFriend = G.units.some(function (x) { return x.id !== u.id && x.f === fi && (x.emb || isNaval(x)) && hd(G.cells[x.c], c0) <= 2; });
+    if (!nearFriend && u.sea < 2 && DM[u.c] !== undefined && DM[u.c] <= 2) return null;
+  } else u.sea = 0;
+  // savaş gemisi: kendi nakliyesi varsa ona eşlik et
+  if (isNaval(u)) {
+    var conv = G.units.filter(function (x) { return x.f === fi && x.emb; })[0];
+    if (conv && hd(G.cells[conv.c], c0) > 2) {
+      var bestE = null; Object.keys(res).map(Number).forEach(function (ci) { if (ci === u.c || unitAt(G, ci) || G.cells[ci].t) return; var dd = hd(G.cells[ci], G.cells[conv.c]); if (!bestE || dd < bestE.d) bestE = { d: dd, ci: ci }; });
+      if (bestE && bestE.d < hd(c0, G.cells[conv.c])) { moveUnit(G, u, bestE.ci); return 'move'; }
+    }
+  }
   // ilerle
   var D = isNaval(u) ? DMn : DM;
   if (!isNaval(u) && !u.emb && DM.land && DM.land[u.c] !== undefined && !(c0.port && c0.f === fi && R() < 0.5)) D = DM.land;
@@ -1259,5 +1278,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, TOWERS: TOWERS, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, TOWERS: TOWERS, TRADE_MAX: TRADE_MAX, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
 };

@@ -62,7 +62,8 @@ G = fresh(); const F = G.factions[P]; F.gold = 100; F.food = 30; F.iron = 0;
 assert(E.trade(G, P, 'sellFood')); assert.strictEqual(F.food, 20); assert.strictEqual(F.gold, 112);
 assert(E.trade(G, P, 'buyIron')); assert.strictEqual(F.iron, 2);
 assert(E.trade(G, P, 'buyFood'));
-assert(!E.trade(G, P, 'sellFood'), 'tur başına 3 takas');
+{ const g0 = F.gold; assert(E.trade(G, P, 'sellFood'), '4. takas yapılabilir'); assert(F.gold - g0 < 12, '3 takastan sonra oran oyuncu aleyhine'); }
+F.gold = 999; F.food = 999; while (E.trade(G, P, 'sellFood')) {} assert.strictEqual(F.trades, E.TRADE_MAX || 8, 'tur başına en fazla 8 takas');
 console.log('✓ ticaret');
 // 6) general gücü
 G = fresh(); [a, b, c] = line(G);

@@ -626,3 +626,42 @@ p.bad { color: #ff8a6a; }
 .resume .rdel.sure { width: 56px; color: #ff8a6a; }
 .resume + .resume { margin-top: -6px; }
 .bt { font: 600 12px var(--f-num); font-style: normal; color: var(--muted); margin-left: 4px; display: inline-flex; align-items: center; gap: 1px; }
+.trb.worse { border-color: #8a3a2a; } .trb.worse .ar { color: #ff8a6a; }
+/* rehber: açılır kartlar */
+.gd { border-radius: 14px; background: var(--panel); border: 1px solid var(--line); }
+.gd summary { list-style: none; display: flex; align-items: center; gap: 10px; padding: 12px 14px; font: 700 16px var(--f-display); cursor: pointer; }
+.gd summary::-webkit-details-marker { display: none; }
+.gd summary::after { content: '›'; margin-left: auto; color: var(--muted); transition: transform .2s; }
+.gd[open] summary::after { transform: rotate(90deg); }
+.gd .gi { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; background: var(--panel2); color: var(--brass2); }
+.gd .gi svg { width: 18px; height: 18px; }
+.gd .gb { padding: 0 14px 12px; font-size: 15px; line-height: 1.45; color: var(--text); }
+.gd .gb ul, .gd .gb ol { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+/* tur özeti: üstte küçük, sade kart; 5 sn sonra kaybolur, dokununca kapanır */
+.tsum { position: absolute; left: 50%; top: calc(64px + env(safe-area-inset-top)); transform: translateX(-50%); z-index: 6; width: min(340px, calc(100% - 24px));
+  background: rgba(20,24,30,.94); border: 1px solid var(--line); border-radius: 14px; padding: 8px 12px; box-shadow: 0 8px 24px rgba(0,0,0,.4); animation: tsIn .25s ease-out; transition: opacity .3s; }
+.tsum.out { opacity: 0; }
+.tsum .tsh { font: 700 12px var(--f-num); letter-spacing: .12em; color: var(--brass2); text-transform: uppercase; margin-bottom: 4px; }
+.tsum ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.tsum li { display: flex; align-items: center; gap: 8px; font-size: 14px; line-height: 1.3; }
+.tsum li svg { width: 16px; height: 16px; flex: none; }
+.tsum li svg.fl { width: 20px; height: 14px; border-radius: 2px; }
+.tsum .bad, .tsum b.bad { color: #ff8a6a; }
+@keyframes tsIn { from { opacity: 0; transform: translate(-50%, -8px); } }
+/* ---------- sade görünüm: ekranın çoğu oyuna ---------- */
+#tabbar { padding: 3px max(6px, env(safe-area-inset-right, 0px)) calc(3px + env(safe-area-inset-bottom, 0px)) max(6px, env(safe-area-inset-left, 0px)); gap: 0; }
+#tabbar button { padding: 5px 2px 3px; gap: 1px; font-size: 10.5px; letter-spacing: .02em; text-transform: none; font-weight: 600; position: relative; }
+#tabbar button svg { width: 21px; height: 21px; }
+#tabbar button.on::before { content: ''; position: absolute; top: 0; left: 35%; right: 35%; height: 2px; border-radius: 2px; background: var(--brass2); }
+.hero { aspect-ratio: 1 / .52; }
+.hero .title { padding: 20px 16px 12px; }
+.hero h1 { font-size: clamp(36px, 11vw, 54px); }
+.hero canvas.heromap { height: 46%; width: 36%; }
+/* oyun ekranı: daha küçük düğmeler, ince üst çubuk */
+.hbtn { width: 36px; height: 36px; border-radius: 11px; }
+.hbtn svg { width: 18px; height: 18px; }
+.hud-top { gap: 4px; padding-top: calc(6px + env(safe-area-inset-top, 0px)); }
+.hud-top .pill { font-size: 15px; padding: 3px 9px; }
+.actbar { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
+.actbar .hbtn { width: 38px; height: 38px; border-radius: 12px; }
+.actbar .endturn { min-height: 38px; padding: 0 14px; font-size: 15px; border-radius: 12px; }

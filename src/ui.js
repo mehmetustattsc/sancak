@@ -115,8 +115,8 @@ function renderHome() {
   var slots = loadSlots(), g = null;
   ART.setMapStyle(null);
   el.innerHTML =
-    '<div class="topbar"><span class="brand">SANCAK</span>' + medalsPill() + '</div>' +
-    '<div class="hero"><div class="hscene">' + ART.scene().replace('xMidYMid slice', 'xMidYMax slice') + '</div><canvas id="heroCv" class="heromap"></canvas><div class="title"><h1>Sancak</h1><p class="sub">Avrupa haritasında sıra tabanlı strateji. Şehirlerini büyüt, ordunu kur, generallerinle fethet.</p></div></div>' +
+    '<div class="topbar"><span></span>' + medalsPill() + '</div>' +
+    '<div class="hero"><div class="hscene">' + ART.scene().replace('xMidYMid slice', 'xMidYMax slice') + '</div><canvas id="heroCv" class="heromap"></canvas><div class="title"><h1>Sancak</h1></div></div>' +
     slots.map(function (g, si) {
       if (!g) return '';
       ART.setMapStyle(MAPS[g.mapIdx]);
@@ -355,44 +355,19 @@ function renderGenerals() {
 
 /* ---------------- REHBER / AYARLAR ---------------- */
 function renderHelp() {
+  // kısa, açılır kartlar: isteyen okur, oyun ekranında yazı yok
+  var sec = function (ic, title, body, open) { return '<details class="gd"' + (open ? ' open' : '') + '><summary><span class="gi">' + ic + '</span>' + title + '</summary><div class="gb">' + body + '</div></details>'; };
   $('#scr-help .wrap').innerHTML = '<div class="topbar"><h2>Rehber</h2></div>' +
-    '<div class="card"><h3>Tur nasıl oynanır</h3><ol>' +
-    '<li><b>Birliğine dokun.</b> Gidebileceği hücreler açık renkle, saldırabileceği düşmanlar kırmızı halkayla görünür.</li>' +
-    '<li>Açık hücreye dokun: birlik yürür. Kırmızı halkaya dokun: savaş tahmini çıkar, <b>Saldır</b>’a bas.</li>' +
-    '<li>Her birlik bir turda bir kez yürür ve bir kez saldırır. Önce yürüyüp sonra saldırabilirsin; saldırı hareketi bitirir.</li>' +
-    '<li>Şehrine dokun: asker al, şehri, demirciyi ve limanı geliştir. Tarlaya ve kaleye dokunarak onları da geliştirirsin.</li>' +
-    '<li>Yanlış hamleyi sol alttaki <b>geri al</b> düğmesiyle geri çekebilirsin (yürüme, asker, bina, ticaret, general). Saldırılar geri alınmaz.</li>' +
-    '<li>Hamlelerin bitince <b>Devam et</b>. Rakipler sırayla oynar; izleyebilir, hızlandırabilir ya da atlayabilirsin.</li></ol></div>' +
-    '<div class="card"><h3>Kaynaklar</h3><ul>' +
-    '<li><b>Altın:</b> şehirlerden gelir, seviye arttıkça artar. Asker ve binalar altınla alınır.</li>' +
-    '<li><b>Gıda:</b> tarlalar ve şehirler üretir. Her birlik tur başına 1 gıda yer. Gıda biterse bütün birlikler her tur 8 can kaybeder.</li>' +
-    '<li><b>Demir:</b> demirciden gelir. Atlı ve gemiler demir ister.</li>' +
-    '<li><b>Ordu sınırı:</b> 2 + şehir başına 2 + kale başına 1 birlik (kuleler sayılmaz). Sınır dolunca altını binalara harca: şehir geliştirmek kendini 5–8 turda öder.</li></ul></div>' +
-    '<div class="card"><h3>Yapılar</h3><ul>' +
-    '<li><b>Şehir (6 seviye):</b> gelir, savunma ve iyileşme artar. Ele geçirilen şehir 1 seviye düşer.</li>' +
-    '<li><b>Demirci (3 seviye):</b> demir üretir. 1. seviye atlıyı açar; 2. ve 3. seviyede yeni birlikler daha tecrübeli doğar.</li>' +
-    '<li><b>Kale (4 seviye):</b> içindeki birliğin savunması %30’dan %90’a kadar artar. Kalede kılıçlı ve okçu alınır; 3. seviyeden itibaren atlı da.</li>' +
-    '<li><b>Tarla (2 seviye):</b> 2 ya da 4 gıda. Düşman alırsa 1. seviyeye düşer.</li>' +
-    '<li><b>Liman (2 seviye, denizli haritalar):</b> kadırga yapar. Kara birliği limandan denize çıkınca nakliyeye biner; nakliye savunmasızdır.</li></ul></div>' +
-    '<div class="card"><h3>Savaş</h3><ul>' +
-    '<li>Kılıçlı atlıyı, atlı okçuyu, okçu kılıçlıyı yener: avantajlı taraf <b>1,5 kat</b> güçlü.</li>' +
-    '<li>Okçu ve kadırga 2 hücre uzaktan atar; uzaktan vurulan karşılık veremez (okçu ve kadırga hariç). Yakın dövüşte savunan karşılık verir.</li>' +
-    '<li>Dağ +%30, şehir seviye başına +%8, kale +%30–90 savunma verir. Yaralı birlik daha zayıf vurur.</li>' +
-    '<li>Saldıran birlik yerinde kalır. Boşalan hücreye başka bir birliğini sürüp oradan saldırmaya devam edebilirsin. İki düşman öldüren birlik tecrübe kazanır.</li>' +
-    '<li><b>Atlı</b> 2 hücre gider ve düşman yanından geçerken durmaz. Saldırıp düşmanı yok ederse yeniden saldırabilir ve 1 hücre daha ilerleyebilir; gücü yettikçe zincirleme devam eder.</li>' +
-    '<li><b>Nakliyedeki birlik</b> kıyıdaki düşmana çıkarma saldırısı yapabilir: gücünün %60’ıyla vurur, karşılığı kendi savunmasının %70’iyle yer, gemide kalır.</li>' +
-    '<li>Kendi birliklerinin içinden geçebilirsin, ama dolu hücrede duramazsın.</li>' +
-    '<li><b>Moral:</b> karşılıklı iki yanında düşman olan birlik kıskaçtadır (−%20). İki kıskaç ya da 4 düşman ağır kıskaç (−%30). Her yanı düşman ya da geçilmez olan birlik çevrilidir (−%45). Kayıp hem saldırıya hem savunmaya işler; haritada kırmızı işaretle görünür.</li></ul></div>' +
-    '<div class="card"><h3>Diplomasi</h3><ul>' +
-    '<li>İki durum var: <b>savaş</b> ya da <b>ittifak</b>. İttifak ' + ALLY_TURNS + ' tur sürer; aynı anda en fazla ' + MAX_ALLIES + ' müttefik olur.</li>' +
-    '<li>Müttefike saldırılamaz, onun birliklerinin ve topraklarının içinden geçilir, seni kıskaca almaz.</li>' +
-    '<li>Müttefikin boş şehrine ya da kalesine girersen orayı alırsın ama ittifak bozulur ve ' + DISTRUST_TURNS + ' tur kimse seninle ittifak kurmaz.</li>' +
-    '<li>Üstteki el sıkışma simgesinden pazarlık masasını aç: altın, gıda, demir, şehir ve kale takası; ittifak karşılığında bir şey ver ya da iste. Başkent verilemez; şehir çevresindeki arazisiyle devredilir.</li>' +
-    '<li><b>Bağlı krallık:</b> gücü seninkinin %40’ından az, en fazla 2 şehri kalmış ya da yeni şehir kaybetmiş ülkeyi altın karşılığında bütünüyle krallığına katabilirsin. Listede taç işaretiyle görünür.</li>' +
-    '<li>Şehirlerin %35’ini geçersen rakipler sana karşı birleşmeye başlar. Müttefik şehirleri zafer için sayılmaz.</li></ul></div>' +
-    '<div class="card"><h3>Kule</h3><p>Her tur kendi boş arazine bir kule kurabilirsin (tarla, şehir ve kaleye olmaz). Kule 2 turda biter; inşaat sırasında savunması yarıdır ve karşılık veremez. Hasar alan inşaat bitince kule o canla başlar. Kule saldırmaz ama saldırana karşılık verir. Yıkılırsa arazi boşalır.</p></div>' +
-    '<div class="card"><h3>Ticaret</h3><p>Başkentinde her tur en fazla 3 takas: 10 gıda → 12 altın, 18 altın → 10 gıda, 25 altın → 2 demir, 2 demir → 14 altın.</p></div>' +
-    '<div class="card"><h3>Kazanmak</h3><p>Haritadaki şehirlerin %60’ını ele geçir (üstteki şehir sayacı) ya da bütün rakipleri yık. Zaferden sonra istersen tur sınırı olmadan bütün haritayı fethetmeye devam edebilirsin: o andan sonra aldığın her şehir 4, yok ettiğin her düşman 1 madalya. İstediğin an menüden “Fethi burada bitir” ile kazandıklarını alıp çıkarsın; tam fetih ek madalya getirir. Bütün şehirlerini kaybeden ülke yıkılır. Tur sınırını geçersen sefer kaybedilir. Yıldızlar kaç turda bitirdiğine göre verilir.</p></div>';
+    sec(I.flag, 'Tur nasıl oynanır', '<ol><li>Birliğine dokun: gidebileceği yerler açılır, saldırabileceği düşmanlar kırmızı halkalı.</li><li>Boş yere dokun: yürür. Düşmana dokun: tahmin çıkar, <b>Saldır</b>.</li><li>Şehrine dokun: asker al, geliştir. Boş arazine dokun: kule kur.</li><li>Geri al düğmesi açıksa son hamleni geri alabilirsin. Saldırı ve anlaşmalar geri alınmaz.</li><li>Bitince <b>Devam et</b>. Botların turundan sonra kısa bir özet gelir.</li></ol>', true) +
+    sec(I.coin, 'Kaynaklar ve ticaret', '<ul><li><b>Altın</b> şehirlerden, <b>gıda</b> tarla ve şehirlerden, <b>demir</b> demirciden gelir. Her birlik turda 1 gıda yer; gıda biterse herkes can kaybeder.</li><li><b>Ordu sınırı:</b> 2 + şehir başına 2 + kale başına 1 (kuleler sayılmaz).</li><li><b>Ticaret</b> başkentte, turda en fazla ' + TRADE_MAX + ' takas. İlk ' + TRADE_FAIR + ' takas adil, sonrakilerde tüccar her seferinde %25 daha pahalı (kırmızı çerçeve).</li></ul>') +
+    sec(I.sword, 'Savaş', '<ul><li>Üçgen: yaya atlıyı, atlı menzilliyi, menzilli yayayı yener (×1,5).</li><li>Menzilliler uzaktan vurur, uzaktan vurulan karşılık veremez.</li><li>Dağ, şehir ve kale savunma verir. Yaralı birlik daha zayıf vurur.</li><li>Atlı düşmanı yok ederse zincirleme saldırmaya ve ilerlemeye devam eder.</li><li>Kendi birliklerinin içinden geçebilirsin, dolu hücrede duramazsın.</li></ul>') +
+    sec(I.mUp, 'Moral', '<ul><li><b>Sarı ok:</b> yanında 2 dost birlik ya da son turda düşman yok etmek (+%10).</li><li><b>Mavi ok:</b> kıskaç (−%20), ağır kıskaç (−%30), çevrili (−%45). 4 düşmanla sarılınca iki mavi ok.</li><li>Yakın ve Modern Çağ’da şehir ya da kaleden uzaklaşan birlik <b>ikmalsiz</b> kalır: −%15 ve iyileşmez.</li></ul>') +
+    sec(I.castle, 'Yapılar ve kuleler', '<ul><li><b>Şehir</b> 6, <b>kale</b> 4, <b>demirci</b> 3, <b>tarla</b> ve <b>liman</b> 2 seviye.</li><li>Her tur kendi boş arazine bir kule: <b>savunma</b> (saldırmaz, 2 tur), <b>savaş kulesi</b> (yanındakine saldırır, 2 tur), <b>ok kulesi</b> / top tabyası / füze bataryası (2 hücre uzağa, 3 tur).</li><li>İnşaat sırasında kule yarı savunmalıdır.</li></ul>') +
+    sec(I.anchor, 'Deniz ve boğazlar', '<ul><li>Kara birliği denize yalnız kendi limanlı şehrinden biner.</li><li>Nakliyedeki birlik kıyıya çıkarma saldırısı yapabilir ama savunmasızdır; yanına savaş gemisi al.</li><li><b>Yeşil çift ok:</b> dar boğaz. Kara birlikleri buradan karşıya yürür, gemiler su yolundan geçer.</li><li><b>Boğaz şehri</b> (İstanbul): gemiler içinden geçer; şehirde düşman garnizonu varsa boğaz kapanır.</li></ul>') +
+    sec(I.handshake, 'Diplomasi ve pazarlık', '<ul><li>Savaş ya da ittifak (' + ALLY_TURNS + ' tur, en fazla ' + MAX_ALLIES + ' müttefik). Müttefikin boş şehrine girmek ihanettir.</li><li>Pazarlık masasında her teklifi yapabilirsin. İpucu şansını gösterir; karşı taraf düşünüp cevap verir. Sana ihtiyacı ne kadar çoksa eksik teklifi o kadar kabul eder.</li><li>Gelen tekliflere <b>Pazarlık</b> ile karşı teklif verebilirsin.</li><li>Çok zayıf ülkeyi altınla <b>bağlı krallık</b> yapabilirsin; her ilhak bir sonrakini %25 pahalılaştırır.</li></ul>') +
+    sec(I.crown, 'Generaller ve efsaneler', '<ul><li>Sefere en fazla ' + MAX_GENS + ' general seç. General birliğini güçlendirir; birlik yok olursa general yaralanır (3 tur, efsane 5 tur).</li><li>Efsaneler bir başarıyla sürpriz olarak katılır, her çağda kullanılır. Koşulları Generaller sekmesinde.</li></ul>') +
+    sec(I.jet, 'Modern Çağ: hava saldırısı', '<p>Her tur bir kez, şehirlerinin ' + AIR_RANGE + ' hücre çevresindeki bir düşmana dokun ve uçak düğmesine bas. Karşılık gelmez; sığınaktakine yarı hasar.</p>') +
+    sec(I.medal, 'Kazanmak ve madalyalar', '<ul><li>Şehirlerin %60’ını al ya da bütün rakipleri yık. Zaferden sonra istersen fethe devam edip istediğin an bitirebilirsin.</li><li>Madalyalar Karargâh’ta kalıcı geliştirmeye ve general eğitimine harcanır. Zor seviye ×1,5, bonus sefer ×1,5.</li><li>Bonus sefer, çağın bütün seferleri kazanılınca açılır. 3 kayıt yerin var.</li></ul>');
 }
 function renderSettings() {
   $('#scr-set .wrap').innerHTML = '<div class="topbar"><h2>Ayarlar</h2></div>' +
@@ -512,7 +487,7 @@ function buildHud() {
     '<button class="hbtn" id="pNext" aria-label="Sıradaki birlik">' + I.next + '<em id="pLeft"></em></button>' +
     '<button class="hbtn" id="hFit" aria-label="Haritayı sığdır">' + I.fit + '</button><span class="sp"></span>' +
     '<button class="btn endturn" id="pEnd"></button></div>' +
-    '<div id="hBanner" class="banner" hidden></div><div id="hTip" class="tip" hidden></div>';
+    '<div id="hBanner" class="banner" hidden></div><div id="turnSum" class="tsum" hidden></div><div id="hTip" class="tip" hidden></div>';
   $('#hPause').onclick = pauseMenu;
   if (B.G.noDip) $('#hDip').hidden = true;
   $('#hDip').onclick = function () { if (B.phase === 'player') { SFX.tap(); dipMenu(); } };
@@ -690,7 +665,7 @@ function cellHTML(c) {
   if (c.t === 3 && c.cap) {
     s += '<div class="trades"><span class="tl">' + I.scale + '<em>' + (TRADE_MAX - (G.factions[f].trades || 0)) + '</em></span>' + TRADES.map(function (t) {
       var r = tradeInfo(G, f, t.id);
-      return '<button class="trb' + (r.ok ? '' : ' off') + '" data-tr="' + t.id + '"' + (r.ok ? '' : ' data-why="' + esc(r.why) + '"') + '>' + resTag(t.give) + '<span class="ar">›</span>' + resTag(t.get) + '</button>';
+      return '<button class="trb' + (r.ok ? '' : ' off') + (r.t.worse ? ' worse' : '') + '" data-tr="' + t.id + '"' + (r.ok ? '' : ' data-why="' + esc(r.why) + '"') + '>' + resTag(r.t.give) + '<span class="ar">›</span>' + resTag(r.t.get) + '</button>';
     }).join('') + '</div>';
   }
   return s;
@@ -1072,9 +1047,40 @@ function endPlayerTurn() {
   if (checkOver()) return;
   runAI();
 }
+/* tur özeti: botların turunda sana dokunan olaylar */
+function noteLog(G) {
+  var P = G.player, S = B.sum;
+  G.log.forEach(function (e) {
+    if (e._s) return; e._s = 1;
+    if (e.t === 'capture' && (G.cells[e.c].t === 3 || G.cells[e.c].t === 4)) {
+      if (e.from === P) S.lost.push(G.cells[e.c].nm || 'Bir kale');
+      else if (e.to >= 0 && e.to !== P && G.cells[e.c].t === 3) S.moves[e.to] = (S.moves[e.to] || 0) + 1;
+    } else if (e.t === 'attack' || e.t === 'air') {
+      if (e.df === P) { S.hits++; if (e.killD) S.dead++; }
+      if (e.af === P && e.killD) S.kills++;
+      if (e.t === 'attack' && e.af !== P && e.killA && e.df === P) S.kills++;
+    } else if (e.t === 'ally' && (e.a === P || e.b === P)) S.notes.push(I.handshake + factionName(G, e.a === P ? e.b : e.a) + ' ile ittifak');
+    else if (e.t === 'betray' && e.b === P) S.notes.push(I.skull + factionName(G, e.a) + ' ihanet etti');
+    else if (e.t === 'elim') S.notes.push(I.flag + factionName(G, e.f) + ' yıkıldı');
+  });
+}
+function showTurnSummary() {
+  var G = B.G, S = B.sum, P = G.player, lines = [];
+  if (S.lost.length) lines.push('<li class="bad">' + I.city + '<span>Kaybettin: <b>' + S.lost.map(esc).join(', ') + '</b></span></li>');
+  if (S.hits) lines.push('<li>' + I.sword + '<span>' + S.hits + ' saldırı aldın' + (S.dead ? ', <b class="bad">' + S.dead + ' birlik</b> düştü' : '') + (S.kills ? ', ' + S.kills + ' düşman öldü' : '') + '</span></li>');
+  Object.keys(S.moves).forEach(function (fi) { lines.push('<li>' + ART.flag(G.factions[fi].id, 'fl mini') + '<span>' + factionName(G, +fi) + ' ' + S.moves[fi] + ' şehir aldı</span></li>'); });
+  S.notes.forEach(function (n) { lines.push('<li>' + n + '</li>'); });
+  var el = $('#turnSum'); if (!el) return;
+  if (!lines.length) { el.hidden = true; return; }
+  el.innerHTML = '<div class="tsh">Tur ' + G.turn + '</div><ul>' + lines.slice(0, 5).join('') + '</ul>';
+  el.hidden = false; el.classList.remove('out');
+  clearTimeout(B.sumT); B.sumT = setTimeout(function () { el.classList.add('out'); setTimeout(function () { el.hidden = true; }, 300); }, 5000);
+  el.onclick = function () { el.hidden = true; };
+}
 function runAI() {
   var G = B.G;
   B.phase = 'ai'; B.skip = false; renderPanel();
+  B.sum = { lost: [], hits: 0, dead: 0, kills: 0, moves: {}, notes: [] };
   $('#aiBar').hidden = false;
   $('#aiFast').classList.toggle('on', B.fast > 1);
   var it = null;
@@ -1087,7 +1093,7 @@ function runAI() {
       if (B.camMem) B.cam.s = B.camMem.s;
       if (lc) B.camT = { x: lc.x, y: lc.y }; else if (B.camMem) B.camT = { x: B.camMem.x, y: B.camMem.y };
       G.log.length = 0;
-      SFX.turn(); banner('Tur ' + G.turn + ' · Senin sıran', 1300);
+      SFX.turn(); showTurnSummary();
       setTimeout(function () { if (B && B.phase === 'player') offerPopup(); }, 900);
       updateHud(); persistGame(); renderPanel(); dirty = true;
       return;
@@ -1099,8 +1105,9 @@ function runAI() {
   function step() {
     if (!B) return;
     var r = it.next();
+    noteLog(G);
     if (r.done || G.over) {
-      endTurn(G); G.log.length = 0;
+      endTurn(G); noteLog(G); G.log.length = 0;
       if (B.skip) { nextFaction(); } else setTimeout(nextFaction, 120 / B.fast);
       return;
     }
