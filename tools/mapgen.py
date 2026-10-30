@@ -522,7 +522,102 @@ MED = {
     ('Çanakkale', 26.40, 40.15, 1, 'castle', 'kirmizi'), ('Tanca', -5.81, 35.76, 1, 'castle'), ('Annaba', 7.77, 36.90, 1, 'castle'), ('Bizerte', 9.87, 37.27, 1, 'castle'),
     ('Mersa Matruh', 27.24, 31.35, 1, 'castle'), ('Split', 16.44, 43.51, 1, 'castle'), ('Valletta', 14.51, 35.90, 1, 'castle'), ('Zaragoza', -0.88, 41.65, 1, 'castle'),
   ]}
-maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST), build(EUROPE), build(NORTH), build(AFRICA), build(NORDIC), build(MED)]
+def steppe_owner(c, lon, lat):
+    if c == 'MNG': return 'siyah' if lon < 97 else 'kahve'          # Naymanlar / Moğollar
+    if c in ('UZB', 'TKM'): return 'kirmizi'                          # Harezm
+    if c in ('KGZ',): return 'yesil'                                  # Kara Hıtay
+    if c == 'KAZ': return 'mavi' if lon < 72 else 'yesil'             # Kıpçaklar / Kara Hıtay
+    if c in ('TJK', 'AFG'): return 'mor'                              # Gurlular
+    if c == 'IRN': return 'kirmizi'
+    if c == 'CHN':
+        if lon < 85: return 'yesil'
+        if lon < 97: return 'siyah'                                   # Uygur ve Nayman toprakları
+        if lon < 110 and lat > 34.5: return 'turuncu'                 # Batı Xia
+        return 'sari'                                                 # Jin
+    return 'n'                                                        # Sibirya ormanları tarafsız
+STEPPE = {
+  'name': 'Moğol Bozkırı', 'navy': False, 'box': (51.5, 33.8, 121.0, 53.5), 'klat': 44, 'target': 210, 'seed': 11, 'island_min': 3, 'foreign_void': True,
+  'countries': ['MNG', 'CHN', 'KAZ', 'UZB', 'TKM', 'KGZ', 'TJK', 'AFG', 'IRN', 'RUS'],
+  'mt': [(70.0, 36.0, 80.0, 43.5), (80.0, 41.5, 95.0, 44.0), (86.0, 46.5, 100.0, 51.0), (66.0, 34.5, 72.0, 37.5), (100.0, 34.0, 104.0, 36.0)],
+  'owner': steppe_owner,
+  'styles': {'kahve': 'bozkir', 'siyah': 'bozkir', 'kirmizi': 'turk', 'mavi': 'bozkir', 'yesil': 'bozkir', 'mor': 'turk', 'sari': 'cin', 'turuncu': 'cin'},
+  'factions': ['kahve', 'siyah', 'kirmizi', 'mavi', 'yesil', 'mor', 'sari', 'turuncu'],
+  'titles': {'kahve': 'Hanlık', 'siyah': 'Hanlık', 'kirmizi': 'Şahlık', 'mavi': 'Boylar Birliği', 'yesil': 'Hanlık', 'mor': 'Sultanlık', 'sari': 'İmparatorluk', 'turuncu': 'Krallık'},
+  'caps': {'kahve': 'Karakurum', 'siyah': 'Kobdo', 'kirmizi': 'Semerkant', 'mavi': 'Sığnak', 'yesil': 'Balasagun', 'mor': 'Herat', 'sari': 'Zhongdu', 'turuncu': 'Xingqing'},
+  'places': [
+    ('Karakurum', 102.83, 47.20, 3, 'city'), ('Kobdo', 91.64, 48.00, 3, 'city'), ('Semerkant', 66.96, 39.65, 3, 'city'), ('Sığnak', 68.40, 44.00, 3, 'city'),
+    ('Balasagun', 75.20, 42.75, 3, 'city'), ('Herat', 62.20, 34.35, 3, 'city'), ('Zhongdu', 116.40, 39.90, 3, 'city'), ('Xingqing', 106.27, 38.47, 3, 'city'),
+    ('Ulanbatur', 106.92, 47.92, 1, 'city'), ('Çoybalsan', 114.53, 48.07, 1, 'city'), ('Ölgii', 89.97, 48.97, 1, 'city', 'siyah'),
+    ('Buhara', 64.42, 39.77, 2, 'city'), ('Gürgenç', 59.15, 42.30, 2, 'city'), ('Merv', 61.83, 37.66, 1, 'city'), ('Nişabur', 58.80, 36.21, 1, 'city'),
+    ('Otrar', 68.30, 42.85, 1, 'city'), ('Türkistan', 68.25, 43.30, 1, 'city'), ('Saray', 52.0, 47.0, 1, 'city'), ('Akmola', 71.43, 51.13, 1, 'city', 'mavi'), ('Ulıtau', 67.0, 48.6, 1, 'castle'), ('Aral', 61.67, 46.8, 1, 'castle'),
+    ('Kaşgar', 75.99, 39.47, 2, 'city'), ('Almalık', 80.9, 43.9, 1, 'city'), ('Turfan', 89.19, 42.95, 1, 'city'), ('Beşbalık', 89.0, 44.0, 1, 'city'),
+    ('Belh', 66.90, 36.76, 2, 'city'), ('Gazne', 68.42, 33.55, 1, 'city'),
+    ('Kaifeng', 114.34, 34.80, 2, 'city'), ('Datong', 113.30, 40.08, 1, 'city'), ('Liaoyang', 123.17, 41.27, 1, 'city'), ('Taiyuan', 112.55, 37.87, 1, 'city'),
+    ('Dunhuang', 94.66, 40.14, 1, 'city'), ('Lanzhou', 103.83, 36.06, 2, 'city'), ('Ganzhou', 100.45, 38.93, 1, 'city'),
+    ('Hocent', 69.62, 40.28, 1, 'castle'), ('Urgenç', 60.63, 41.55, 1, 'castle'), ('Bamyan', 67.83, 34.82, 1, 'castle'), ('Hami', 93.51, 42.82, 1, 'castle'),
+    ('Juyongguan', 116.07, 40.29, 2, 'castle'), ('Yinchuan', 106.0, 39.0, 1, 'castle'), ('Avarga', 109.2, 47.1, 1, 'castle'), ('Tarbagatay', 83.0, 47.0, 1, 'castle'),
+  ]}
+def fareast_owner(c, lon, lat):
+    if c == 'JPN': return 'kirmizi'
+    if c in ('KOR', 'PRK'): return 'mavi'
+    if c == 'RUS': return 'buz'
+    if c == 'CHN':
+        if lat > 41.2 and lon > 119.5: return 'yesil'                # Mançurya
+        if lat < 34.2: return 'turuncu'                               # Yangzi kıyıları
+        return 'sari'                                                 # Qing
+    return 'n'                                                        # Moğolistan tarafsız
+FAREAST = {
+  'name': 'Uzak Doğu 1904', 'navy': True, 'box': (112.5, 29.6, 146.0, 50.5), 'klat': 40, 'target': 175, 'seed': 12, 'island_min': 1, 'foreign_void': True,
+  'countries': ['JPN', 'KOR', 'PRK', 'RUS', 'CHN', 'MNG'],
+  'mt': [(136.0, 35.0, 139.5, 37.5), (127.5, 38.5, 129.5, 41.5), (125.5, 41.0, 129.0, 43.0), (140.0, 38.5, 141.5, 41.0)],
+  'owner': fareast_owner, 'styles': {'sari': 'cin', 'yesil': 'cin', 'turuncu': 'cin', 'kirmizi': 'cin', 'mavi': 'cin'},
+  'factions': ['kirmizi', 'buz', 'mavi', 'sari', 'yesil', 'turuncu'],
+  'titles': {'kirmizi': 'İmparatorluk', 'buz': 'Çarlık', 'mavi': 'Krallık', 'sari': 'İmparatorluk', 'yesil': 'Valilik', 'turuncu': 'Valilik'},
+  'caps': {'kirmizi': 'Tokyo', 'buz': 'Vladivostok', 'mavi': 'Seul', 'sari': 'Pekin', 'yesil': 'Mukden', 'turuncu': 'Şanghay'},
+  'places': [
+    ('Tokyo', 139.69, 35.69, 3, 'city'), ('Vladivostok', 131.89, 43.12, 3, 'city', 'buz'), ('Seul', 126.98, 37.57, 3, 'city'), ('Pekin', 116.40, 39.90, 3, 'city'),
+    ('Mukden', 123.43, 41.80, 3, 'city'), ('Şanghay', 121.47, 31.23, 3, 'city'),
+    ('Osaka', 135.50, 34.69, 2, 'city'), ('Hiroşima', 132.46, 34.39, 1, 'city'), ('Sendai', 140.87, 38.27, 1, 'city'), ('Sapporo', 141.35, 43.06, 1, 'city'), ('Nagasaki', 129.87, 32.75, 1, 'city'),
+    ('Habarovsk', 135.07, 48.48, 2, 'city'), ('Blagoveşçensk', 127.53, 50.27, 1, 'city'), ('Nikolsk', 131.95, 43.80, 1, 'city'),
+    ('Pyongyang', 125.76, 39.04, 2, 'city'), ('Busan', 129.08, 35.18, 1, 'city'), ('Wonsan', 127.44, 39.15, 1, 'city'),
+    ('Tianjin', 117.20, 39.13, 2, 'city'), ('Jinan', 117.00, 36.65, 1, 'city'), ('Kaifeng', 114.34, 34.80, 1, 'city'), ('Qingdao', 120.38, 36.07, 1, 'city'),
+    ('Harbin', 126.63, 45.75, 2, 'city'), ('Kirin', 126.55, 43.84, 1, 'city'), ('Qiqihar', 123.92, 47.35, 1, 'city'),
+    ('Nanjing', 118.80, 32.06, 2, 'city'), ('Hangzhou', 120.15, 30.27, 1, 'city'), ('Hefei', 117.23, 31.82, 1, 'city'),
+    ('Port Arthur', 121.26, 38.81, 2, 'castle', 'buz'), ('Shimonoseki', 130.94, 33.95, 1, 'castle'), ('Hakodate', 140.73, 41.77, 1, 'castle'), ('Nagoya', 136.91, 35.18, 1, 'castle'),
+    ('Sahalin', 142.73, 46.96, 1, 'castle'), ('Incheon', 126.70, 37.46, 1, 'castle'), ('Shanhaiguan', 119.75, 40.0, 1, 'castle'), ('Xuzhou', 117.18, 34.26, 1, 'castle'),
+    ('Yingkou', 122.24, 40.67, 1, 'castle'),
+  ]}
+def samerica_owner(c, lon, lat):
+    if c == 'BRA':
+        if lat > -9.5 and lon < -44.5: return 'n'                     # Amazon ormanı tarafsız
+        if lat > -15.5 and lon > -45.5: return 'turkuaz'              # Kuzeydoğu kıyısı
+        return 'sari'
+    return {'ARG': 'mavi', 'CHL': 'kirmizi', 'PER': 'turuncu', 'COL': 'yesil', 'ECU': 'yesil', 'VEN': 'mor', 'BOL': 'kahve',
+            'URY': 'buz', 'PRY': 'buz'}.get(c, 'n')
+SAMERICA = {
+  'name': 'Güney Amerika', 'navy': True, 'box': (-82.5, -42.0, -34.0, 12.8), 'klat': 18, 'target': 240, 'seed': 13, 'island_min': 2, 'foreign_void': True,
+  'countries': ['BRA', 'ARG', 'CHL', 'PER', 'COL', 'VEN', 'BOL', 'ECU', 'URY', 'PRY', 'GUY', 'SUR', 'FRA'],
+  'mt': [(-80.0, -40.0, -68.0, -15.0), (-79.5, -15.0, -66.0, -2.0), (-78.5, -2.0, -71.0, 8.0), (-71.5, 6.0, -67.0, 10.5)],
+  'owner': samerica_owner,
+  'factions': ['sari', 'mavi', 'kirmizi', 'turuncu', 'yesil', 'mor', 'kahve', 'turkuaz', 'buz'],
+  'caps': {'sari': 'Brasília', 'mavi': 'Buenos Aires', 'kirmizi': 'Santiago', 'turuncu': 'Lima', 'yesil': 'Bogota', 'mor': 'Karakas', 'kahve': 'La Paz', 'turkuaz': 'Salvador', 'buz': 'Montevideo'},
+  'places': [
+    ('Brasília', -47.88, -15.79, 3, 'city'), ('Buenos Aires', -58.38, -34.60, 3, 'city'), ('Santiago', -70.67, -33.45, 3, 'city'), ('Lima', -77.04, -12.05, 3, 'city'),
+    ('Bogota', -74.07, 4.71, 3, 'city'), ('Karakas', -66.90, 10.48, 3, 'city'), ('La Paz', -68.15, -16.50, 3, 'city'), ('Quito', -78.47, -0.18, 2, 'city'), ('Montevideo', -56.16, -34.90, 3, 'city'),
+    ('São Paulo', -46.63, -23.55, 2, 'city'), ('Rio de Janeiro', -43.17, -22.91, 2, 'city'), ('Salvador', -38.50, -12.97, 3, 'city'), ('Recife', -34.88, -8.05, 1, 'city'), ('Porto Alegre', -51.23, -30.03, 1, 'city'), ('Belo Horizonte', -43.94, -19.92, 1, 'city'),
+    ('Córdoba', -64.18, -31.42, 2, 'city'), ('Mendoza', -68.83, -32.89, 1, 'city'), ('Tucumán', -65.22, -26.82, 1, 'city'), ('Rosario', -60.64, -32.95, 1, 'city'),
+    ('Antofagasta', -70.40, -23.65, 1, 'city'), ('Concepción', -73.05, -36.82, 1, 'city'),
+    ('Arequipa', -71.54, -16.41, 1, 'city'), ('Trujillo', -79.03, -8.11, 1, 'city'), ('Cusco', -71.97, -13.53, 1, 'city'),
+    ('Medellín', -75.56, 6.25, 2, 'city'), ('Cali', -76.53, 3.45, 1, 'city'), ('Barranquilla', -74.80, 10.96, 1, 'city'),
+    ('Maracaibo', -71.64, 10.65, 2, 'city'), ('Ciudad Guayana', -62.65, 8.35, 1, 'city'),
+    ('Santa Cruz', -63.18, -17.78, 2, 'city'), ('Cochabamba', -66.16, -17.39, 1, 'city'),
+    ('Guayaquil', -79.89, -2.19, 2, 'city'), ('Asunción', -57.58, -25.26, 2, 'city'),
+    ('Manaus', -60.02, -3.12, 2, 'city'), ('Belém', -48.50, -1.46, 1, 'city'), ('Georgetown', -58.16, 6.80, 1, 'city'),
+    ('Iquique', -70.14, -20.21, 1, 'castle'), ('Bahía Blanca', -62.27, -38.72, 1, 'castle'), ('Iguazú', -54.58, -25.6, 1, 'castle'), ('Callao', -77.15, -12.06, 1, 'castle'),
+    ('Cúcuta', -72.50, 7.89, 1, 'castle'), ('Potosí', -65.75, -19.58, 1, 'castle'), ('Cuenca', -79.0, -2.9, 1, 'castle'), ('Salto', -57.96, -31.39, 1, 'castle'),
+    ('Fortaleza', -38.54, -3.73, 1, 'castle'), ('Campo Grande', -54.62, -20.45, 1, 'castle'),
+  ]}
+maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST), build(EUROPE), build(NORTH), build(AFRICA), build(NORDIC), build(MED), build(STEPPE), build(FAREAST), build(SAMERICA)]
 out = os.path.join(os.path.dirname(__file__), '..', 'src', 'maps.json')
 json.dump(maps, open(out, 'w'), ensure_ascii=False, separators=(',', ':'))
 print('wrote', out, os.path.getsize(out), file=sys.stderr)

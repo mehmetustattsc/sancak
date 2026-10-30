@@ -30,7 +30,12 @@ function chosenGens(e) {
   var sel = save.gsel ? save.gsel.filter(function (id) { return ids.indexOf(id) >= 0; }) : ids;
   return sel.slice(0, MAX_GENS);
 }
-function levelUnlocked(e, l) { return l === 0 || (save.stars[e + '-' + (l - 1)] || 0) > 0; }
+// normal sefer: bir öncekini kazan; bonus sefer: çağın bütün normal seferlerini kazan
+function levelUnlocked(e, l) {
+  var L = levelsOf(e)[l];
+  if (L && L.bonus) { for (var k = 0; k < l; k++) if (!levelsOf(e)[k].bonus && !(save.stars[e + '-' + k] > 0)) return false; return true; }
+  return l === 0 || (save.stars[e + '-' + (l - 1)] || 0) > 0;
+}
 function factionName(G, fi) { return fi < 0 ? 'Tarafsız' : fname(G.factions[fi].id, G.era, G.mapIdx); }
 function fname(fid, e, mi) { var T = mi != null && MAPS[mi] && MAPS[mi].titles; return FACTIONS[fid].name + ' ' + ((T && T[fid]) || ERAS[e].suffix); }
 function insignia(r) { var s = ''; for (var i = 0; i < 5; i++) s += i < r ? '★' : '☆'; return s; }
@@ -158,16 +163,16 @@ function openEra(e) {
     '<div class="eyebrow">Seferler</div><div class="levels">' + levelsOf(e).map(function (L, l) {
       var M = MAPS[L.map], st = save.stars[e + '-' + l] || 0, un = levelUnlocked(e, l);
       var nc = M.cells.filter(function (c) { return c[2] === 3; }).length, nk = M.cells.filter(function (c) { return c[2] === 4; }).length;
-      return '<button class="lvl' + (un ? '' : ' locked') + '" data-l="' + l + '"><canvas></canvas><div><div class="nm">' + M.name + '</div>' +
+      return '<button class="lvl' + (un ? '' : ' locked') + (L.bonus ? ' bonus' : '') + '" data-l="' + l + '"><canvas></canvas><div>' + (L.bonus ? '<div class="bonusb">BONUS SEFER</div>' : '') + '<div class="nm">' + M.name + '</div>' +
         '<div class="meta">' + M.factions.length + ' ülke · ' + nc + ' şehir · ' + nk + ' kale' + (M.navy ? ' · deniz' : '') + '</div>' +
         '<div class="meta">★★★ ' + L.par + ' turda · sınır ' + L.limit + ' tur</div></div>' +
         (un ? '<div class="st">' + [1, 2, 3].map(function (k) { return k <= st ? '<b>★</b>' : '★'; }).join('') + '</div>' : I.lock) + '</button>';
-    }).join('') + '<div class="lvl soon"><div class="ph">?</div><div><div class="nm">' + (['Britanya Adaları, Kuzey Denizleri…', 'Balkanlar, Kafkasya, Kuzey Afrika…', 'İskandinavya, Akdeniz, Atlantik…'][e] || '') + '</div><div class="meta">Yeni seferler geliyor</div></div></div></div>';
+    }).join('') + '</div>';
   $('#eraBack').onclick = function () { SFX.tap(); show('home'); };
   el.querySelectorAll('.lvl[data-l]').forEach(function (b) {
     drawMini(b.querySelector('canvas'), levelsOf(e)[+b.dataset.l].map);
     b.onclick = function () {
-      if (b.classList.contains('locked')) { toast('Önce bir önceki seferi kazan.'); return; }
+      if (b.classList.contains('locked')) { toast(b.classList.contains('bonus') ? 'Bonus sefer, çağın bütün seferlerini kazanınca açılır.' : 'Önce bir önceki seferi kazan.'); return; }
       SFX.tap(); openSetup(e, +b.dataset.l);
     };
   });
@@ -1086,7 +1091,7 @@ function finish(win, timeout, stopped) {
   if (stopped) win = true;
   var st = win ? (full ? G.stars0 : starsFor(G)) : 0;
   var medals = stopped ? cq.medals : full ? 30 + 10 * G.level + cq.medals : win ? 20 + 10 * st + 10 * G.level : (G.endless ? 0 : 10);
-  medals = Math.round(medals * DIFF_MEDAL[G.diff == null ? 1 : G.diff]);
+  medals = Math.round(medals * DIFF_MEDAL[G.diff == null ? 1 : G.diff] * (levelsOf(G.era)[G.level].bonus ? 1.5 : 1));   // bonus sefer: madalya ×1,5
   if (stopped || full) st = G.stars0;
   if (win && !full && !stopped && st > prev) { medals += 10 * (st - prev); save.stars[key] = st; }
   var canGoOn = win && !full && !stopped && G.factions.some(function (f, i) { return i !== G.player && f.alive; });
@@ -1103,7 +1108,7 @@ function finish(win, timeout, stopped) {
   var newGens = GENERALS.filter(function (x) { return x.era === G.era && x.unlock > before && x.unlock <= eraStars(G.era); });
   save.medals += medals; persist(); store(GAME_KEY, null);
   (win ? SFX.win : SFX.lose)();
-  var hasNext = G.level + 1 < levelsOf(G.era).length;
+  var hasNext = G.level + 1 < levelsOf(G.era).length && levelUnlocked(G.era, G.level + 1);
   modal('<div class="result">' +
     '<div class="eyebrow">' + MAPS[G.mapIdx].name + ' · ' + G.turn + '. tur</div>' +
     '<h2 class="' + (win ? 'w' : 'l') + '">' + (full ? 'TAM FETİH' : stopped ? 'SEFER TAMAM' : win ? 'ZAFER' : 'YENİLGİ') + '</h2>' +

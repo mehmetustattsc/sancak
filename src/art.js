@@ -176,6 +176,16 @@ var ART = (function () {
       '<path d="M22 32 60 4" stroke="#8a6234" stroke-width="2.4" stroke-linecap="round"/><path d="M57 6l5-4-1.5 5z" fill="#c9cfd4"/>' +
       '<path d="M53 8.5q2 5-1 9 5-1 7-6z" fill="' + C + '" stroke="' + OUT + '" stroke-width="1"/>';
   };
+  /* ---- Uzak Doğu (Çin) birlikleri: Türk figürlerinden başlığı değiştirerek, pullu miğfer ve kırmızı püskül ---- */
+  function cinHelm(x, y, w) {
+    return '<path d="M' + (x - w / 2) + ' ' + y + 'q0-' + (w * 0.8) + ' ' + (w / 2) + ' -' + (w * 0.8) + 't' + (w / 2) + ' ' + (w * 0.8) + 'z" fill="#6b4f2a" stroke="' + OUT + '" stroke-width="1.2"/>' +
+      '<path d="M' + (x - w * 0.62) + ' ' + y + 'h' + (w * 1.24) + '" stroke="#3b2a14" stroke-width="2.2" stroke-linecap="round"/>' +
+      '<path d="M' + (x - w * 0.3) + ' ' + (y - w * 0.35) + 'h' + (w * 0.6) + 'M' + (x - w * 0.36) + ' ' + (y - w * 0.15) + 'h' + (w * 0.72) + '" stroke="#c9a24a" stroke-width="1"/>' +
+      '<path d="M' + x + ' ' + (y - w * 0.8) + 'v-' + (w * 0.25) + '" stroke="#3b2a14" stroke-width="1.6"/><circle cx="' + x + '" cy="' + (y - w * 1.1) + '" r="' + (w * 0.16) + '" fill="#c0281f"/>';
+  }
+  FIG['kilic#cin'] = function (C, D, L) { return dropEl(FIG['kilic#turk'](C, D, L), ['M25 15q0-4 7-4.5', 'M27 11.5q1-9 5-10', 'M30 11l2-7']) + cinHelm(32, 15, 15); };
+  FIG['okcu#cin'] = function (C, D, L) { return dropEl(FIG['okcu#turk'](C, D, L), ['M24.5 16q-1-8 7.5-8.5', 'M26 12q6-3 12 0']).replace(/<circle cx="32" cy="8.5"[^>]*\/>/, '') + cinHelm(32, 16, 15); };
+  FIG['atli#cin'] = function (C, D, L) { return dropEl(FIG['atli#turk'](C, D, L), ['M26.5 12q0-3 5.5-3.5', 'M28 9l4-8 4 8z']) + cinHelm(32, 12, 12); };
   // harita bazlı görünüm: hangi renk hangi üslupla çizilir (ör. Balkanlar haritasında Türk beylikleri)
   var STYLE_BY_COL = {}, FLAG_OV = {};
   function setMapStyle(M) {
@@ -350,7 +360,8 @@ var ART = (function () {
   };
   var IMG = {};
   function curEra() { return typeof ERA_CUR !== 'undefined' ? ERA_CUR : 0; }
-  function figFn(type, era, col) { var st = STYLE_BY_COL[col]; return (st && FIG[type + '#' + st + (era ? '@' + era : '')]) || FIG[type + '@' + era] || FIG[type]; }
+  var STYLE_FIG = { bozkir: 'turk' };   // bozkır boyları Türk figürleriyle çizilir
+  function figFn(type, era, col) { var st = STYLE_BY_COL[col]; st = STYLE_FIG[st] || st; return (st && FIG[type + '#' + st + (era ? '@' + era : '')]) || FIG[type + '@' + era] || FIG[type]; }
   function figSVG(type, col, era) {
     var C = col, D = shade(col, -0.35), L = shade(col, 0.55);
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="128" height="128">' + figFn(type, era == null ? curEra() : era, col)(C, D, L) + '</svg>';
@@ -365,8 +376,10 @@ var ART = (function () {
   function flag(fid, cls) {
     var F = FACTIONS[fid]; if (!F) return '';
     var c = F.col, d = F.dark, w = '#f3ecdc', p;
-    var kind = FLAG_OV[fid] === 'turk' ? (fid === 'kahve' ? 'hilal3' : 'hilal') : F.flag;
+    var ov = FLAG_OV[fid], kind = ov === 'turk' ? (fid === 'kahve' ? 'hilal3' : 'hilal') : ov === 'bozkir' ? 'tug' : ov === 'cin' ? 'gunes' : F.flag;
     switch (kind) {
+      case 'tug': p = '<rect width="30" height="20" fill="' + c + '"/><path d="M11 3v15" stroke="' + w + '" stroke-width="1.4"/><path d="M11 4q-5 2-4 7 2-3 4-3zM11 8q-5 2-4 7 2-3 4-3zM11 4q5 2 4 7-2-3-4-3zM11 8q5 2 4 7-2-3-4-3z" fill="' + w + '"/><circle cx="11" cy="2.6" r="1.4" fill="#e8c977"/>'; break;
+      case 'gunes': p = '<rect width="30" height="20" fill="' + c + '"/><rect x="1.5" y="1.5" width="27" height="17" fill="none" stroke="#e8c977" stroke-width="1.2"/><circle cx="15" cy="10" r="4.6" fill="#e8c977"/><circle cx="15" cy="10" r="2.2" fill="' + d + '"/>'; break;
       case 'hilal': p = '<rect width="30" height="20" fill="' + c + '"/><circle cx="13" cy="10" r="5.6" fill="' + w + '"/><circle cx="15.13" cy="10" r="4.59" fill="' + c + '"/>'; break;
       case 'hilal3': p = '<rect width="30" height="20" fill="' + c + '"/><circle cx="9.5" cy="6.5" r="3.4" fill="' + '#e8c977' + '"/><circle cx="10.79" cy="6.5" r="2.79" fill="' + c + '"/><circle cx="19.5" cy="6.5" r="3.4" fill="' + '#e8c977' + '"/><circle cx="20.79" cy="6.5" r="2.79" fill="' + c + '"/><circle cx="14.5" cy="14" r="3.4" fill="' + '#e8c977' + '"/><circle cx="15.79" cy="14" r="2.79" fill="' + c + '"/>'; break;
       case 'cross': p = '<rect width="30" height="20" fill="' + c + '"/><path d="M0 10h30M15 0v20" stroke="' + w + '" stroke-width="4"/>'; break;

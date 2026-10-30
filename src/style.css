@@ -577,3 +577,6 @@ p.bad { color: #ff8a6a; }
 .gen.leg.locked .por { filter: brightness(0) opacity(.55); }
 .story { font-family: var(--f-display); font-style: italic; color: var(--brass2); margin: 6px 0 2px; font-size: 15px; line-height: 1.35; }
 #uAir { position: relative; } #uAir svg { width: 24px; height: 24px; } #uAir em { position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); padding: 0 5px; border-radius: 7px; background: #1b2128; border: 1px solid var(--line); font: 700 11px/15px var(--f-num); font-style: normal; color: #ff8a6a; white-space: nowrap; }
+/* bonus sefer kartı */
+.lvl.bonus { border-color: #c9a24a; background: linear-gradient(135deg, #3a2e12, var(--panel) 65%); box-shadow: 0 0 0 1px rgba(232, 201, 119, .25) inset; }
+.lvl .bonusb { display: inline-block; font: 700 11px var(--f-num); letter-spacing: .12em; color: #1b1410; background: linear-gradient(#f2d27a, #c9a24a); border-radius: 6px; padding: 1px 6px; margin-bottom: 2px; }

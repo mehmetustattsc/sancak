@@ -210,21 +210,27 @@ var ERA_LEVELS = [[
   { map: 2, par: 45, limit: 100, aiEco: 0.85, grace: 3,
     story: 'Doğu ile Batı’nın kavşağı. Sekiz sancak, iki deniz ve bir Boğaz. İstanbul’u tutan iki denizin geçidini tutar; ama her sancak aynı şansla başlar.' },
   { map: 6, par: 40, limit: 85, aiEco: 0.85, grace: 3,
-    story: 'Adalar, fiyortlar ve soğuk denizler. Yedi sancağın çoğu denizle ayrılmış: donanmasız fetih olmaz. Yeşil oklar dar boğazlardan karadan geçişi gösterir.' }
+    story: 'Adalar, fiyortlar ve soğuk denizler. Yedi sancağın çoğu denizle ayrılmış: donanmasız fetih olmaz. Yeşil oklar dar boğazlardan karadan geçişi gösterir.' },
+  { map: 10, bonus: true, par: 25, limit: 70, aiEco: 1.05, grace: 3,
+    story: 'Bonus sefer. Hazar’dan Çin Seddi’ne uçsuz bozkır: sekiz han, şah ve imparator. Deniz yok, mesafe çok; atlılar bozkırın efendisidir.' }
 ], [
   { map: 3, par: 35, limit: 80, aiEco: 0.85, grace: 3,
     story: 'Demiryolları, fabrikalar ve büyük ordular. Kanal’ın iki yakasında sekiz devlet. Ordun ikmal hattından kopmasın: şehirden ve kaleden 3 hücreden uzaklaşan birlik zayıflar ve iyileşmez.' },
   { map: 4, par: 45, limit: 95, aiEco: 0.85, grace: 3,
     story: 'Uçsuz bozkırlar, bataklıklar ve Karadeniz. Mesafeler uzun, ikmal her şey: şehirden şehre ilerle. Baltık’tan Kafkas eteklerine sekiz devlet.' },
   { map: 7, par: 50, limit: 100, aiEco: 0.85, grace: 3,
-    story: 'Nil, çöl kıyıları ve Doğu Akdeniz. Şehirler kıyıda, aralarında uzun yollar var: ikmal hattını denizle ve şehirlerle kur. Yedi devlet, tek deniz.' }
+    story: 'Nil, çöl kıyıları ve Doğu Akdeniz. Şehirler kıyıda, aralarında uzun yollar var: ikmal hattını denizle ve şehirlerle kur. Yedi devlet, tek deniz.' },
+  { map: 11, bonus: true, par: 40, limit: 90, aiEco: 1.0, grace: 3,
+    story: 'Bonus sefer. 1904, Uzak Doğu: adalar, yarımada ve Mançurya ovaları. Altı güç Port Arthur ile denizin hâkimiyeti için çarpışıyor.' }
 ], [
   { map: 8, par: 40, limit: 90, aiEco: 0.85, grace: 3,
     story: 'Fiyortlar, ormanlar ve Baltık. Yedi devlet, dar boğazlar ve uzun kıyılar. Donanma ile hava gücü bu kuzey denizinde kilit.' },
   { map: 9, par: 50, limit: 110, aiEco: 0.85, grace: 3,
     story: 'Cebelitarık’tan Boğaz’a dokuz devlet ve tek deniz. Donanma, hava saldırısı ve çıkarma birlikte kullanılmalı. Yeşil oklar dar boğazdan karadan geçişi gösterir.' },
   { map: 5, par: 40, limit: 100, aiEco: 0.85, grace: 3,
-    story: 'Lizbon’dan Anadolu’ya on devlet. Tanklar hızlı, roketler uzağa vurur. Her tur bir hava saldırın var: şehirlerinin 4 hücre çevresindeki bir düşmanı vur.' }
+    story: 'Lizbon’dan Anadolu’ya on devlet. Tanklar hızlı, roketler uzağa vurur. Her tur bir hava saldırın var: şehirlerinin 4 hücre çevresindeki bir düşmanı vur.' },
+  { map: 12, bonus: true, par: 25, limit: 70, aiEco: 1.15, grace: 3,
+    story: 'Bonus sefer. And Dağları’ndan Amazon’a dokuz ülke. Pasifik ile Atlantik birbirine bağlı değil: iki ayrı donanma gerekir. Orman tarafsız ve geniş.' }
 ]];
 var LEVELS = ERA_LEVELS[0];
 function levelsOf(e) { return ERA_LEVELS[e || 0] || []; }
