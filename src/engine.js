@@ -215,7 +215,9 @@ var ERA_LEVELS = [[
   { map: 3, par: 35, limit: 80, aiEco: 0.85, grace: 3,
     story: 'Demiryolları, fabrikalar ve büyük ordular. Kanal’ın iki yakasında sekiz devlet. Ordun ikmal hattından kopmasın: şehirden ve kaleden 3 hücreden uzaklaşan birlik zayıflar ve iyileşmez.' },
   { map: 4, par: 45, limit: 95, aiEco: 0.85, grace: 3,
-    story: 'Uçsuz bozkırlar, bataklıklar ve Karadeniz. Mesafeler uzun, ikmal her şey: şehirden şehre ilerle. Baltık’tan Kafkas eteklerine sekiz devlet.' }
+    story: 'Uçsuz bozkırlar, bataklıklar ve Karadeniz. Mesafeler uzun, ikmal her şey: şehirden şehre ilerle. Baltık’tan Kafkas eteklerine sekiz devlet.' },
+  { map: 7, par: 50, limit: 100, aiEco: 0.85, grace: 3,
+    story: 'Nil, çöl kıyıları ve Doğu Akdeniz. Şehirler kıyıda, aralarında uzun yollar var: ikmal hattını denizle ve şehirlerle kur. Yedi devlet, tek deniz.' }
 ], [
   { map: 5, par: 40, limit: 100, aiEco: 0.85, grace: 3,
     story: 'Lizbon’dan Anadolu’ya on devlet. Tanklar hızlı, roketler uzağa vurur. Her tur bir hava saldırın var: şehirlerinin 4 hücre çevresindeki bir düşmanı vur.' }

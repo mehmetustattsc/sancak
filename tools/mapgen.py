@@ -436,7 +436,39 @@ NORTH = {
     ('Caernarfon', -4.27, 53.14, 1, 'castle'), ('Tønsberg', 10.41, 59.27, 1, 'castle'), ('Bohus', 11.97, 57.71, 1, 'castle'), ('Schleswig', 9.57, 54.52, 1, 'castle'),
     ('Calais', 1.86, 50.95, 1, 'castle'), ('Durham', -1.57, 54.78, 1, 'castle'),
   ]}
-maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST), build(EUROPE), build(NORTH)]
+def africa_owner(c, lon, lat):
+    if c == 'TUR': return 'kirmizi' if lon < 33.2 else 'n'
+    if c in ('SYR', 'LBN', 'JOR', 'ISR', 'PSE'): return 'yesil'
+    if c == 'EGY': return 'sari'
+    if c == 'LBY': return 'turuncu'
+    if c == 'TUN': return 'mavi'
+    if c == 'GRC': return 'turkuaz'
+    if c == 'ITA': return 'mor'
+    return 'n'                                   # Kıbrıs, Malta tarafsız
+AFRICA = {
+  'name': 'Kuzey Afrika ve Doğu Akdeniz', 'navy': True, 'box': (8.5, 29.4, 37.5, 41.4), 'klat': 35, 'target': 165, 'seed': 8, 'island_min': 1, 'foreign_void': True,
+  'countries': ['TUN', 'LBY', 'EGY', 'ISR', 'PSE', 'LBN', 'SYR', 'JOR', 'TUR', 'CYP', 'GRC', 'ITA', 'MLT'],
+  'mt': [(35.5, 33.0, 36.6, 34.6), (30.0, 36.5, 34.0, 37.6), (21.0, 38.5, 22.6, 40.2), (15.6, 39.2, 16.6, 40.6)],
+  'owner': africa_owner, 'styles': {'kirmizi': 'turk'},
+  'factions': ['kirmizi', 'yesil', 'sari', 'turuncu', 'mavi', 'turkuaz', 'mor'],
+  'titles': {'kirmizi': 'Saltanat', 'yesil': 'Emirlik', 'sari': 'Hidivlik', 'turuncu': 'Paşalık', 'mavi': 'Beylik', 'turkuaz': 'Krallık', 'mor': 'Krallık'},
+  'caps': {'kirmizi': 'İstanbul', 'yesil': 'Şam', 'sari': 'Kahire', 'turuncu': 'Trablus', 'mavi': 'Tunus', 'turkuaz': 'Atina', 'mor': 'Napoli'},
+  'places': [
+    ('İstanbul', 28.97, 41.01, 3, 'city'), ('Şam', 36.29, 33.51, 3, 'city'), ('Kahire', 31.24, 30.04, 3, 'city'), ('Trablus', 13.19, 32.89, 3, 'city'),
+    ('Tunus', 10.18, 36.81, 3, 'city'), ('Atina', 23.73, 37.98, 3, 'city'), ('Napoli', 14.25, 40.85, 3, 'city'),
+    ('Bursa', 29.06, 40.19, 2, 'city'), ('İzmir', 27.14, 38.42, 2, 'city'), ('Konya', 32.49, 37.87, 1, 'city'), ('Antalya', 30.71, 36.89, 1, 'city'),
+    ('Halep', 37.16, 36.20, 2, 'city'), ('Beyrut', 35.50, 33.89, 1, 'city'), ('Kudüs', 35.21, 31.77, 2, 'city'), ('Humus', 36.72, 34.73, 1, 'city'),
+    ('İskenderiye', 29.92, 31.20, 2, 'city'), ('Dimyat', 31.81, 31.42, 1, 'city'),
+    ('Bingazi', 20.07, 32.12, 2, 'city'), ('Derne', 22.64, 32.77, 1, 'city'), ('Misrata', 15.09, 32.38, 1, 'city'),
+    ('Sfaks', 10.76, 34.74, 1, 'city'), ('Kayrevan', 10.10, 35.68, 1, 'city'),
+    ('Selanik', 22.94, 40.64, 2, 'city'), ('Patras', 21.73, 38.25, 1, 'city'), ('Kandiye', 25.13, 35.34, 1, 'city'),
+    ('Palermo', 13.36, 38.12, 2, 'city'), ('Bari', 16.87, 41.12, 1, 'city'), ('Reggio', 15.65, 38.11, 1, 'city'),
+    ('Adana', 35.32, 37.00, 1, 'city'), ('Kayseri', 35.49, 38.73, 1, 'city'), ('Lefkoşa', 33.36, 35.17, 1, 'city'),
+    ('Çanakkale', 26.40, 40.15, 1, 'castle'), ('Kütahya', 29.98, 39.42, 1, 'castle'), ('Akka', 35.07, 32.93, 2, 'castle'), ('Antakya', 36.16, 36.20, 1, 'castle'),
+    ('Süveyş', 32.55, 29.97, 1, 'castle'), ('Tobruk', 23.96, 32.08, 1, 'castle'), ('Bizerte', 9.87, 37.27, 1, 'castle'), ('Mistra', 22.37, 37.07, 1, 'castle'),
+    ('Siraküza', 15.29, 37.07, 1, 'castle'), ('Valletta', 14.51, 35.90, 1, 'castle'), ('Rodos', 28.22, 36.43, 1, 'castle'),
+  ]}
+maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST), build(EUROPE), build(NORTH), build(AFRICA)]
 out = os.path.join(os.path.dirname(__file__), '..', 'src', 'maps.json')
 json.dump(maps, open(out, 'w'), ensure_ascii=False, separators=(',', ':'))
 print('wrote', out, os.path.getsize(out), file=sys.stderr)
