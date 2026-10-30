@@ -208,7 +208,9 @@ var ERA_LEVELS = [[
   { map: 1, par: 38, limit: 70, aiEco: 0.85, grace: 3,
     story: 'Zengin şehirler, karlı Alpler ve Akdeniz. Denizi tutan kıyıları, dağları tutan geçitleri tutar.' },
   { map: 2, par: 45, limit: 100, aiEco: 0.85, grace: 3,
-    story: 'Doğu ile Batı’nın kavşağı. Sekiz sancak, iki deniz ve bir Boğaz. İstanbul’u tutan iki denizin geçidini tutar; ama her sancak aynı şansla başlar.' }
+    story: 'Doğu ile Batı’nın kavşağı. Sekiz sancak, iki deniz ve bir Boğaz. İstanbul’u tutan iki denizin geçidini tutar; ama her sancak aynı şansla başlar.' },
+  { map: 6, par: 40, limit: 85, aiEco: 0.85, grace: 3,
+    story: 'Adalar, fiyortlar ve soğuk denizler. Yedi sancağın çoğu denizle ayrılmış: donanmasız fetih olmaz. Yeşil oklar dar boğazlardan karadan geçişi gösterir.' }
 ], [
   { map: 3, par: 35, limit: 80, aiEco: 0.85, grace: 3,
     story: 'Demiryolları, fabrikalar ve büyük ordular. Kanal’ın iki yakasında sekiz devlet. Ordun ikmal hattından kopmasın: şehirden ve kaleden 3 hücreden uzaklaşan birlik zayıflar ve iyileşmez.' },
@@ -965,7 +967,7 @@ function starsFor(G) { return G.turn <= G.par ? 3 : G.turn <= Math.round(G.par *
 
 /* ============================ Yapay zekâ ============================ */
 /* hedefe uzaklık haritası (kara + liman üzerinden deniz) */
-function distMap(G, fi, targets, naval) {
+function distMap(G, fi, targets, naval, landOnly) {
   var D = {}, q = [];
   targets.forEach(function (t) { D[t] = 0; q.push(t); });
   while (q.length) {
@@ -975,12 +977,11 @@ function distMap(G, fi, targets, naval) {
       var j = c.nb[k], n = G.cells[j], w;
       if (naval) { if (n.t !== 0 && !(n.t === 3 && n.f === fi && n.port)) continue; w = 1; }
       else {
-        if (n.t === 0) { if (!G.navy) continue; w = 0.6; }
+        if (n.t === 0) { if (!G.navy || landOnly) continue; w = 0.6; }
         else w = n.mt ? 2 : 1;
-        if (n.t === 0 && c.t !== 0 && c.t) w += 0; // inişte ek maliyet yok
-        if (c.t === 0 && n.t && !(n.t === 3 && n.f === fi && n.port)) w += 0; // kıyıya çıkış
-        if (n.t && c.t === 0) w += 0;
-        if (n.t === 0 && c.t && !(c.t === 3 && c.f === fi && c.port)) w += 6; // limansız binmek zor
+        // harita hedeften geriye doğru açılır: n birliğin geldiği hücre, c hedefe yakın olan.
+        // n kara, c deniz ise birlik n'den denize biniyor demektir: bu ancak kendi limanından olur.
+        if (c.t === 0 && n.t && !(n.t === 3 && n.f === fi && n.port)) w += 12;
       }
       var nd = D[ci] + w;
       if (D[j] === undefined || nd < D[j]) { D[j] = nd; q.push(j); }
@@ -1016,6 +1017,8 @@ function* aiTurn(G, fi, R) {
   var tgtCities = G.cells.filter(function (c) { return c.t === 3 && foe(G, c.f, fi); }).map(function (c) { return c.i; });
   var castles = G.cells.filter(function (c) { return c.t === 4 && foe(G, c.f, fi); }).map(function (c) { return c.i; });
   var DM = distMap(G, fi, tgtCities.concat(castles), false);
+  // karadan ulaşılabilen hedef varken birlikler karadan yürür; denize yalnız limandakiler ve kara yolu olmayanlar açılır
+  DM.land = G.navy ? distMap(G, fi, tgtCities.concat(castles), false, true) : DM;
   var DMn = G.navy ? distMap(G, fi, G.units.filter(function (u) { return foe(G, u.f, fi) && (u.emb || isNaval(u) || G.cells[u.c].coast); }).map(function (u) { return u.c; }), true) : {};
   units.sort(function (a, b) { return (DM[a.c] || 99) - (DM[b.c] || 99); });
   for (var k = 0; k < units.length; k++) {
@@ -1098,8 +1101,12 @@ function aiUnit(G, u, DM, DMn, R) {
     return 'move';
   }
   // savunma: tehdit altındaki şehirde tek birlik ise yerinde kal ve sadece saldır
-  var hold = (c0.t === 3 || c0.t === 4) && c0.f === fi && G.units.some(function (e) { return foe(G, e.f, fi) && e.f >= 0 && !e.emb && hd(G.cells[e.c], c0) <= (c0.cap ? 3 : 2); }) && u.hp > 20;
+  // yalnız savunucu kalır; arkasında en az iki dost birlik varsa ileri çıkabilir
+  var backup = G.units.filter(function (x) { return x.f === fi && x.id !== u.id && !UT[x.type].tower && hd(G.cells[x.c], c0) <= 2; }).length;
+  var hold = (c0.t === 3 || c0.t === 4) && c0.f === fi && landThreat(G, c0, fi, c0.cap ? 3 : 2) && u.hp > 20 && backup < 2;
   var best = null;
+  // ordu dolduysa bekleyerek bir şey kazanılmaz: kuşatmaya giriş (kendini öldürmeyen saldırılar da yapılır)
+  var full = armySize(G, fi) >= armyCap(G, fi) - 1 && u.hp >= 70;
   var cand = hold ? [u.c] : Object.keys(res).map(Number);
   var enemies = G.units.filter(function (e) { return foe(G, e.f, fi); });
   cand.forEach(function (ci) {
@@ -1114,6 +1121,7 @@ function aiUnit(G, u, DM, DMn, R) {
       var val = p.dmg * (e.f < 0 ? 0.7 : UT[e.type].tower ? 0.6 : 1) - p.back * 1.1 + (p.kill ? 35 + (ec.t === 3 ? 45 : ec.t === 4 ? 25 : 0) : 0) - (p.die ? 60 : 0);
       if (e.f === G.player && G.turn < G.grace) return;
       if (genOf(G, e)) val += 8;
+      if (full && !p.die && (ec.t === 3 || ec.t === 4)) val += 10;
       val -= r.cost * 0.5;
       if (!best || val > best.val) best = { val: val, ci: ci, e: e };
     });
@@ -1144,6 +1152,7 @@ function aiUnit(G, u, DM, DMn, R) {
   }
   // ilerle
   var D = isNaval(u) ? DMn : DM;
+  if (!isNaval(u) && !u.emb && DM.land && DM.land[u.c] !== undefined && !(c0.port && c0.f === fi && R() < 0.5)) D = DM.land;
   var bestM = null, here = D[u.c] !== undefined ? D[u.c] : 999;
   Object.keys(res).map(Number).forEach(function (ci) {
     if (ci === u.c || unitAt(G, ci)) return;
@@ -1160,6 +1169,17 @@ function aiUnit(G, u, DM, DMn, R) {
   return null;
 }
 
+/* karadan en fazla rad adımda ulaşabilen düşman kara birliği var mı (deniz aşırı düşman tehdit sayılmaz) */
+function landThreat(G, c0, fi, rad) {
+  var seen = {}, q = [[c0.i, 0]]; seen[c0.i] = 1;
+  while (q.length) {
+    var it = q.shift(), c = G.cells[it[0]];
+    if (it[1] > 0) { var e = unitAt(G, c.i); if (e && e.f >= 0 && foe(G, e.f, fi) && !e.emb && !isNaval(e)) return true; }
+    if (it[1] >= rad) continue;
+    for (var k = 0; k < c.nb.length; k++) { var j = c.nb[k]; if (!seen[j] && G.cells[j].t) { seen[j] = 1; q.push([j, it[1] + 1]); } }
+  }
+  return false;
+}
 function takeEmpty(G, u, res) {
   if (isNaval(u)) return null;
   var best = null;

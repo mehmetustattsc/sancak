@@ -8,7 +8,7 @@ Telefonda tarayıcı menüsünden "Ana ekrana ekle" ile uygulama gibi kurulur, i
 ## Durum (sürüm 0.7)
 - **Yakın Çağ** (1850–1920), iki sefer: Batı Avrupa (8 devlet, 175 kara bölgesi) ve Doğu Cephesi ve Kafkasya (8 devlet, 197 kara bölgesi; fesli Kızıl Saltanat). Birlikler Piyade, Topçu (3 hücre menzil), Süvari (3 hareket), Tabya ve Zırhlı gemi. İkmal kuralı: şehir ya da kaleden 3 hücreden uzak kara birliği −%15 moral, iyileşmez
 - **Modern Çağ** (1990–bugün), Avrupa seferi: 11 ülke, 251 kara bölgesi. Birlikler Piyade (2 hareket), Roketatar (menzil 3), Tank (3 hareket), Sığınak, Fırkateyn. Hava saldırısı: her tur bir kez, şehirlerinin 4 hücre çevresindeki bir düşmana 22 hasar. İkmal menzili 4
-- **Orta Çağ**, üç sefer (sırayla açılır): İber Yarımadası (6 ülke + tarafsız Mayorka), İtalya ve Akdeniz (6 ülke + tarafsız adalar) ve Balkanlar ve Anadolu (8 ülke, 136 kara bölgesi, İstanbul ve Boğaz, Kızıl Beylik)
+- **Orta Çağ**, dört sefer (sırayla açılır): İber Yarımadası, İtalya ve Akdeniz, Balkanlar ve Anadolu (İstanbul ve Boğaz, Kızıl Beylik), Britanya ve Kuzey Denizleri (7 sancak, adalar ve fiyortlar)
 - Yakın Çağ ve Modern Çağ menüde "Yakında" olarak duruyor
 - Referanslar: European War 4 (harita, generaller), War Regions (sadelik), Medieval: Total War (arazi, kale, general etkisi)
 

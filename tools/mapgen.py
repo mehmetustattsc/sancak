@@ -8,14 +8,20 @@ NE = os.environ.get('NE', '/home/claude/nvkelso/natural-earth-vector/geojson/')
 C = json.load(open(NE + 'ne_50m_admin_0_countries.geojson'))
 K = math.cos(math.radians(42))
 
-polys = []
+ALL = []
 for f in C['features']:
     a = f['properties']['ADM0_A3']
     g = f['geometry']; parts = g['coordinates'] if g['type'] == 'MultiPolygon' else [g['coordinates']]
     for poly in parts:
         ring = np.array(poly[0])
-        if ring[:, 0].max() < -15 or ring[:, 0].min() > 36 or ring[:, 1].max() < 33 or ring[:, 1].min() > 52: continue
-        polys.append((a, Path(ring), ring[:, 0].min(), ring[:, 0].max(), ring[:, 1].min(), ring[:, 1].max()))
+        ALL.append((a, Path(ring), ring[:, 0].min(), ring[:, 0].max(), ring[:, 1].min(), ring[:, 1].max()))
+polys = []
+def use_box(box, legacy=False):
+    """Haritanın kutusuna değen ülke parçalarını seç. legacy: ilk haritaların eski süzgeci (çıktı aynı kalsın)."""
+    global polys
+    if legacy: x0, y0, x1, y1 = -15, 33, 36, 52
+    else: x0, y0, x1, y1 = box[0] - 3, box[1] - 3, box[2] + 3, box[3] + 3
+    polys = [p for p in ALL if not (p[3] < x0 or p[2] > x1 or p[5] < y0 or p[4] > y1)]
 
 def country_at(lon, lat):
     for a, p, x0, x1, y0, y1 in polys:
@@ -25,7 +31,8 @@ def country_at(lon, lat):
 MT = [(5.8,44.0,7.5,46.5),(7,45.6,13.8,47.3),(-1.6,42.4,2.8,43.0),(-3.9,36.9,-2.6,37.3),(11,43.6,12.6,44.2),(12.6,42.0,14.6,43.0),(15.2,39.6,16.4,40.8),
       (15.4,43.4,18.6,44.8),(-6.6,42.8,-3.6,43.2),(-5.6,40.1,-3.2,40.8),(-3.6,38.2,-2.2,38.6),(-7.8,40.1,-7.2,40.5),(6.0,45.0,7.2,46.5),(16.5,42.6,19.5,43.4),
       (8.8,39.8,9.5,40.6),(8.7,41.8,9.3,42.4),(14.8,37.6,15.2,37.9),(9.8,44.1,10.6,44.5)]
-def mountain(lon, lat): return any(a <= lon <= c and b <= lat <= d for a, b, c, d in MT)
+MT_CUR = MT
+def mountain(lon, lat): return any(a <= lon <= c and b <= lat <= d for a, b, c, d in MT_CUR)
 
 def neigh(q, r):
     d = [(1,0),(-1,0),(0,-1),(1,-1),(0,1),(1,1)] if r & 1 else [(1,0),(-1,0),(-1,-1),(0,-1),(-1,1),(0,1)]
@@ -48,7 +55,7 @@ def grid(box, s, allowed, foreign_void=False):
             cs = [country_at(*p) for p in pts]
             land = [c for c in cs if c and c in allowed]
             if len(land) >= 3 or (cs[0] and cs[0] in allowed):
-                best = max(set(land), key=land.count) if land else cs[0]
+                best = max(sorted(set(land)), key=land.count) if land else cs[0]   # eşitlikte alfabetik: her çalıştırmada aynı sonuç
                 cells[(q, r)] = {'land': 1, 'c': best, 'lon': lon, 'lat': lat}
             elif foreign_void and cs[0]:
                 continue   # haritaya alınmayan ülkenin toprağı: boşluk (deniz değil)
@@ -57,6 +64,10 @@ def grid(box, s, allowed, foreign_void=False):
     return cells, cols, rows
 
 def build(spec):
+    global K, MT_CUR
+    K = math.cos(math.radians(spec.get('klat', 42)))
+    MT_CUR = MT + spec.get('mt', [])
+    use_box(spec['box'], spec.get('legacy', False))
     allowed = set(spec['countries'])
     lo, hi = 0.15, 2.0
     for _ in range(26):
@@ -71,7 +82,7 @@ def build(spec):
     land = {k for k, c in cells.items() if c['land']}
     if os.environ.get('DUMP') == spec['name']:   # hata ayıklama: DUMP='Harita adı' ile hücre koordinatları
         for k, c in sorted(cells.items()):
-            if -6 < c['lon'] < 4 and 48.5 < c['lat'] < 50.3: print('  dump', k, round(c['lon'], 2), round(c['lat'], 2), c['land'], c.get('c'), file=sys.stderr)
+            if (-8 < c['lon'] < -3 and 54 < c['lat'] < 56.5) or (8.5 < c['lon'] < 14 and 54.3 < c['lat'] < 57.8): print('  dump', k, round(c['lon'], 2), round(c['lat'], 2), c['land'], c.get('c'), file=sys.stderr)
     # drop tiny land components that are not wanted (or all islands on land-only maps)
     comp = {}; cid = 0
     for k in land:
@@ -195,7 +206,7 @@ def iber_owner(c, lon, lat):
         return 'sari'
     return 'n'
 IBER = {
-  'name': 'İber Yarımadası', 'navy': True, 'box': (-9.7, 35.9, 3.6, 44.0), 'target': 64, 'seed': 1, 'island_min': 1, 'pad_w': 1,
+  'name': 'İber Yarımadası', 'legacy': True, 'navy': True, 'box': (-9.7, 35.9, 3.6, 44.0), 'target': 64, 'seed': 1, 'island_min': 1, 'pad_w': 1,
   'countries': ['ESP', 'PRT', 'FRA', 'AND'],
   'owner': iber_owner,
   'factions': ['sari', 'yesil', 'kirmizi', 'kahve', 'turkuaz', 'mavi'],
@@ -224,7 +235,7 @@ def italy_owner(c, lon, lat):
         return 'turuncu'
     return 'n'
 ITALY = {
-  'name': 'İtalya ve Akdeniz', 'navy': True, 'box': (5.0, 36.6, 19.2, 47.9), 'target': 72, 'seed': 2,
+  'name': 'İtalya ve Akdeniz', 'legacy': True, 'navy': True, 'box': (5.0, 36.6, 19.2, 47.9), 'target': 72, 'seed': 2,
   'countries': ['ITA', 'SMR', 'VAT', 'FRA', 'MCO', 'CHE', 'AUT', 'DEU', 'LIE', 'SVN', 'HRV', 'BIH', 'MNE'],
   'owner': italy_owner,
   'factions': ['yesil', 'sari', 'turuncu', 'mavi', 'siyah', 'bordo'],
@@ -257,7 +268,7 @@ def balkan_owner(c, lon, lat):
     if c in ('BIH', 'HRV'): return 'sari'
     return 'n'                                                             # Arnavutluk tarafsız
 BALKAN = {
-  'name': 'Balkanlar ve Anadolu', 'navy': True, 'box': (15.6, 34.8, 33.6, 46.3), 'target': 135, 'seed': 3, 'island_min': 1, 'foreign_void': True,
+  'name': 'Balkanlar ve Anadolu', 'legacy': True, 'navy': True, 'box': (15.6, 34.8, 33.6, 46.3), 'target': 135, 'seed': 3, 'island_min': 1, 'foreign_void': True,
   'sea_at': [(28.4, 40.75), (27.2, 40.6)], 'straits': ['İstanbul'],
   'styles': {'kirmizi': 'turk', 'kahve': 'turk'},
   'countries': ['TUR', 'GRC', 'BGR', 'ROU', 'SRB', 'KOS', 'MNE', 'MKD', 'BIH', 'HRV', 'ALB'],
@@ -291,7 +302,7 @@ def west_owner(c, lon, lat):
     if c == 'ITA': return 'yesil'
     return 'n'                     # İsviçre tarafsız
 WEST = {
-  'name': 'Batı Avrupa', 'navy': True, 'box': (-5.9, 44.0, 17.6, 55.4), 'target': 165, 'seed': 4, 'island_min': 2, 'foreign_void': True,
+  'name': 'Batı Avrupa', 'legacy': True, 'navy': True, 'box': (-5.9, 44.0, 17.6, 55.4), 'target': 165, 'seed': 4, 'island_min': 2, 'foreign_void': True,
   'sea_at': [(1.59, 51.02)], 'links': [((0.23, 51.02), (2.28, 50.14))],          # Manş: su yolu ve geçit
   'countries': ['FRA', 'GBR', 'NLD', 'BEL', 'LUX', 'DEU', 'POL', 'AUT', 'CZE', 'SVN', 'HRV', 'ITA', 'CHE'],
   'owner': west_owner,
@@ -328,7 +339,7 @@ def east_owner(c, lon, lat):
     if c == 'BLR': return 'kahve' if lon < 28.3 else 'buz'
     return 'n'                                   # Bulgaristan tarafsız
 EAST = {
-  'name': 'Doğu Cephesi ve Kafkasya', 'navy': True, 'box': (17.6, 39.6, 45.2, 56.4), 'target': 200, 'seed': 5, 'island_min': 2, 'foreign_void': True,
+  'name': 'Doğu Cephesi ve Kafkasya', 'legacy': True, 'navy': True, 'box': (17.6, 39.6, 45.2, 56.4), 'target': 200, 'seed': 5, 'island_min': 2, 'foreign_void': True,
   'styles': {'kirmizi': 'turk'},
   'countries': ['RUS', 'POL', 'HUN', 'SVK', 'UKR', 'ROU', 'MDA', 'TUR', 'GEO', 'ARM', 'AZE', 'LTU', 'LVA', 'BLR', 'BGR'],
   'owner': east_owner,
@@ -357,7 +368,7 @@ def europe_owner(c, lon, lat):
             'HRV': 'mor', 'BIH': 'mor', 'SRB': 'mor', 'MNE': 'mor', 'KOS': 'mor', 'MKD': 'turkuaz', 'ALB': 'turkuaz',
             'GRC': 'turkuaz', 'ROU': 'kahve', 'BGR': 'kahve', 'TUR': 'kirmizi'}.get(c, 'n')
 EUROPE = {
-  'name': 'Avrupa', 'navy': True, 'box': (-10.6, 34.8, 36.4, 56.2), 'target': 255, 'seed': 6, 'island_min': 2, 'foreign_void': True,
+  'name': 'Avrupa', 'legacy': True, 'navy': True, 'box': (-10.6, 34.8, 36.4, 56.2), 'target': 255, 'seed': 6, 'island_min': 2, 'foreign_void': True,
   'links': [((-1.89, 51.72), (-0.15, 49.47))],                                       # Manş geçidi
   'straits': ['İstanbul'], 'sea_at': [(-1.02, 50.6), (28.0, 40.7), (26.2, 39.9), (25.4, 38.9), (25.6, 37.6)],
   'styles': {'kirmizi': 'turk'},
@@ -373,7 +384,7 @@ EUROPE = {
     ('Atina', 23.73, 37.98, 3, 'city'), ('Bükreş', 26.10, 44.43, 3, 'city'), ('Ankara', 32.85, 39.93, 3, 'city'),
     ('Barselona', 2.17, 41.39, 2, 'city'), ('Sevilla', -5.98, 37.39, 1, 'city'), ('Lizbon', -9.14, 38.72, 2, 'city'), ('Bilbao', -2.93, 43.26, 1, 'city'), ('Valensiya', -0.38, 39.47, 1, 'city'),
     ('Lyon', 4.84, 45.76, 2, 'city'), ('Marsilya', 5.37, 43.30, 2, 'city'), ('Bordeaux', -0.58, 44.84, 1, 'city'), ('Nantes', -1.55, 47.22, 1, 'city'), ('Strazburg', 7.75, 48.58, 1, 'city', 'mavi'),
-    ('Manchester', -2.24, 53.48, 2, 'city'), ('Dublin', -6.26, 53.35, 2, 'city'), ('Glasgow', -4.25, 55.86, 1, 'city'), ('Bristol', -2.59, 51.45, 1, 'city'),
+    ('Manchester', -2.24, 53.48, 2, 'city'), ('Dublin', -6.26, 53.35, 2, 'city'), ('Glasgow', -4.25, 55.86, 1, 'city', 'buz'), ('Bristol', -2.59, 51.45, 1, 'city'),
     ('Hamburg', 9.99, 53.55, 2, 'city'), ('Münih', 11.58, 48.14, 2, 'city'), ('Köln', 6.96, 50.94, 2, 'city'), ('Frankfurt', 8.68, 50.11, 1, 'city'), ('Dresden', 13.74, 51.05, 1, 'city'),
     ('Krakov', 19.94, 50.06, 2, 'city'), ('Gdańsk', 18.65, 54.35, 2, 'city'), ('Poznań', 16.93, 52.41, 1, 'city'), ('Wrocław', 17.04, 51.11, 1, 'city'),
     ('Prag', 14.42, 50.08, 2, 'city'), ('Budapeşte', 19.04, 47.50, 2, 'city'), ('Graz', 15.44, 47.07, 1, 'city'),
@@ -387,7 +398,45 @@ EUROPE = {
     ('Lublin', 22.57, 51.25, 1, 'castle'), ('Brno', 16.61, 49.20, 1, 'castle'), ('Floransa', 11.25, 43.77, 1, 'castle'), ('Split', 16.44, 43.51, 1, 'castle'),
     ('Yanya', 20.85, 39.66, 1, 'castle'), ('Plovdiv', 24.75, 42.14, 1, 'castle'), ('Çanakkale', 26.40, 40.15, 1, 'castle'), ('Erzurum', 41.27, 39.90, 1, 'castle'),
   ]}
-maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST), build(EUROPE)]
+def north_owner(c, lon, lat):
+    if c == 'GBR':
+        if lon < -5.3 and lat < 55.4: return 'yesil'                  # Kuzey İrlanda
+        if lat > 55.3: return 'buz'                                   # İskoçya
+        if lon < -2.9 and 51.3 < lat < 53.45: return 'n'               # Galler tarafsız
+        return 'kirmizi'
+    if c == 'IRL': return 'yesil'
+    if c == 'NOR': return 'turkuaz'
+    if c == 'SWE': return 'sari' if lat < 57.2 else 'turkuaz'
+    if c == 'DNK': return 'sari'
+    if c == 'DEU': return 'siyah' if lat > 52.6 else 'n'                # iç Almanya tarafsız
+    if c in ('NLD', 'BEL', 'FRA'): return 'turuncu'
+    return 'n'
+NORTH = {
+  'name': 'Britanya ve Kuzey Denizleri', 'navy': True, 'box': (-10.8, 50.6, 13.6, 61.2), 'klat': 56, 'target': 140, 'seed': 7, 'island_min': 1, 'foreign_void': True,
+  'sea_at': [(-5.38, 55.95), (-4.7, 55.29), (10.89, 57.26), (11.57, 55.29)],
+  'links': [((-6.06, 55.29), (-4.02, 55.95)), ((10.21, 55.29), (12.24, 55.95))],   # Kuzey Kanalı ve Büyük Belt geçitleri
+  'countries': ['GBR', 'IRL', 'NOR', 'SWE', 'DNK', 'DEU', 'NLD', 'BEL', 'FRA'],
+  'mt': [(-5.5, 56.5, -3.0, 58.5), (6.0, 59.5, 9.5, 61.2), (-4.2, 52.5, -3.3, 53.3)],
+  'owner': north_owner,
+  'factions': ['kirmizi', 'buz', 'yesil', 'turkuaz', 'sari', 'siyah', 'turuncu'],
+  'titles': {'siyah': 'Hansa Birliği', 'turuncu': 'Kontluk'},
+  'caps': {'kirmizi': 'Londra', 'buz': 'Edinburgh', 'yesil': 'Dublin', 'turkuaz': 'Bergen', 'sari': 'Roskilde', 'siyah': 'Lübeck', 'turuncu': 'Brugge'},
+  'places': [
+    ('Londra', -0.13, 51.51, 3, 'city'), ('Edinburgh', -3.19, 55.95, 3, 'city'), ('Dublin', -6.26, 53.35, 3, 'city'), ('Bergen', 5.32, 60.39, 3, 'city'),
+    ('Roskilde', 12.08, 55.64, 3, 'city'), ('Lübeck', 10.69, 53.87, 3, 'city'), ('Brugge', 3.22, 51.21, 3, 'city'),
+    ('York', -1.08, 53.96, 2, 'city'), ('Norwich', 1.30, 52.63, 1, 'city'), ('Bristol', -2.59, 51.45, 1, 'city'), ('Lincoln', -0.54, 53.23, 1, 'city'),
+    ('Aberdeen', -2.09, 57.15, 1, 'city'), ('Glasgow', -4.25, 55.86, 1, 'city', 'buz'), ('Inverness', -4.22, 57.48, 1, 'city'),
+    ('Cork', -8.47, 51.90, 1, 'city'), ('Galway', -9.05, 53.27, 1, 'city'), ('Armagh', -6.65, 54.35, 1, 'city'),
+    ('Oslo', 10.75, 59.91, 2, 'city'), ('Stavanger', 5.73, 58.97, 1, 'city'), ('Kristiansand', 7.99, 58.15, 1, 'city'),
+    ('Aarhus', 10.20, 56.16, 2, 'city'), ('Ribe', 8.76, 55.33, 1, 'city'), ('Lund', 13.19, 55.70, 1, 'city'), ('Aalborg', 9.92, 57.05, 1, 'city'),
+    ('Hamburg', 9.99, 53.55, 2, 'city'), ('Bremen', 8.80, 53.08, 1, 'city'), ('Rostock', 12.10, 54.09, 1, 'city'),
+    ('Gent', 3.72, 51.05, 2, 'city'), ('Utrecht', 5.12, 52.09, 1, 'city'), ('Amsterdam', 4.90, 52.37, 1, 'city'),
+    ('Cardiff', -3.18, 51.48, 1, 'city'),
+    ('Dover', 1.31, 51.13, 1, 'castle'), ('Nottingham', -1.15, 52.95, 1, 'castle'), ('Stirling', -3.94, 56.12, 2, 'castle'), ('Limerick', -8.63, 52.66, 1, 'castle'),
+    ('Caernarfon', -4.27, 53.14, 1, 'castle'), ('Tønsberg', 10.41, 59.27, 1, 'castle'), ('Bohus', 11.97, 57.71, 1, 'castle'), ('Schleswig', 9.57, 54.52, 1, 'castle'),
+    ('Calais', 1.86, 50.95, 1, 'castle'), ('Durham', -1.57, 54.78, 1, 'castle'),
+  ]}
+maps = [build(IBER), build(ITALY), build(BALKAN), build(WEST), build(EAST), build(EUROPE), build(NORTH)]
 out = os.path.join(os.path.dirname(__file__), '..', 'src', 'maps.json')
 json.dump(maps, open(out, 'w'), ensure_ascii=False, separators=(',', ':'))
 print('wrote', out, os.path.getsize(out), file=sys.stderr)

@@ -40,6 +40,7 @@ jobs:
           python3 tests/balkan.py
           python3 tests/yakin.py
           python3 tests/modern.py
+          python3 tests/maps.py
       - uses: actions/upload-pages-artifact@v3
         with:
           path: web
