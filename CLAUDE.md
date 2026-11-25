@@ -10,7 +10,7 @@ but must stay simple on a phone (no nested menus) and must never be pay-to-win (
 - `src/ui.js`: canvas map + DOM panels. `tapCell` is the single input entry point. Events in `G.log` are played by `playLog`.
 - `src/art.js`: SVG art drawn by code (unit figures per faction colour, flags, portraits, city/castle icons).
 - `tools/build.py` inlines everything into `web/index.html` (+ PWA files from `public/`). `web/` and `dist/` are build output (gitignored).
-- Countries are colours, generals have invented names — keep it that way (no real flags/people).
+- Countries are real historical states per map and era (owner's decision): name + flag in `NAT` (art.js), keyed by map name; colours stay the gameplay identity (territory tint, uniforms). Generals keep invented names.
   Exception (owner's decision): `LEGENDS` in engine.js are famous historical commanders (Selahaddin, Cengiz, Napolyon, Fatih,
   Barbaros, Hannibal, İskender, Timur), unlocked by earned achievements and usable in every era. Atatürk is deliberately excluded.
 - Max 4 generals per battle (player chooses in setup); legends rest 5 turns when wounded, normal generals 3.

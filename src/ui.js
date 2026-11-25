@@ -46,7 +46,7 @@ function levelUnlocked(e, l) {
   return l === 0 || (save.stars[e + '-' + (l - 1)] || 0) > 0;
 }
 function factionName(G, fi) { return fi < 0 ? 'Tarafsız' : fname(G.factions[fi].id, G.era, G.mapIdx); }
-function fname(fid, e, mi) { var T = mi != null && MAPS[mi] && MAPS[mi].titles; return FACTIONS[fid].name + ' ' + ((T && T[fid]) || ERAS[e].suffix); }
+function fname(fid, e, mi) { var N = mi != null && MAPS[mi] && ART.nation(MAPS[mi].name, fid); if (N) return N.name; var T = mi != null && MAPS[mi] && MAPS[mi].titles; return FACTIONS[fid].name + ' ' + ((T && T[fid]) || ERAS[e].suffix); }
 function insignia(r) { var s = ''; for (var i = 0; i < 5; i++) s += i < r ? '★' : '☆'; return s; }
 
 /* ---------------- ses ---------------- */
@@ -1575,6 +1575,12 @@ function render(now) {
       var occupied = !!unitAt(G, c.i);
       var by = occupied ? p.y - s * 0.95 : p.y - ht * 0.55;
       if (im.complete) ctx.drawImage(im, p.x - wd / 2, by, wd, ht);
+      if (c.f >= 0 && s > 14) {
+        // şehir ve kale üstünde sahibinin bayrağı
+        var fim = ART.flagImg(G.factions[c.f].id), fw = s * 0.4, fx0 = p.x - wd * 0.5, fy0 = by + ht * 0.05;
+        ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = Math.max(1, s * 0.035); ctx.beginPath(); ctx.moveTo(fx0, fy0 + fw * 1.25); ctx.lineTo(fx0, fy0); ctx.stroke();
+        if (fim.complete) { ctx.drawImage(fim, fx0, fy0, fw, fw * 0.667); ctx.strokeStyle = 'rgba(30,20,10,.6)'; ctx.lineWidth = 0.8; ctx.strokeRect(fx0, fy0, fw, fw * 0.667); }
+      }
       if (c.cap) { ctx.fillStyle = '#e8c977'; ctx.strokeStyle = '#4b360c'; ctx.lineWidth = 1.2; star(p.x + wd * 0.42, by + ht * 0.15, s * 0.16); }
       // seviye ve bina rozetleri
       var bx = p.x - s * 0.62, byy = p.y + s * 0.5;

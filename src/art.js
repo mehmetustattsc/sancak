@@ -187,9 +187,9 @@ var ART = (function () {
   FIG['okcu#cin'] = function (C, D, L) { return dropEl(FIG['okcu#turk'](C, D, L), ['M24.5 16q-1-8 7.5-8.5', 'M26 12q6-3 12 0']).replace(/<circle cx="32" cy="8.5"[^>]*\/>/, '') + cinHelm(32, 16, 15); };
   FIG['atli#cin'] = function (C, D, L) { return dropEl(FIG['atli#turk'](C, D, L), ['M26.5 12q0-3 5.5-3.5', 'M28 9l4-8 4 8z']) + cinHelm(32, 12, 12); };
   // harita bazlı görünüm: hangi renk hangi üslupla çizilir (ör. Balkanlar haritasında Türk beylikleri)
-  var STYLE_BY_COL = {}, FLAG_OV = {};
+  var STYLE_BY_COL = {}, FLAG_OV = {}, FIMG = {};
   function setMapStyle(M) {
-    STYLE_BY_COL = {}; FLAG_OV = {};
+    STYLE_BY_COL = {}; FLAG_OV = {}; NAT_CUR = M && NAT[M.name] || null; FIMG = {};
     if (M && M.styles) Object.keys(M.styles).forEach(function (fid) { if (FACTIONS[fid]) { STYLE_BY_COL[FACTIONS[fid].col] = M.styles[fid]; FLAG_OV[fid] = M.styles[fid]; } });
   }
   /* ---- Yakın Çağ figürleri (1850–1920) ---- */
@@ -389,7 +389,183 @@ var ART = (function () {
   }
   function figInline(type, col, era) { return figSVG(type, col, era).replace('width="128" height="128"', 'class="fig"'); }
 
+  /* ---------- gerçek devletler: harita adına göre her renk için ad ve bayrak ----------
+     Bayrak dili (30x20): h/v şerit, cross, nordic, saltire, canton, rect, circle, crescent, star, tri, checker, eagle, lion, castle, lily, keys, harp, sun, tug, text */
+  var Rd = '#c8102e', Wt = '#f4f1ea', Bl = '#1f3f8f', Yl = '#f2c230', Gn = '#1f7a3a', Bk = '#1b1b1b', Au = '#d9a521', Lb = '#74acdf', Pu = '#6b2d7a';
+  var OSM0 = [['h', [Rd]], ['crescent', Wt, 13, 10, 5.4]], OSM = [['h', [Rd]], ['crescent', Wt, 12, 10, 5.2, 1]];
+  var FR = [['v', [Bl, Wt, Rd]]], DE = [['h', [Bk, Rd, '#ffce00']]], GB = [['h', ['#012169']], ['saltire', Wt, 3.4], ['saltire', Rd, 1.2], ['cross', Wt, 5], ['cross', Rd, 3]];
+  var RU = [['h', [Wt, '#0039a6', '#d52b1e']]], GR = [['h', ['#0d5eaf', Wt, '#0d5eaf', Wt, '#0d5eaf', Wt, '#0d5eaf', Wt, '#0d5eaf']], ['rect', '#0d5eaf', 0, 0, 11.1, 11.1], ['rect', Wt, 4.4, 0, 2.2, 11.1], ['rect', Wt, 0, 4.4, 11.1, 2.2]];
+  var PRU = [['h', [Wt, Bk]], ['eagle', Bk, 15, 6.5, 0.6]], AT1 = [['h', [Bk, Yl]], ['eagle', Bk, 15, 10, 0.7, 1]], IT = [['v', ['#009246', Wt, '#ce2b37']]], ES = [['hw', ['#aa151b', '#f1bf00', '#aa151b'], [1, 2, 1]]];
+  var PL = [['h', [Wt, '#dc143c']]], DK = [['h', ['#c8102e']], ['nordic', Wt, 3]], TR = [['h', ['#e30a17']], ['crescent', Wt, 12, 10, 5, 1]];
+  var NAT = {
+    'İber Yarımadası': {
+      sari: ['Kastilya Krallığı', [['h', [Rd]], ['castle', Au, 15, 10, 1]]],
+      yesil: ['Muvahhid Halifeliği', [['h', [Rd]], ['checker', Bk, Wt, 4, 4, 9, 4, 12, 12]]],
+      kirmizi: ['Aragon Krallığı', [['v', [Au, Rd, Au, Rd, Au, Rd, Au, Rd, Au]]]],
+      kahve: ['León Krallığı', [['h', [Wt]], ['lion', Pu, 15, 10, 1]]],
+      turkuaz: ['Portekiz Krallığı', [['h', [Wt]], ['rect', Bl, 13, 3, 4, 4], ['rect', Bl, 13, 8, 4, 4], ['rect', Bl, 13, 13, 4, 4], ['rect', Bl, 8, 8, 4, 4], ['rect', Bl, 18, 8, 4, 4]]],
+      mavi: ['Toulouse Kontluğu', [['h', [Rd]], ['cross', Au, 3], ['circle', Au, 15, 10, 3]]]
+    },
+    'İtalya ve Akdeniz': {
+      yesil: ['Venedik Cumhuriyeti', [['h', ['#a51c30']], ['lion', Au, 13, 10, 1.05]]],
+      sari: ['Papalık Devleti', [['v', [Yl, Wt]], ['keys', Au, 22, 10]]],
+      turuncu: ['Sicilya Krallığı', [['h', [Au]], ['eagle', Bk, 15, 10, 0.75]]],
+      mavi: ['Provence Kontluğu', [['h', ['#1b3d8f']], ['lily', Au, 8, 6, 0.55], ['lily', Au, 22, 6, 0.55], ['lily', Au, 15, 14, 0.55]]],
+      siyah: ['Kutsal Roma İmparatorluğu', [['h', [Au]], ['eagle', Bk, 15, 10, 0.8]]],
+      bordo: ['Hırvatistan Krallığı', [['h', [Wt]], ['checker', Rd, Wt, 5, 5, 8, 3, 14, 14]]]
+    },
+    'Balkanlar ve Anadolu': {
+      kirmizi: ['Osmanlı Beyliği', OSM0],
+      mor: ['Bizans İmparatorluğu', [['h', [Rd]], ['cross', Au, 2.4], ['text', Au, 'B', 7.5, 6.6, 6], ['text', Au, 'B', 22.5, 6.6, 6], ['text', Au, 'B', 7.5, 17.2, 6], ['text', Au, 'B', 22.5, 17.2, 6]]],
+      turkuaz: ['Atina Dükalığı', [['h', [Bl]], ['cross', Wt, 3]]],
+      siyah: ['Bulgar Çarlığı', [['h', [Rd]], ['lion', Au, 15, 10, 1]]],
+      bordo: ['Sırp Despotluğu', [['h', [Rd]], ['eagle', Wt, 15, 10, 0.75, 1]]],
+      yesil: ['Eflak Voyvodalığı', [['h', [Bl]], ['eagle', Au, 15, 10, 0.7]]],
+      sari: ['Bosna Krallığı', [['h', [Bl]], ['band', Wt], ['lily', Au, 8, 14, 0.45], ['lily', Au, 22, 6, 0.45]]],
+      kahve: ['Karamanoğulları', [['h', ['#1f4f8f']], ['crescent', Au, 13, 10, 5.4]]]
+    },
+    'Britanya ve Kuzey Denizleri': {
+      kirmizi: ['İngiltere Krallığı', [['h', [Wt]], ['cross', Rd, 4]]],
+      buz: ['İskoçya Krallığı', [['h', ['#005eb8']], ['saltire', Wt, 3.4]]],
+      yesil: ['İrlanda Lordluğu', [['h', ['#1b3d8f']], ['harp', Au, 15, 10]]],
+      turkuaz: ['Norveç Krallığı', [['h', [Rd]], ['lion', Au, 15, 10, 1]]],
+      sari: ['Danimarka Krallığı', DK],
+      siyah: ['Hansa Birliği', [['h', [Wt, Rd]]]],
+      turuncu: ['Flandre Kontluğu', [['h', [Yl]], ['lion', Bk, 15, 10, 1]]]
+    },
+    'Moğol Bozkırı': {
+      kahve: ['Moğol İmparatorluğu', [['h', ['#2f5fa8']], ['tug', Wt]]],
+      siyah: ['Naymanlar', [['h', [Bk]], ['tug', Wt]]],
+      kirmizi: ['Harezmşahlar', [['h', ['#1f6b3a']], ['crescent', Au, 13, 10, 5.4]]],
+      mavi: ['Kıpçaklar', [['h', ['#3a7bc0']], ['tug', Au]]],
+      yesil: ['Karahıtaylar', [['h', ['#2c6e49']], ['sun', Au, 15, 10, 4]]],
+      mor: ['Gur Sultanlığı', [['h', [Bk]], ['crescent', Wt, 13, 10, 5.4]]],
+      sari: ['Kin Hanedanı', [['h', [Yl]], ['circle', Rd, 15, 10, 5]]],
+      turuncu: ['Batı Xia', [['h', ['#d8742a']], ['sun', Wt, 15, 10, 4]]]
+    },
+    'Batı Avrupa': {
+      mavi: ['Fransız İmparatorluğu', FR], buz: ['Büyük Britanya', GB],
+      turuncu: ['Hollanda Krallığı', [['h', ['#ae1c28', Wt, '#21468b']]]],
+      kahve: ['Ren Konfederasyonu', [['h', [Bk, Rd, Au]]]],
+      siyah: ['Prusya Krallığı', PRU],
+      sari: ['Bavyera Krallığı', [['h', [Wt]], ['lozenge', '#0098d4']]],
+      bordo: ['Avusturya İmparatorluğu', AT1],
+      yesil: ['Sardinya Krallığı', [['h', [Rd]], ['cross', Wt, 4]]]
+    },
+    'Doğu Cephesi ve Kafkasya': {
+      buz: ['Rus Çarlığı', RU], siyah: ['Prusya Krallığı', PRU], bordo: ['Avusturya İmparatorluğu', AT1],
+      yesil: ['Eflak ve Boğdan', [['v', ['#002b7f', '#fcd116', '#ce1126']]]],
+      kirmizi: ['Osmanlı Devleti', OSM],
+      mor: ['Ukrayna Hetmanlığı', [['h', ['#0057b7', '#ffd700']]]],
+      turuncu: ['Don Kazakları', [['h', ['#0b3d91', Yl, Rd]]]],
+      kahve: ['Litvanya Dükalığı', [['h', [Rd]], ['knight', Wt]]]
+    },
+    'Kuzey Afrika ve Doğu Akdeniz': {
+      kirmizi: ['Osmanlı Devleti', OSM],
+      yesil: ['Şam Paşalığı', [['h', ['#1f6b3a']], ['crescent', Wt, 12, 10, 5.2, 1]]],
+      sari: ['Mısır Hidivliği', [['h', [Rd]], ['crescent', Wt, 8, 6, 3, 1], ['crescent', Wt, 20, 6, 3, 1], ['crescent', Wt, 14, 14, 3, 1]]],
+      turuncu: ['Trablusgarp Paşalığı', [['hw', [Rd, Gn, Rd], [1, 2, 1]], ['crescent', Wt, 13, 10, 3.6, 1]]],
+      mavi: ['Tunus Beyliği', [['h', ['#1f3f8f', Rd, Gn, Yl, Rd, Gn, '#1f3f8f']]]],
+      turkuaz: ['Yunanistan Krallığı', GR],
+      mor: ['İki Sicilya Krallığı', [['h', [Wt]], ['shield', Au, Rd, 15, 10]]]
+    },
+    'Uzak Doğu 1904': {
+      kirmizi: ['Japon İmparatorluğu', [['h', [Wt]], ['circle', '#bc002d', 15, 10, 5.5]]],
+      buz: ['Rus İmparatorluğu', RU],
+      mavi: ['Kore İmparatorluğu', [['h', [Wt]], ['taegeuk']]],
+      sari: ['Qing Hanedanı', [['h', [Yl]], ['dragon', '#1f4f9f'], ['circle', Rd, 7, 6, 2]]],
+      yesil: ['Mançurya Valiliği', [['h', [Gn]], ['tri', Yl, 18]]],
+      turuncu: ['Nanjing Valiliği', [['h', [Yl]], ['rect', Rd, 0, 0, 30, 2], ['rect', Rd, 0, 18, 30, 2], ['dragon', Rd]]]
+    },
+    'İskandinavya ve Baltık': {
+      turkuaz: ['Norveç', [['h', ['#ba0c2f']], ['nordic', Wt, 4.4], ['nordic', '#00205b', 2]]],
+      sari: ['İsveç', [['h', ['#006aa7']], ['nordic', '#fecc00', 3.4]]],
+      buz: ['Finlandiya', [['h', [Wt]], ['nordic', '#002f6c', 4]]],
+      kirmizi: ['Danimarka', DK], siyah: ['Almanya', DE], turuncu: ['Polonya', PL],
+      yesil: ['Letonya', [['hw', ['#9e3039', Wt, '#9e3039'], [2, 1, 2]]]]
+    },
+    'Akdeniz': {
+      sari: ['İspanya', ES], mavi: ['Fransa', FR], yesil: ['İtalya', IT], turkuaz: ['Yunanistan', GR], kirmizi: ['Türkiye', TR],
+      turuncu: ['Fas', [['h', ['#c1272d']], ['pentagram', '#006233', 15, 10, 5]]],
+      kahve: ['Cezayir', [['v', ['#006233', Wt]], ['crescent', '#d21034', 15, 10, 5, 1]]],
+      mor: ['Tunus', [['h', ['#e70013']], ['circle', Wt, 15, 10, 5.5], ['crescent', '#e70013', 15, 10, 4, 1]]],
+      siyah: ['Mısır', [['h', ['#ce1126', Wt, Bk]], ['eagle', '#c09300', 15, 10, 0.4]]]
+    },
+    'Avrupa': {
+      mavi: ['Fransa', FR], siyah: ['Almanya', DE], buz: ['Birleşik Krallık', GB], sari: ['İspanya', ES], yesil: ['İtalya', IT], kirmizi: ['Türkiye', TR], turuncu: ['Polonya', PL],
+      bordo: ['Avusturya', [['h', ['#ed2939', Wt, '#ed2939']]]],
+      mor: ['Sırbistan', [['h', ['#c6363c', '#0c4076', Wt]], ['eagle', Wt, 10, 10, 0.45, 1]]],
+      turkuaz: ['Yunanistan', GR],
+      kahve: ['Romanya', [['v', ['#002b7f', '#fcd116', '#ce1126']]]]
+    },
+    'Güney Amerika': {
+      sari: ['Brezilya', [['h', ['#009c3b']], ['diamond', '#ffdf00'], ['circle', '#002776', 15, 10, 3.6]]],
+      mavi: ['Arjantin', [['h', [Lb, Wt, Lb]], ['sun', '#f6b40e', 15, 10, 2]]],
+      kirmizi: ['Şili', [['h', [Wt, '#d52b1e']], ['rect', '#0039a6', 0, 0, 10, 10], ['star', Wt, 5, 5, 2.4]]],
+      turuncu: ['Peru', [['v', ['#d91023', Wt, '#d91023']]]],
+      yesil: ['Kolombiya', [['hw', ['#fcd116', '#003893', '#ce1126'], [2, 1, 1]]]],
+      mor: ['Venezuela', [['h', ['#ffcc00', '#00247d', '#cf142b']], ['star', Wt, 11, 10, 1], ['star', Wt, 15, 9, 1], ['star', Wt, 19, 10, 1]]],
+      kahve: ['Bolivya', [['h', ['#d52b1e', '#f9e300', '#007934']]]],
+      turkuaz: ['Bahia Cumhuriyeti', [['h', [Wt]], ['tri', '#1f3f8f', 12], ['rect', Rd, 0, 8.5, 30, 3]]],
+      buz: ['Uruguay', [['h', [Wt, '#0038a8', Wt, '#0038a8', Wt, '#0038a8', Wt, '#0038a8', Wt]], ['rect', Wt, 0, 0, 11, 11], ['sun', '#fcd116', 5.5, 5.5, 2.2]]]
+    }
+  };
+  var NAT_CUR = null;
+  function nation(mapName, fid) { var m = NAT[mapName]; return m && m[fid] ? { name: m[fid][0], fl: m[fid][1] } : null; }
+  var LION = 'M-5 6l1-4-1-3 2-3 1-3 3-1 2 1-1 2 1 1-2 1 1 3 3 1 1 3-2 1-1-2-1 3h-2l1-3-2-1-1 2z';
+  function prim(p) {
+    var k = p[0], c = p[1], s = '', i;
+    switch (k) {
+      case 'h': case 'v': case 'hw': {
+        var cols = c, wts = k === 'hw' ? p[2] : cols.map(function () { return 1; }), tot = wts.reduce(function (a, b) { return a + b; }, 0), o = 0;
+        cols.forEach(function (cl, j) { var sz = (k === 'v' ? 30 : 20) * wts[j] / tot; s += k === 'v' ? '<rect x="' + o + '" width="' + (sz + 0.1) + '" height="20" fill="' + cl + '"/>' : '<rect y="' + o + '" width="30" height="' + (sz + 0.1) + '" fill="' + cl + '"/>'; o += sz; });
+        return s;
+      }
+      case 'cross': return '<path d="M0 10h30M15 0v20" stroke="' + c + '" stroke-width="' + p[2] + '"/>';
+      case 'nordic': return '<path d="M0 10h30M11 0v20" stroke="' + c + '" stroke-width="' + p[2] + '"/>';
+      case 'saltire': return '<path d="M0 0 30 20M30 0 0 20" stroke="' + c + '" stroke-width="' + p[2] + '"/>';
+      case 'band': return '<path d="M0 20 30 0" stroke="' + c + '" stroke-width="4"/>';
+      case 'rect': return '<rect x="' + p[2] + '" y="' + p[3] + '" width="' + p[4] + '" height="' + p[5] + '" fill="' + c + '"/>';
+      case 'circle': return '<circle cx="' + p[2] + '" cy="' + p[3] + '" r="' + p[4] + '" fill="' + c + '"/>';
+      case 'crescent': {
+        // ay dışarıda kalan zemin rengini bilmediğimiz için maske ile çizilir
+        var id = 'm' + Math.round(p[2] * 7 + p[3] * 13 + p[4] * 17) + c.replace('#', '');
+        s = '<mask id="' + id + '"><rect width="30" height="20" fill="#fff"/><circle cx="' + (p[2] + p[4] * 0.38) + '" cy="' + p[3] + '" r="' + (p[4] * 0.82) + '" fill="#000"/></mask><circle cx="' + p[2] + '" cy="' + p[3] + '" r="' + p[4] + '" fill="' + c + '" mask="url(#' + id + ')"/>';
+        if (p[5]) s += starP(c, p[2] + p[4] * 1.05, p[3], p[4] * 0.42);
+        return s;
+      }
+      case 'star': return starP(c, p[2], p[3], p[4]);
+      case 'pentagram': { var pts = []; for (i = 0; i < 5; i++) { var a = -Math.PI / 2 + i * 4 * Math.PI / 5; pts.push((p[2] + p[4] * Math.cos(a)).toFixed(2) + ' ' + (p[3] + p[4] * Math.sin(a)).toFixed(2)); } return '<path d="M' + pts.join('L') + 'z" fill="none" stroke="' + c + '" stroke-width="1.1"/>'; }
+      case 'tri': return '<path d="M0 0L' + p[2] + ' 10L0 20z" fill="' + c + '"/>';
+      case 'diamond': return '<path d="M15 2L28 10L15 18L2 10z" fill="' + c + '"/>';
+      case 'lozenge': for (i = 0; i < 6; i++) for (var j2 = 0; j2 < 4; j2++) if ((i + j2) % 2) s += '<path d="M' + (i * 5) + ' ' + (j2 * 5 + 2.5) + 'l2.5-2.5 2.5 2.5-2.5 2.5z" fill="' + c + '"/>'; return s;
+      case 'checker': for (i = 0; i < p[3]; i++) for (var j = 0; j < p[4]; j++) s += '<rect x="' + (p[5] + i * p[7] / p[3]) + '" y="' + (p[6] + j * p[8] / p[4]) + '" width="' + (p[7] / p[3]) + '" height="' + (p[8] / p[4]) + '" fill="' + ((i + j) % 2 ? p[2] : c) + '"/>'; return s;
+      case 'eagle': {
+        var wing = 'M-1.5-3L-9-7.5L-8.2-5L-10.5-4.6L-8.6-2.6L-10.4-1.6L-7.5-0.4L-8.6 1L-4.5 1.2L-1.5 1z';
+        var e = '<path d="' + wing + '"/><path transform="scale(-1 1)" d="' + wing + '"/><path d="M-2-4h4l1 6-3 3-3-3z"/><path d="M-1.6 4.5L-4 8h8L1.6 4.5z"/>';
+        e += p[5] ? '<circle cx="-2.2" cy="-5.6" r="1.6"/><circle cx="2.2" cy="-5.6" r="1.6"/><path d="M-3.6-5.4l-1.6.6 1.4.6zM3.6-5.4l1.6.6-1.4.6z"/>' : '<circle cx="0" cy="-5.8" r="1.8"/><path d="M1.6-5.8l1.8.7-1.6.7z"/>';
+        return '<g fill="' + c + '" transform="translate(' + p[2] + ' ' + p[3] + ') scale(' + p[4] + ')">' + e + '</g>';
+      }
+      case 'lion': return '<path transform="translate(' + p[2] + ' ' + p[3] + ') scale(' + p[4] + ')" d="' + LION + '" fill="' + c + '"/>';
+      case 'castle': return '<path transform="translate(' + p[2] + ' ' + p[3] + ') scale(' + p[4] + ')" d="M-7 6V-1h2v-2h2v2h1v-5h1v-1h1v1h1v1h1v-1h1v5h1v-2h2v2h2v7h-5v-3q-1.5-2-3 0v3z" fill="' + c + '"/>';
+      case 'lily': return '<path transform="translate(' + p[2] + ' ' + p[3] + ') scale(' + p[4] + ')" d="M0 -8q3 4 0 8q-3-4 0-8zM0 0q4-7 7-2-3-1-5 3zM0 0q-4-7-7-2 3-1 5 3zM-5 2h10v1.5h-10zM-1 3.5h2v4h-2z" fill="' + c + '"/>';
+      case 'keys': return '<g stroke="' + c + '" stroke-width="1.4" fill="none" transform="translate(' + p[2] + ' ' + p[3] + ')"><path d="M-5 5 5 -5M5 5 -5 -5"/><circle cx="-5.5" cy="5.5" r="1.6"/><circle cx="5.5" cy="5.5" r="1.6"/><path d="M3 -5h2v2M-3 -5h-2v2"/></g>';
+      case 'harp': return '<g transform="translate(' + p[2] + ' ' + p[3] + ')" stroke="' + c + '" fill="none" stroke-width="1.2"><path d="M-4 6V-6q6 0 8 6l-8 6"/><path d="M-2 -5v8M0 -4v6M2 -2v3"/></g>';
+      case 'sun': { s = '<circle cx="' + p[2] + '" cy="' + p[3] + '" r="' + p[4] + '" fill="' + c + '"/>'; for (i = 0; i < 12; i++) { var an = i * Math.PI / 6; s += '<path d="M' + (p[2] + Math.cos(an) * p[4] * 1.2).toFixed(2) + ' ' + (p[3] + Math.sin(an) * p[4] * 1.2).toFixed(2) + 'L' + (p[2] + Math.cos(an) * p[4] * 1.7).toFixed(2) + ' ' + (p[3] + Math.sin(an) * p[4] * 1.7).toFixed(2) + '" stroke="' + c + '" stroke-width="' + (p[4] * 0.25) + '"/>'; } return s; }
+      case 'tug': return '<path d="M15 3v15" stroke="' + c + '" stroke-width="1.4"/><path d="M15 4q-5 2-4 7 2-3 4-3zM15 8q-5 2-4 7 2-3 4-3zM15 4q5 2 4 7-2-3-4-3zM15 8q5 2 4 7-2-3-4-3z" fill="' + c + '"/><circle cx="15" cy="2.5" r="1.2" fill="' + c + '"/>';
+      case 'text': return '<text x="' + p[3] + '" y="' + p[4] + '" font-size="' + p[5] + '" font-weight="700" font-family="serif" text-anchor="middle" fill="' + c + '">' + p[2] + '</text>';
+      case 'taegeuk': return '<circle cx="15" cy="10" r="4.5" fill="#cd2e3a"/><path d="M10.5 10a4.5 4.5 0 0 0 9 0a2.25 2.25 0 0 0-4.5 0a2.25 2.25 0 0 1-4.5 0z" fill="#0047a0"/><path d="M5 4l3 2M4 5l3 2M22 4l3-2M23 5l3-2M5 16l3-2M4 15l3-2M22 14l3 2M23 15l3 2" stroke="' + Bk + '" stroke-width=".8"/>';
+      case 'dragon': return '<path d="M4 14q4-8 8-3t7-2 7 1" fill="none" stroke="' + c + '" stroke-width="2" stroke-linecap="round"/><path d="M24 9l3-2-1 3z" fill="' + c + '"/>';
+      case 'knight': return '<g fill="' + c + '" transform="translate(15 11)"><path d="M-6 3l2-4h6l3-3 2 1-2 3v3l-1 3h-1v-3h-5l-1 3h-1v-3z"/><path d="M-1-1v-5h2v5z"/><path d="M1-6l5-3" stroke="' + c + '" stroke-width="1"/></g>';
+      case 'shield': return '<path transform="translate(' + p[3] + ' ' + p[4] + ')" d="M-4-5h8v5q0 4-4 6-4-2-4-6z" fill="' + c + '" stroke="' + p[2] + '" stroke-width=".8"/>';
+    }
+    return '';
+  }
+  function starP(c, x, y, r) { var pts = []; for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? r * 0.42 : r; pts.push((x + rr * Math.cos(a)).toFixed(2) + ' ' + (y + rr * Math.sin(a)).toFixed(2)); } return '<path d="M' + pts.join('L') + 'z" fill="' + c + '"/>'; }
+  function realFlag(fl) { return fl.map(prim).join(''); }
   function flag(fid, cls) {
+    var nt = NAT_CUR && NAT_CUR[fid];
+    if (nt) return '<svg class="' + (cls || 'fl') + '" viewBox="0 0 30 20" aria-hidden="true">' + realFlag(nt[1]) + '</svg>';
     var F = FACTIONS[fid]; if (!F) return '';
     var c = F.col, d = F.dark, w = '#f3ecdc', p;
     var ov = FLAG_OV[fid], kind = ov === 'turk' ? (fid === 'kahve' ? 'hilal3' : 'hilal') : ov === 'bozkir' ? 'tug' : ov === 'cin' ? 'gunes' : F.flag;
@@ -586,6 +762,10 @@ var ART = (function () {
     if (lv >= 2) s += tower(3, 45, 8, 16, lv >= 4 ? 'roof' : 'crenel') + tower(53, 45, 8, 16, lv >= 4 ? 'roof' : 'crenel');
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 52" width="128" height="104">' + s + '</svg>';
   }
+  function flagImg(fid) {
+    if (!FIMG[fid]) { var im = new Image(); im.onload = function () { if (typeof dirty !== 'undefined') dirty = true; }; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(flag(fid).replace('<svg ', '<svg xmlns="http://www.w3.org/2000/svg" width="60" height="40" ')); FIMG[fid] = im; }
+    return FIMG[fid];
+  }
   function bImg(kind, lv) {
     var k = kind + lv;
     if (!BIMG[k]) { var im = new Image(); im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(kind === 'city' ? cityIcon(lv) : castleIcon(lv)); BIMG[k] = im; }
@@ -630,5 +810,5 @@ var ART = (function () {
     castle: '<svg viewBox="0 0 24 24"><path d="M3 21V9h3v3h3V9h2v3h2V9h2v3h3V9h3v12z" fill="currentColor"/></svg>',
     city: '<svg viewBox="0 0 24 24"><path d="M3 21V11h5V6h6v5h7v10z" fill="currentColor"/></svg>'
   };
-  return { setMapStyle: setMapStyle, fig: figImg, figInline: figInline, flag: flag, portrait: portrait, portraitImg: portraitImg, specInfo: specInfo, scene: scene, bImg: bImg, UI: UI, shade: shade };
+  return { setMapStyle: setMapStyle, fig: figImg, figInline: figInline, flag: flag, portrait: portrait, portraitImg: portraitImg, specInfo: specInfo, scene: scene, bImg: bImg, flagImg: flagImg, nation: nation, UI: UI, shade: shade };
 })();
