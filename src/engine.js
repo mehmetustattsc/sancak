@@ -223,9 +223,9 @@ var ERA_LEVELS = [[
   { map: 10, bonus: true, par: 32, limit: 85, aiEco: 1.05, grace: 3,
     story: 'Bonus sefer. Hazar’dan Çin Seddi’ne uçsuz bozkır: sekiz han, şah ve imparator. Deniz yok, mesafe çok; atlılar bozkırın efendisidir.' }
 ], [
-  { map: 3, par: 35, limit: 80, aiEco: 0.85, grace: 3,
+  { map: 3, par: 45, limit: 100, aiEco: 0.85, grace: 3,
     story: 'Demiryolları, fabrikalar ve büyük ordular. Kanal’ın iki yakasında sekiz devlet. Ordun ikmal hattından kopmasın: şehirden ve kaleden 3 hücreden uzaklaşan birlik zayıflar ve iyileşmez.' },
-  { map: 4, par: 45, limit: 95, aiEco: 0.85, grace: 3,
+  { map: 4, par: 55, limit: 115, aiEco: 0.85, grace: 3,
     story: 'Uçsuz bozkırlar, bataklıklar ve Karadeniz. Mesafeler uzun, ikmal her şey: şehirden şehre ilerle. Baltık’tan Kafkas eteklerine sekiz devlet.' },
   { map: 7, par: 50, limit: 100, aiEco: 0.85, grace: 3,
     story: 'Nil, çöl kıyıları ve Doğu Akdeniz. Şehirler kıyıda, aralarında uzun yollar var: ikmal hattını denizle ve şehirlerle kur. Yedi devlet, tek deniz.' },

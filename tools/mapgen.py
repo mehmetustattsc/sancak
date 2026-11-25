@@ -340,8 +340,8 @@ def west_owner(c, lon, lat):
     if c == 'ITA': return 'yesil'
     return 'n'                     # İsviçre tarafsız
 WEST = {
-  'name': 'Batı Avrupa', 'legacy': True, 'navy': True, 'box': (-5.9, 44.0, 17.6, 55.4), 'target': 165, 'seed': 4, 'island_min': 2, 'foreign_void': True,
-  'sea_at': [(1.59, 51.02)], 'links': [((0.23, 51.02), (2.28, 50.14))],          # Manş: su yolu ve geçit
+  'name': 'Batı Avrupa', 'legacy': True, 'navy': True, 'box': (-5.9, 44.0, 17.6, 55.4), 'target': 250, 'seed': 4, 'island_min': 2, 'foreign_void': True,
+  'links': [((0.74, 51.13), (2.4, 50.41))],          # Manş: su yolu ve geçit
   'countries': ['FRA', 'GBR', 'NLD', 'BEL', 'LUX', 'DEU', 'POL', 'AUT', 'CZE', 'SVN', 'HRV', 'ITA', 'CHE'],
   'owner': west_owner,
   'factions': ['mavi', 'buz', 'turuncu', 'kahve', 'siyah', 'sari', 'bordo', 'yesil'],
@@ -363,6 +363,10 @@ WEST = {
     ('Dover', 1.31, 51.13, 1, 'castle', 'buz'), ('York', -1.08, 53.96, 1, 'castle'), ('Namur', 4.87, 50.47, 1, 'castle'), ('Lüksemburg', 6.13, 49.61, 1, 'castle', 'turuncu'),
     ('Koblenz', 7.59, 50.36, 1, 'castle', 'kahve'), ('Magdeburg', 11.63, 52.12, 1, 'castle'), ('Kiel', 10.13, 54.32, 1, 'castle'),
     ('Ulm', 9.99, 48.40, 1, 'castle'), ('Linz', 14.29, 48.31, 1, 'castle'), ('Olomouc', 17.25, 49.59, 1, 'castle'), ('Verona', 10.99, 45.44, 1, 'castle'),
+    ('Rennes', -1.68, 48.11, 1, 'city', 'n'), ('Rouen', 1.10, 49.44, 1, 'city'), ('Dijon', 5.04, 47.32, 1, 'city'), ('Limoges', 1.26, 45.83, 1, 'city', 'n'), ('Reims', 4.03, 49.26, 1, 'castle'),
+    ('Leeds', -1.55, 53.80, 1, 'city'), ('Plymouth', -4.14, 50.38, 1, 'castle'), ('Norwich', 1.30, 52.63, 1, 'city'), ('Bremen', 8.80, 53.08, 1, 'city'), ('Leipzig', 12.37, 51.34, 1, 'city'),
+    ('Kassel', 9.48, 51.31, 1, 'castle'), ('Würzburg', 9.93, 49.79, 1, 'city', 'sari'), ('Augsburg', 10.90, 48.37, 1, 'castle', 'sari'), ('Salzburg', 13.05, 47.81, 1, 'city'), ('Innsbruck', 11.40, 47.27, 1, 'castle'),
+    ('Brno', 16.61, 49.20, 1, 'city'), ('Poznan', 16.93, 52.41, 1, 'city'), ('Ljubljana', 14.51, 46.06, 1, 'city'), ('Bern', 7.45, 46.95, 1, 'castle'), ('Bologna', 11.34, 44.49, 1, 'city'),
   ]}
 def east_owner(c, lon, lat):
     if c == 'RUS': return 'siyah' if lon < 23 else ('buz' if lat >= 50.2 else 'turuncu')
@@ -377,7 +381,8 @@ def east_owner(c, lon, lat):
     if c == 'BLR': return 'kahve' if lon < 28.3 else 'buz'
     return 'n'                                   # Bulgaristan tarafsız
 EAST = {
-  'name': 'Doğu Cephesi ve Kafkasya', 'legacy': True, 'navy': True, 'box': (17.6, 39.6, 45.2, 56.4), 'target': 200, 'seed': 5, 'island_min': 2, 'foreign_void': True,
+  'name': 'Doğu Cephesi ve Kafkasya', 'legacy': True, 'navy': True, 'box': (17.6, 39.6, 45.2, 56.4), 'target': 290, 'seed': 5, 'island_min': 1, 'foreign_void': True,
+  'sea_at': [(28.64, 40.41)], 'straits': ['İstanbul'],   # Marmara ve İstanbul Boğazı
   'styles': {'kirmizi': 'turk'},
   'countries': ['RUS', 'POL', 'HUN', 'SVK', 'UKR', 'ROU', 'MDA', 'TUR', 'GEO', 'ARM', 'AZE', 'LTU', 'LVA', 'BLR', 'BGR'],
   'owner': east_owner,
@@ -385,7 +390,7 @@ EAST = {
   'titles': {'buz': 'Çarlık', 'siyah': 'Krallık', 'bordo': 'İmparatorluk', 'yesil': 'Krallık', 'kirmizi': 'Saltanat', 'mor': 'Hetmanlık', 'turuncu': 'Kazaklığı', 'kahve': 'Dükalık'},
   'caps': {'buz': 'Moskova', 'siyah': 'Königsberg', 'bordo': 'Budapeşte', 'yesil': 'Bükreş', 'kirmizi': 'İstanbul', 'mor': 'Kiev', 'turuncu': 'Rostov', 'kahve': 'Vilna'},
   'places': [
-    ('Moskova', 37.62, 55.75, 3, 'city'), ('Königsberg', 20.51, 54.71, 3, 'city'), ('Budapeşte', 19.04, 47.50, 3, 'city'), ('Bükreş', 26.10, 44.43, 3, 'city'),
+    ('Moskova', 37.62, 55.75, 3, 'city'), ('Königsberg', 20.9, 53.85, 3, 'city'), ('Budapeşte', 19.04, 47.50, 3, 'city'), ('Bükreş', 26.10, 44.43, 3, 'city'),
     ('İstanbul', 28.97, 41.01, 3, 'city'), ('Kiev', 30.52, 50.45, 3, 'city'), ('Stavropol', 41.97, 45.04, 1, 'city'), ('Vilna', 25.28, 54.69, 3, 'city'),
     ('Smolensk', 32.05, 54.78, 2, 'city'), ('Voronej', 39.20, 51.66, 1, 'city'), ('Rostov', 39.72, 47.23, 3, 'city'), ('Çaritsin', 44.51, 48.70, 1, 'city'), ('Kursk', 36.19, 51.73, 1, 'city'), ('Krasnodar', 38.98, 45.04, 1, 'city'),
     ('Danzig', 18.65, 54.35, 2, 'city'), ('Varşova', 21.01, 52.23, 2, 'city'),
@@ -399,6 +404,10 @@ EAST = {
     ('Thorn', 18.60, 53.01, 1, 'castle'), ('Przemyśl', 22.77, 49.78, 2, 'castle'), ('Komárom', 18.13, 47.76, 1, 'castle'),
     ('Brăila', 27.97, 45.27, 1, 'castle'), ('Çatalca', 28.46, 41.14, 1, 'castle', 'kirmizi'), ('Sinop', 35.15, 42.02, 1, 'castle'), ('Kars', 43.10, 40.60, 2, 'castle'),
     ('Sivastopol', 33.52, 44.60, 2, 'castle'), ('Jitomir', 28.66, 50.25, 1, 'castle'), ('Kaunas', 23.90, 54.90, 1, 'castle', 'kahve'), ('Brest-Litovsk', 23.69, 52.10, 1, 'castle'),
+    ('Ryazan', 39.74, 54.63, 1, 'city'), ('Oryol', 36.08, 52.97, 1, 'city', 'mor'), ('Tver', 35.90, 56.86, 1, 'castle'), ('Lublin', 22.57, 51.25, 1, 'city', 'siyah'), ('Grodno', 23.83, 53.68, 1, 'castle', 'kahve'),
+    ('Poltava', 34.55, 49.59, 1, 'city'), ('Çernigov', 31.29, 51.49, 1, 'city'), ('Zaporoje', 35.14, 47.84, 1, 'castle'), ('Herson', 32.62, 46.64, 1, 'city'), ('Akmescit', 34.10, 44.95, 1, 'city'),
+    ('Samsun', 36.33, 41.29, 1, 'city'), ('Tiflis', 44.79, 41.72, 1, 'city', 'n'), ('Batum', 41.64, 41.65, 1, 'castle'), ('Debrecen', 21.63, 47.53, 1, 'city'), ('Košice', 21.26, 48.72, 1, 'castle'),
+    ('Volgograd Kalesi', 44.0, 49.5, 1, 'castle'), ('Penza', 45.0, 53.2, 1, 'city', 'n'), ('Tambov', 41.45, 52.72, 1, 'city', 'turuncu'),
   ]}
 def europe_owner(c, lon, lat):
     return {'ESP': 'sari', 'PRT': 'sari', 'FRA': 'mavi', 'GBR': 'buz', 'IRL': 'buz', 'DEU': 'siyah', 'POL': 'turuncu',
