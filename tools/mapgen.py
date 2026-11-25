@@ -450,9 +450,9 @@ def north_owner(c, lon, lat):
     if c in ('NLD', 'BEL', 'FRA'): return 'turuncu'
     return 'n'
 NORTH = {
-  'name': 'Britanya ve Kuzey Denizleri', 'navy': True, 'box': (-10.8, 50.6, 13.6, 61.2), 'klat': 56, 'target': 140, 'seed': 7, 'island_min': 1, 'foreign_void': True,
-  'sea_at': [(-5.38, 55.95), (-4.7, 55.29), (10.89, 57.26), (11.57, 55.29)],
-  'links': [((-6.06, 55.29), (-4.02, 55.95)), ((10.21, 55.29), (12.24, 55.95))],   # Kuzey Kanalı ve Büyük Belt geçitleri
+  'name': 'Britanya ve Kuzey Denizleri', 'navy': True, 'box': (-10.8, 50.6, 13.6, 61.2), 'klat': 56, 'target': 210, 'seed': 7, 'island_min': 1, 'foreign_void': True,
+  'sea_at': [(11.64, 55.37)],
+  'links': [((-6.42, 54.84), (-4.78, 55.37)), ((10.54, 55.37), (12.18, 55.9))],   # Kuzey Kanalı ve Büyük Belt geçitleri
   'countries': ['GBR', 'IRL', 'NOR', 'SWE', 'DNK', 'DEU', 'NLD', 'BEL', 'FRA'],
   'mt': [(-5.5, 56.5, -3.0, 58.5), (6.0, 59.5, 9.5, 61.2), (-4.2, 52.5, -3.3, 53.3)],
   'owner': north_owner,
@@ -472,6 +472,9 @@ NORTH = {
     ('Cardiff', -3.18, 51.48, 1, 'city'),
     ('Dover', 1.31, 51.13, 1, 'castle'), ('Nottingham', -1.15, 52.95, 1, 'castle'), ('Stirling', -3.94, 56.12, 2, 'castle'), ('Limerick', -8.63, 52.66, 1, 'castle'),
     ('Caernarfon', -4.27, 53.14, 1, 'castle'), ('Tønsberg', 10.41, 59.27, 1, 'castle'), ('Bohus', 11.97, 57.71, 1, 'castle'), ('Schleswig', 9.57, 54.52, 1, 'castle'),
+    ('Exeter', -3.53, 50.72, 1, 'city'), ('Southampton', -1.40, 50.90, 1, 'city'), ('Carlisle', -2.94, 54.89, 1, 'castle', 'buz'), ('Perth', -3.44, 56.40, 1, 'city'),
+    ('Belfast', -5.93, 54.60, 1, 'city'), ('Waterford', -7.11, 52.26, 1, 'city'), ('Sligo', -8.48, 54.27, 1, 'castle'), ('Odense', 10.39, 55.40, 1, 'city'),
+    ('Hamar', 11.07, 60.79, 1, 'castle'), ('Kiel', 10.13, 54.32, 1, 'castle'), ('Groningen', 6.57, 53.22, 1, 'city'), ('Göteborg', 11.97, 57.71, 1, 'city'),
     ('Calais', 1.86, 50.95, 1, 'castle'), ('Durham', -1.57, 54.78, 1, 'castle'),
   ]}
 def africa_owner(c, lon, lat):
@@ -574,7 +577,7 @@ def steppe_owner(c, lon, lat):
         return 'sari'                                                 # Jin
     return 'n'                                                        # Sibirya ormanları tarafsız
 STEPPE = {
-  'name': 'Moğol Bozkırı', 'navy': False, 'box': (51.5, 33.8, 121.0, 53.5), 'klat': 44, 'target': 210, 'seed': 11, 'island_min': 3, 'foreign_void': True,
+  'name': 'Moğol Bozkırı', 'navy': False, 'box': (51.5, 33.8, 121.0, 53.5), 'klat': 44, 'target': 300, 'seed': 11, 'island_min': 3, 'foreign_void': True,
   'countries': ['MNG', 'CHN', 'KAZ', 'UZB', 'TKM', 'KGZ', 'TJK', 'AFG', 'IRN', 'RUS'],
   'mt': [(70.0, 36.0, 80.0, 43.5), (80.0, 41.5, 95.0, 44.0), (86.0, 46.5, 100.0, 51.0), (66.0, 34.5, 72.0, 37.5), (100.0, 34.0, 104.0, 36.0)],
   'owner': steppe_owner,
@@ -594,6 +597,10 @@ STEPPE = {
     ('Dunhuang', 94.66, 40.14, 1, 'city'), ('Lanzhou', 103.83, 36.06, 2, 'city'), ('Ganzhou', 100.45, 38.93, 1, 'city'),
     ('Hocent', 69.62, 40.28, 1, 'castle'), ('Urgenç', 60.63, 41.55, 1, 'castle'), ('Bamyan', 67.83, 34.82, 1, 'castle'), ('Hami', 93.51, 42.82, 1, 'castle'),
     ('Juyongguan', 116.07, 40.29, 2, 'castle'), ('Yinchuan', 106.0, 39.0, 1, 'castle'), ('Avarga', 109.2, 47.1, 1, 'castle'), ('Tarbagatay', 83.0, 47.0, 1, 'castle'),
+    ('Taşkent', 69.24, 41.30, 1, 'city'), ('Tirmiz', 67.28, 37.22, 1, 'castle', 'mor'), ('Tus', 59.60, 36.48, 1, 'castle'), ('Hotan', 79.92, 37.11, 1, 'city'),
+    ('Kuça', 82.96, 41.72, 1, 'city'), ('Urumçi', 87.62, 43.83, 1, 'castle'), ('Uliastay', 96.84, 47.74, 1, 'city'), ('Darhan', 105.96, 49.47, 1, 'castle'),
+    ('Hohhot', 111.67, 40.84, 1, 'city'), ('Kalgan', 114.88, 40.82, 1, 'castle'), ('Xining', 101.78, 36.62, 1, 'city'), ('Jiuquan', 98.49, 39.73, 1, 'castle'),
+    ('Kızılorda', 65.51, 44.85, 1, 'castle'), ('Balkaş', 74.98, 46.85, 1, 'city', 'mavi'), ('Semey', 80.23, 50.41, 1, 'city'), ('Kabil', 69.17, 34.53, 1, 'city', 'mor'),
   ]}
 def fareast_owner(c, lon, lat):
     if c == 'JPN': return 'kirmizi'

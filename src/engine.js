@@ -218,9 +218,9 @@ var ERA_LEVELS = [[
     story: 'Zengin şehirler, karlı Alpler ve Akdeniz. Denizi tutan kıyıları, dağları tutan geçitleri tutar.' },
   { map: 2, par: 55, limit: 115, aiEco: 0.85, grace: 3,
     story: 'Doğu ile Batı’nın kavşağı. Sekiz sancak, iki deniz ve bir Boğaz. İstanbul’u tutan iki denizin geçidini tutar; ama her sancak aynı şansla başlar.' },
-  { map: 6, par: 40, limit: 85, aiEco: 0.85, grace: 3,
+  { map: 6, par: 50, limit: 105, aiEco: 0.85, grace: 3,
     story: 'Adalar, fiyortlar ve soğuk denizler. Yedi sancağın çoğu denizle ayrılmış: donanmasız fetih olmaz. Yeşil oklar dar boğazlardan karadan geçişi gösterir.' },
-  { map: 10, bonus: true, par: 25, limit: 70, aiEco: 1.05, grace: 3,
+  { map: 10, bonus: true, par: 32, limit: 85, aiEco: 1.05, grace: 3,
     story: 'Bonus sefer. Hazar’dan Çin Seddi’ne uçsuz bozkır: sekiz han, şah ve imparator. Deniz yok, mesafe çok; atlılar bozkırın efendisidir.' }
 ], [
   { map: 3, par: 35, limit: 80, aiEco: 0.85, grace: 3,
