@@ -264,6 +264,8 @@ function upEffect(u, lv) {
   if (u.id === 'hazine') return 'Altın geliri +%' + Math.round(u.per * 100 * lv);
   if (u.id === 'tarim') return 'Her tarla +' + lv + ' gıda';
   if (u.id === 'baslangic') return 'Sefere +' + (u.per * lv) + ' altınla başla';
+  if (u.id === 'casus' || u.id === 'suikast') return 'Başarı şansı +%' + Math.round(u.per * 100 * lv);
+  if (u.id === 'diplomat') return 'Teklifler daha kolay kabul edilir, yakalanınca öfke ' + lv + ' tur kısa';
   return '';
 }
 function renderHQ() {
@@ -272,7 +274,7 @@ function renderHQ() {
     var lv = upLv(u.id), max = lv >= u.max, cost = max ? 0 : u.cost[lv];
     var pips = ''; for (var i = 0; i < u.max; i++) pips += '<i class="' + (i < lv ? 'on' : '') + '"></i>';
     var art = u.kind === 'unit' ? '<span class="hqfig">' + ART.figInline(u.id === 'kule' ? 'kule' : u.id, '#3c6fb4') + '</span>' :
-      '<span class="hqfig ico">' + (u.id === 'hazine' ? I.coin : u.id === 'tarim' ? I.food : I.medal) + '</span>';
+      '<span class="hqfig ico">' + (u.id === 'hazine' ? I.coin : u.id === 'tarim' ? I.food : u.id === 'casus' ? I.spy : u.id === 'suikast' ? I.dagger : u.id === 'diplomat' ? I.handshake : I.medal) + '</span>';
     return '<div class="hq">' + art + '<div class="hqm"><b>' + u.name + '</b><span class="pips">' + pips + '</span>' +
       '<span class="muted">' + (lv ? 'Şimdi: ' + upEffect(u, lv) : 'Henüz geliştirilmedi') + '</span>' +
       (max ? '<span class="good">En üst seviye</span>' : '<span class="nx">Sonraki: ' + upEffect(u, lv + 1) + '</span>') + '</div>' +
@@ -282,6 +284,7 @@ function renderHQ() {
     '<p class="muted">Seferlerden kazandığın madalyalarla ordunu kalıcı olarak geliştir. Geliştirmeler sadece senin birliklerine işler; rakip krallıklar bunları kullanmaz.</p>' +
     '<div class="eyebrow">Birlikler</div><div class="hqs">' + UPGRADES.filter(function (u) { return u.kind === 'unit'; }).map(card).join('') + '</div>' +
     '<div class="eyebrow">Hazine ve erzak</div><div class="hqs">' + UPGRADES.filter(function (u) { return u.kind === 'eco'; }).map(card).join('') + '</div>' +
+    '<div class="eyebrow">Casus, suikastçı ve diplomat</div><div class="hqs">' + UPGRADES.filter(function (u) { return u.kind === 'covert'; }).map(card).join('') + '</div>' +
     '<div class="card"><h3>Madalya nasıl kazanılır?</h3><p class="muted">Zafer: 20 + yıldız başına 10 + seferin zorluğu. Bir seferde ilk kez aldığın her yıldız için +10. Yenilgide bile 10 madalya. Generallerini Generaller sekmesinden madalyayla eğitebilirsin.</p></div>';
   el.querySelectorAll('[data-hq]').forEach(function (b) { b.onclick = function () {
     var u = UPGRADES.filter(function (x) { return x.id === b.dataset.hq; })[0], lv = upLv(u.id);
@@ -367,6 +370,7 @@ function renderHelp() {
     sec(I.handshake, 'Diplomasi ve pazarlık', '<ul><li>Savaş ya da ittifak (' + ALLY_TURNS + ' tur, en fazla ' + MAX_ALLIES + ' müttefik). Müttefikin boş şehrine girmek ihanettir.</li><li>Pazarlık masasında her teklifi yapabilirsin. İpucu şansını gösterir; karşı taraf düşünüp cevap verir. Sana ihtiyacı ne kadar çoksa eksik teklifi o kadar kabul eder.</li><li>Gelen tekliflere <b>Pazarlık</b> ile karşı teklif verebilirsin.</li><li>Çok zayıf ülkeyi altınla <b>bağlı krallık</b> yapabilirsin; her ilhak bir sonrakini %25 pahalılaştırır.</li></ul>') +
     sec(I.crown, 'Generaller ve efsaneler', '<ul><li>Sefere en fazla ' + MAX_GENS + ' general seç. General birliğini güçlendirir; birlik yok olursa general yaralanır (3 tur, efsane 5 tur).</li><li>Efsaneler bir başarıyla sürpriz olarak katılır, her çağda kullanılır. Koşulları Generaller sekmesinde.</li></ul>') +
     sec(I.jet, 'Modern Çağ: hava saldırısı', '<p>Her tur bir kez, şehirlerinin ' + AIR_RANGE + ' hücre çevresindeki bir düşmana dokun ve uçak düğmesine bas. Karşılık gelmez; sığınaktakine yarı hasar.</p>') +
+    sec(I.spy, 'Casus, suikast ve isyan', '<ul><li><b>İsyan:</b> içinde birlik olmayan şehir ayaklanabilir. Sonradan alınmış şehirde ihtimal yüksek, baştan beri senin olanda çok düşük. Ayaklanan şehir eski sahibine döner. Son şehir ayaklanmaz. ' + I.fire + ' işareti ihtimali gösterir.</li><li><b>Casus</b> (turda bir, ' + SPY_COST + ' altın): düşman şehrine dokun, görevi seç: <b>gelir çal</b> ya da <b>kışkırt</b>. Başarılı casus 3 tur orada kalır; o şehre saldırınca +%15.</li><li><b>Suikastçı</b> (turda bir, ' + ASSN_COST + ' altın): yalnız düşman generaline. Sınırdaki ve yalnız generale kolay, ülkenin ortasındaki ve korunan generale zor. Başarılıysa general dinlenmeye çekilir.</li><li>Yakalanırsan o ülke birkaç tur seninle konuşmaz. Karargâh’ta casus, suikastçı ve diplomatları geliştirebilirsin.</li></ul>') +
     sec(I.medal, 'Kazanmak ve madalyalar', '<ul><li>Şehirlerin %60’ını al ya da bütün rakipleri yık. Bir devletin son şehrini alan, kalan bütün topraklarını (kale, tarla, arazi) da alır. Zaferden sonra istersen fethe devam edip istediğin an bitirebilirsin.</li><li>Madalyalar Karargâh’ta kalıcı geliştirmeye ve general eğitimine harcanır. Zor seviye ×1,5, bonus sefer ×1,5.</li><li>Bonus sefer, çağın bütün seferleri kazanılınca açılır. 3 kayıt yerin var.</li></ul>');
 }
 function renderSettings() {
@@ -599,13 +603,23 @@ function unitHTML(u) {
   } else if (mine && !UT[u.type].tower && freeGenerals(G, G.player).length) {
     acts += '<button class="ibtn gold" id="uAssign" aria-label="General ata">' + I.genplus + '</button>';
   }
+  if (!mine && g && u.f >= 0 && !isAlly(G, G.player, u.f)) { var as = assnInfo(G, G.player, u.id); acts += '<button class="ibtn' + (as.ok ? '' : ' off') + '" id="uAssn" aria-label="Suikast"' + (as.ok ? '' : ' data-why="' + esc(as.why) + '"') + '>' + I.dagger + '<em>%' + Math.round(as.chance * 100) + '</em></button>'; }
   if (!mine && canAir(G, G.player, u)) acts += '<button class="ibtn gold" id="uAir" aria-label="Hava saldırısı">' + I.jet + '<em>−' + airDmg(G, u) + '</em></button>';
   if (mine) {
     var c = G.cells[u.c];
     if (c.f === G.player && c.t >= 2) acts += '<button class="ibtn" id="uCell" aria-label="Yapı">' + (c.t === 3 ? I.city : c.t === 4 ? I.castle : I.wheat) + '</button>';
     if (hasMoves(u)) acts += '<button class="ibtn" id="uWait" aria-label="Beklet">' + I.hourglass + '</button>';
   }
-  return s + (acts ? '<div class="uacts">' + acts + '</div>' : '') + '</div>';
+  return s + (acts ? '<div class="uacts">' + acts + '</div>' : '') + '</div>' + (!mine ? spyRow(G, G.cells[u.c]) : '');
+}
+/* düşman şehrine casus: görev baştan seçilir (gelir çal ya da kışkırt) */
+function spyRow(G, c) {
+  if (c.t !== 3 || c.f < 0 || c.f === G.player || isAlly(G, G.player, c.f) || G.player < 0) return '';
+  return '<div class="spyrow"><span class="tl">' + I.spy + '<em>' + I.coin + SPY_COST + '</em></span>' + ['steal', 'incite'].map(function (m) {
+    var r = spyInfo(G, G.player, c.i, m);
+    return '<button class="trb' + (r.ok ? '' : ' off') + '" data-spy="' + m + '" data-c="' + c.i + '"' + (r.ok ? '' : ' data-why="' + esc(r.why) + '"') + '>' +
+      (m === 'steal' ? I.coin + '+' + r.gain : I.fire) + '<small>%' + Math.round(r.chance * 100) + '</small></button>';
+  }).join('') + '</div>';
 }
 /* moral: sarı yukarı ok yükseliş, mavi aşağı ok düşüş, 4+ düşmanla çevriliyse iki mavi ok */
 function moraleTag(G, u, named) {
@@ -642,11 +656,12 @@ function cellHTML(c) {
   var kindIcon = c.t === 3 ? I.city : c.t === 4 ? I.castle : c.t === 2 ? I.wheat : c.mt ? I.mount : I.flag;
   var facts = '';
   if (c.t === 3) facts += '<span>' + I.coin + '+' + Math.round((CITY_INCOME[c.lv] + c.port * 2) * (G.factions[f] ? G.factions[f].eco : 1)) + '</span>' + (c.smith ? '<span>' + I.hammer + c.smith + '</span>' : '') + (c.port ? '<span>' + I.anchor + c.port + '</span>' : '') + '<span>' + I.shield + '+' + (8 * c.lv) + '%</span>';
+  if (c.t === 3) { var rv = revoltChance(G, c); if (rv >= 0.05) facts += '<span class="bad">' + I.fire + '%' + Math.round(rv * 100) + '</span>'; if (c.spy && c.spy.f === G.player && c.spy.until >= G.turn) facts += '<span class="good">' + I.spy + '</span>'; }
   if (c.t === 4) facts += '<span>' + I.shield + '+' + Math.round(CASTLE_DEF[c.lv] * 100) + '%</span>';
   if (c.t === 2) facts += '<span>' + I.food + '+' + FARM_FOOD[c.lv] + '</span>';
   if (c.mt) facts += '<span>' + I.mount + '+30%</span>';
   var s = '<div class="chd">' + (f >= 0 ? ART.flag(G.factions[f].id) : '') + kindIcon + '<b>' + (c.nm ? esc(c.nm) : (c.t === 1 ? (c.mt ? 'Dağ' : 'Arazi') : c.t === 2 ? 'Tarla' : '')) + '</b>' + (c.t >= 2 ? '<span class="lvtag">' + c.lv + '</span>' : '') + '<span class="facts">' + facts + '</span></div>';
-  if (!mine) return s;
+  if (!mine) return s + spyRow(G, c);
   var cols = FACTIONS[G.factions[f].id].col, tiles = [];
   if (c.t === 3 || c.t === 4) {
     var types = c.t === 3 ? ['kilic', 'okcu', 'atli'].concat(G.navy ? ['kadirga'] : []) : ['kilic', 'okcu', 'atli'];
@@ -691,6 +706,15 @@ function renderPanel() {
     B.lastAct = d.c; airStrike(G, G.player, d.id); B.undo = []; updateHud();
     playLog(function () { var d2 = unitById(G, d.id); if (d2) selectUnit(d2); else deselect(); updateHud(); checkOver(); });
   };
+  if ($('#uAssn') && !$('#uAssn').classList.contains('off')) $('#uAssn').onclick = function () {
+    var d = unitById(G, B.sel); if (!d) return;
+    assassinate(G, G.player, d.id); B.undo = []; updateHud();
+    playLog(function () { renderPanel(); updateHud(); });
+  };
+  el.querySelectorAll('[data-spy]:not(.off)').forEach(function (b) { b.onclick = function () {
+    sendSpy(G, G.player, +b.dataset.c, b.dataset.spy); B.undo = []; updateHud();
+    playLog(function () { renderPanel(); updateHud(); dirty = true; });
+  }; });
   el.querySelectorAll('[data-up]:not(.off)').forEach(function (b) { b.onclick = function () {
     var what = b.dataset.up;
     if (act(function () { return upgrade(G, B.view, what); })) { SFX.build(); fx({ k: 'text', c: B.view, txt: UP_FX[what], col: '#e8c977' }); updateHud(); renderPanel(); dirty = true; }
@@ -1005,6 +1029,16 @@ function animEvent(e, sp) {
     fx({ k: 'ring', c: e.c, col: e.to >= 0 ? FACTIONS[G.factions[e.to].id].col : '#ccc' });
     if (G.cells[e.c].nm) fx({ k: 'text', c: e.c, txt: G.cells[e.c].nm, col: '#fff' });
     d = 300 / sp;
+  } else if (e.t === 'spy' || e.t === 'assn') {
+    var me = e.f === G.player, vic = e.to === G.player;
+    if (me || vic) {
+      var txt = e.t === 'spy' ? (e.ok ? (e.m === 'steal' ? (me ? 'Casus ' + e.amt + ' altın çaldı' : 'Casus ' + e.amt + ' altınını çaldı') : (me ? 'Casus halkı kışkırttı' : 'Casus halkı kışkırtıyor')) : (me ? 'Casus yakalandı' : 'Casus yakalandı: ' + factionName(G, e.f)))
+        : (e.ok ? (me ? 'Suikast başarılı' : 'Generaline suikast!') : (me ? 'Suikastçı yakalandı' : 'Suikastçı yakalandı: ' + factionName(G, e.f)));
+      fx({ k: 'text', c: e.c, txt: txt, col: e.ok === me ? '#e8c977' : '#ff8a6a' }); toast(txt); d = 600 / sp;
+    }
+  } else if (e.t === 'revolt') {
+    if (e.from === G.player || e.to === G.player || B.phase === 'ai') ensureVisible(e.c);
+    fx({ k: 'text', c: e.c, txt: 'İsyan!', col: '#ff8a6a' }); toast((G.cells[e.c].nm || 'Şehir') + ' ayaklandı'); d = 700 / sp; dirty = true;
   } else if (e.t === 'elim') {
     toast(factionName(G, e.f) + ' yıkıldı!' + (e.by >= 0 ? ' Topraklar → ' + factionName(G, e.by) : '')); d = 700 / sp; dirty = true;
   } else if (e.t === 'wounded') {
@@ -1061,6 +1095,8 @@ function noteLog(G) {
       if (e.t === 'attack' && e.af !== P && e.killA && e.df === P) S.kills++;
     } else if (e.t === 'ally' && (e.a === P || e.b === P)) S.notes.push(I.handshake + factionName(G, e.a === P ? e.b : e.a) + ' ile ittifak');
     else if (e.t === 'betray' && e.b === P) S.notes.push(I.skull + factionName(G, e.a) + ' ihanet etti');
+    else if (e.t === 'revolt' && (e.from === P || e.to === P)) S.notes.push(I.fire + (G.cells[e.c].nm || 'Şehir') + (e.to === P ? ' isyanla sana döndü' : ' ayaklandı'));
+    else if ((e.t === 'spy' || e.t === 'assn') && e.to === P) S.notes.push((e.t === 'spy' ? I.spy : I.dagger) + factionName(G, e.f) + (e.ok ? (e.t === 'spy' ? (e.m === 'steal' ? ' ' + e.amt + ' altın çaldı' : ' şehrini kışkırttı') : ' generaline suikast yaptı') : ' casusu yakalandı'));
     else if (e.t === 'elim') S.notes.push(I.flag + factionName(G, e.f) + ' yıkıldı' + (e.by >= 0 ? ' → ' + factionName(G, e.by) : ''));
   });
 }

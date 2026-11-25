@@ -96,7 +96,10 @@ var UPGRADES = [
   { id: 'kule', kind: 'unit', name: 'Kule ve tabya ustaları', max: 5, cost: [25, 40, 60, 90, 130], per: 0.08 },
   { id: 'hazine', kind: 'eco', name: 'Hazine', max: 3, cost: [40, 80, 140], per: 0.10 },
   { id: 'tarim', kind: 'eco', name: 'Tarım', max: 2, cost: [40, 90], per: 1 },
-  { id: 'baslangic', kind: 'eco', name: 'Savaş sandığı', max: 3, cost: [30, 60, 100], per: 40 }
+  { id: 'baslangic', kind: 'eco', name: 'Savaş sandığı', max: 3, cost: [30, 60, 100], per: 40 },
+  { id: 'casus', kind: 'covert', name: 'Casus okulu', max: 4, cost: [30, 60, 100, 150], per: 0.08 },
+  { id: 'suikast', kind: 'covert', name: 'Suikastçı loncası', max: 4, cost: [30, 60, 100, 150], per: 0.08 },
+  { id: 'diplomat', kind: 'covert', name: 'Diplomatlar', max: 3, cost: [40, 80, 130], per: 6 }
 ];
 function upg(G, fi, id) { var f = fi >= 0 ? G.factions[fi] : null; if (id === 'kule2' || id === 'kule3') id = 'kule'; return f && f.upg && f.upg[id] || 0; }
 function armyCap(G, fi) {
@@ -267,7 +270,7 @@ function newGame(o) {
     var cell = { i: i, q: c[0], r: c[1], x: p.x, y: p.y, t: c[2], nb: [] };
     if (c[2]) {
       cell.f = c[3] === 'n' ? -1 : fidx[c[3]]; cell.mt = c[4]; cell.lv = c[5]; cell.nm = c[6] || ''; cell.cap = c[7] || 0; if (c[8]) cell.strait = 1;
-      cell.smith = 0; cell.port = 0;
+      cell.smith = 0; cell.port = 0; cell.o0 = cell.f;
     } else { cell.f = -1; }
     G.cells.push(cell);
   });
@@ -366,6 +369,7 @@ function startTurn(G, fi, first) {
     var inc = income(G, fi);
     f.gold += inc.g; f.iron += inc.iron; f.food += inc.food - inc.up;
     G.cells.forEach(function (c) { if (c.f === fi && c.fresh) c.fresh = 0; });
+    revolts(G, fi);
     if (f.food < 0) {
       f.food = 0;
       G.units.forEach(function (u) { if (u.f === fi) u.hp = Math.max(1, u.hp - 8); });
@@ -531,6 +535,130 @@ function checkElim(G, fi, by) {
   else if (G.player >= 0 && G.factions.every(function (x, i) { return i === G.player || !x.alive; })) G.over = 1;
 }
 
+
+/* ---------- casusluk, isyan, suikast ----------
+   İsyan: içinde birlik olmayan şehir her tur küçük bir şansla ayaklanır. Sonradan alınmış şehirde şans yüksek,
+   baştan beri senin olanda çok düşük. Casusun kışkırttığı şehirde şans büyür. Ülkenin son şehri ayaklanmaz.
+   Ayaklanan şehir asıl sahibine döner (yaşıyorsa), yoksa bağımsız olur.
+   Casus (turda bir): görev baştan seçilir, gelir çal ya da kışkırt. Başarılı casus 3 tur o şehirde kalır, oraya saldırana +%15.
+   Suikastçı (turda bir): yalnız generale. Ülkenin içlerindeki ve korunan generale zor, sınırdakine kolay.
+   Yakalanan casus ya da suikastçı: o ülke birkaç tur seninle konuşmaz. */
+var SPY_COST = 30, ASSN_COST = 50, SPY_TURNS = 3, SPY_ATK = 1.15, ANGER_TURNS = 5;
+function angry(G, a, b) { var t = G.anger && G.anger[a + ':' + b]; return t && t >= G.turn ? t - G.turn + 1 : 0; }
+function covertLv(G, fi, id) { return fi >= 0 && !G.factions[fi].isPlayer ? 1 : upg(G, fi, id); }
+function origOf(c) { return c.o0 === undefined ? c.f : c.o0; }
+function incited(G, c) { return c.inc && c.inc.until >= G.turn && c.inc.f !== c.f ? c.inc : null; }
+function revoltChance(G, c) {
+  if (c.t !== 3 || c.f < 0 || unitAt(G, c.i)) return 0;
+  var n = 0; G.cells.forEach(function (x) { if (x.t === 3 && x.f === c.f) n++; });
+  if (n < 2) return 0;
+  var own = origOf(c) === c.f, p = own ? 0.01 : 0.06;
+  if (G.factions[c.f].food <= 0) p += 0.04;
+  if (incited(G, c)) p += own ? 0.15 : 0.30;
+  return p;
+}
+function revolts(G, fi) {
+  G.cells.forEach(function (c) {
+    if (c.f !== fi || c.t !== 3) return;
+    var p = revoltChance(G, c);
+    if (p && Math.random() < p) {
+      var o = origOf(c), to = o >= 0 && o !== fi && G.factions[o].alive ? o : -1;
+      c.inc = null; c.spy = null;
+      G.log.push({ t: 'revolt', c: c.i, from: fi, to: to });
+      capture(G, c, to);
+    }
+  });
+}
+function spyGain(G, c) { return Math.round((CITY_INCOME[c.lv] + c.port * 2) * G.factions[c.f].eco * 2); }
+function spyInfo(G, fi, ci, m) {
+  var c = G.cells[ci], f = G.factions[fi], r = { ok: false, cost: SPY_COST, chance: 0, gain: 0 };
+  if (!c || c.t !== 3 || c.f < 0 || c.f === fi) { r.why = 'Casus yalnız düşman şehrine'; return r; }
+  r.gain = m === 'steal' ? Math.min(spyGain(G, c), G.factions[c.f].gold) : 0;
+  var ch = 0.55 + 0.08 * covertLv(G, fi, 'casus') - (unitAt(G, ci) ? 0.10 : 0) + (origOf(c) !== c.f ? 0.05 : 0);
+  r.chance = Math.max(0.1, Math.min(0.9, ch));
+  if (isAlly(G, fi, c.f)) r.why = 'Müttefike casus gönderilmez';
+  else if (G.spyUsed && G.spyUsed[fi] === G.turn) r.why = 'Bu tur casus gönderdin';
+  else if (f.gold < SPY_COST) r.why = 'Yetersiz altın';
+  else r.ok = true;
+  return r;
+}
+function sendSpy(G, fi, ci, m, R) {
+  var r = spyInfo(G, fi, ci, m); if (!r.ok) return false;
+  var c = G.cells[ci], f = G.factions[fi], to = c.f;
+  f.gold -= SPY_COST; G.spyUsed = G.spyUsed || {}; G.spyUsed[fi] = G.turn;
+  var ok = (R || Math.random)() < r.chance, amt = 0;
+  if (ok) {
+    if (m === 'steal') { amt = r.gain; G.factions[to].gold -= amt; f.gold += amt; }
+    else c.inc = { f: fi, until: G.turn + SPY_TURNS };
+    c.spy = { f: fi, until: G.turn + SPY_TURNS };
+  } else caught(G, to, fi);
+  G.log.push({ t: 'spy', f: fi, to: to, c: ci, m: m, ok: ok, amt: amt });
+  return true;
+}
+function caught(G, by, fi) { G.anger = G.anger || {}; G.anger[by + ':' + fi] = G.turn + Math.max(2, ANGER_TURNS - upg(G, fi, 'diplomat')); }
+/* generalin ülke içindeki derinliği: sınıra kaç adım */
+function depthOf(G, c, f) {
+  var seen = {}, q = [c.i], d = 0; seen[c.i] = 1;
+  while (q.length && d < 8) {
+    d++; var nq = [];
+    for (var k = 0; k < q.length; k++) {
+      var nb = G.cells[q[k]].nb;
+      for (var j = 0; j < nb.length; j++) { var x = G.cells[nb[j]]; if (seen[x.i]) continue; seen[x.i] = 1; if (x.f !== f) return d; nq.push(x.i); }
+    }
+    q = nq;
+  }
+  return d;
+}
+function assnInfo(G, fi, uid) {
+  var u = G.units.filter(function (x) { return x.id === uid; })[0], r = { ok: false, cost: ASSN_COST, chance: 0 };
+  var g = u && genOf(G, u);
+  if (!g || u.f === fi) { r.why = 'Suikastçı yalnız düşman generaline'; return r; }
+  var ch = 0.40 + 0.08 * covertLv(G, fi, 'suikast') - 0.07 * (depthOf(G, G.cells[u.c], u.f) - 1) - (g.legend ? 0.10 : 0);
+  var c = G.cells[u.c], ring = {}; ring[c.i] = 1;
+  c.nb.forEach(function (j) { ring[j] = 1; G.cells[j].nb.forEach(function (k) { ring[k] = 1; }); });
+  G.units.forEach(function (x) {
+    if (x.id === u.id || !ring[x.c]) return;
+    if (x.f === u.f || isAlly(G, x.f, u.f)) ch -= 0.04; else if (x.f === fi) ch += 0.04;
+  });
+  r.chance = Math.max(0.05, Math.min(0.85, ch));
+  if (isAlly(G, fi, u.f)) r.why = 'Müttefike suikast olmaz';
+  else if (G.assnUsed && G.assnUsed[fi] === G.turn) r.why = 'Bu tur suikastçı gönderdin';
+  else if (G.factions[fi].gold < ASSN_COST) r.why = 'Yetersiz altın';
+  else r.ok = true;
+  return r;
+}
+function assassinate(G, fi, uid, R) {
+  var r = assnInfo(G, fi, uid); if (!r.ok) return false;
+  var u = G.units.filter(function (x) { return x.id === uid; })[0], g = genOf(G, u);
+  G.factions[fi].gold -= ASSN_COST; G.assnUsed = G.assnUsed || {}; G.assnUsed[fi] = G.turn;
+  var ok = (R || Math.random)() < r.chance;
+  if (ok) { u.gen = null; g.unit = 0; g.rest = G.turn + (g.legend ? LEGEND_REST : GEN_REST); G.log.push({ t: 'wounded', f: u.f, gen: g.id, c: u.c }); }
+  else caught(G, u.f, fi);
+  G.log.push({ t: 'assn', f: fi, to: u.f, c: u.c, ok: ok, gen: g.id });
+  return true;
+}
+/* bot: ara sıra kendi kaybettiği ya da boş bırakılmış düşman şehrini kışkırtır, zengin şehirden çalar, sınırdaki generale suikast dener */
+function aiCovert(G, fi, R) {
+  var f = G.factions[fi], did = false;
+  if (f.gold > 110 && R() < 0.3) {
+    var best = null, bs = 0;
+    G.cells.forEach(function (c) {
+      if (c.t !== 3 || c.f < 0 || c.f === fi || isAlly(G, fi, c.f)) return;
+      var inc = !unitAt(G, c.i) && !incited(G, c) ? (origOf(c) === fi ? 3 : origOf(c) !== c.f ? 2 : 1) : 0;
+      var st = CITY_INCOME[c.lv] / 15;
+      if (inc > bs) { bs = inc; best = { c: c.i, m: 'incite' }; }
+      if (st > bs) { bs = st; best = { c: c.i, m: 'steal' }; }
+    });
+    if (best && sendSpy(G, fi, best.c, best.m, R)) did = true;
+  }
+  if (f.gold > 150 && R() < 0.15) {
+    var bu = null, bc = 0.35;
+    G.units.forEach(function (u) { if (u.f >= 0 && u.f !== fi && u.gen) { var a = assnInfo(G, fi, u.id); if (a.ok && a.chance > bc) { bc = a.chance; bu = u.id; } } });
+    if (bu && assassinate(G, fi, bu, R)) did = true;
+  }
+  return did;
+}
+
 /* ---------- savaş ---------- */
 function stat(G, u, kind, vs, cell, attacking) {
   var T = UT[u.type];
@@ -548,6 +676,7 @@ function stat(G, u, kind, vs, cell, attacking) {
     if (g.skill === 'derya' && (isNaval(u) || u.emb) && kind === 'atk') m *= u.emb ? 1 / 0.6 : 1.3;
   }
   if (kind === 'atk' && dahiNear(G, u)) m *= 1.15;
+  if (kind === 'atk' && attacking && cell && cell.spy && cell.spy.f === u.f && cell.spy.until >= G.turn) m *= SPY_ATK;
   m *= 0.45 + 0.55 * u.hp / 100;
   m *= moraleMul(G, u);
   return base * m;
@@ -604,6 +733,7 @@ function bundleValue(G, b) {
 }
 function dealCheck(G, p, t, deal) {
   var fp = G.factions[p], ft = G.factions[t];
+  var an = angry(G, t, p); if (an) return 'Casusunu yakaladı, ' + an + ' tur konuşmaz';
   function enough(f, b, fi) {
     if ((b.gold || 0) > f.gold || (b.food || 0) > f.food || (b.iron || 0) > f.iron) return 'Yetersiz kaynak';
     for (var i = 0; i < (b.cells || []).length; i++) if (!tradable(G, G.cells[b.cells[i]], fi)) return 'Bu şehir verilemez';
@@ -630,6 +760,7 @@ function enclaved(G, ci, p) {
 function dealNeed(G, p, t, deal) {
   var need = 0, ratio = power(G, p) / Math.max(1, power(G, t));
   if (isAlly(G, p, t)) need += 12;
+  need += 6 * upg(G, p, 'diplomat');
   need += Math.max(0, Math.min(30, (ratio - 1) * 15));
   if (G.recentLoss && G.recentLoss[t] >= G.turn - 3) need += 10;
   (deal.get.cells || []).forEach(function (ci) { var e = enclaved(G, ci, p); if (e >= 0.5) need += cellValue(G, G.cells[ci]) * e * 0.6; });
@@ -717,7 +848,7 @@ function aiOffer(G, R) {
   var P = G.player; if (G.noDip || P < 0 || allyCount(G, P) >= MAX_ALLIES) return null;
   var pp = power(G, P), best = null;
   G.factions.forEach(function (f, fi) {
-    if (fi === P || !f.alive || isAlly(G, fi, P) || allyCount(G, fi) >= MAX_ALLIES || G.distrust[P] > G.turn) return;
+    if (fi === P || !f.alive || isAlly(G, fi, P) || allyCount(G, fi) >= MAX_ALLIES || G.distrust[P] > G.turn || angry(G, fi, P)) return;
     var ratio = power(G, fi) / pp, lost = G.recentLoss && G.recentLoss[fi] >= G.turn - 2;
     if (ratio > 0.75 && !lost) return;
     var sc = (1 - ratio) + (lost ? 0.5 : 0);
@@ -1070,6 +1201,7 @@ function* aiTurn(G, fi, R) {
   aiEconomy(G, fi);
   yield 'eco';
   if (aiAir(G, fi)) yield 'air';
+  if (aiCovert(G, fi, R)) yield 'covert';
   // 2) generaller
   freeGenerals(G, fi).forEach(function (g) {
     var best = null;
@@ -1287,5 +1419,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, TOWERS: TOWERS, TRADE_MAX: TRADE_MAX, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, TOWERS: TOWERS, TRADE_MAX: TRADE_MAX, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, spyInfo: spyInfo, sendSpy: sendSpy, assnInfo: assnInfo, assassinate: assassinate, revoltChance: revoltChance, angry: angry, SPY_COST: SPY_COST, ASSN_COST: ASSN_COST, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
 };

@@ -665,3 +665,10 @@ p.bad { color: #ff8a6a; }
 .actbar { padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)); }
 .actbar .hbtn { width: 38px; height: 38px; border-radius: 12px; }
 .actbar .endturn { min-height: 38px; padding: 0 14px; font-size: 15px; border-radius: 12px; }
+.spyrow { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+.spyrow .tl { display: inline-flex; align-items: center; gap: 3px; color: var(--brass); font: 700 13px var(--f-num); }
+.spyrow .tl svg, .spyrow .trb svg { width: 18px; height: 18px; }
+.spyrow .tl em { font-style: normal; display: inline-flex; align-items: center; gap: 2px; }
+.spyrow .tl em svg { width: 14px; height: 14px; }
+.spyrow .trb small { margin-left: 4px; opacity: .8; font-size: 11px; }
+.facts .bad { color: #ff8a6a; } .facts .good { color: #e8c977; }
