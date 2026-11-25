@@ -535,32 +535,56 @@ var ART = (function () {
   }
   /* bina simgeleri (canvas), parşömen tonlarında */
   var BIMG = {};
+  /* izometrik ev: önde alınlık duvar, sağda gölgeli yan duvar, kiremit çatı */
+  function house(x, y, w, h, roof) {
+    var d = w * 0.45, e = w * 0.28, rh = h * 0.7, f = function (n) { return Math.round(n * 10) / 10; };
+    var s = '<path d="M' + f(x + w) + ' ' + f(y) + 'L' + f(x + w + d) + ' ' + f(y - e) + 'L' + f(x + w + d) + ' ' + f(y - h - e) + 'L' + f(x + w) + ' ' + f(y - h) + 'z" fill="#b9a681" stroke="#3a2a1a" stroke-width=".7"/>';
+    s += '<path d="M' + f(x) + ' ' + f(y) + 'V' + f(y - h) + 'L' + f(x + w / 2) + ' ' + f(y - h - rh) + 'L' + f(x + w) + ' ' + f(y - h) + 'V' + f(y) + 'z" fill="#eadfc4" stroke="#3a2a1a" stroke-width=".7"/>';
+    s += '<path d="M' + f(x + w / 2) + ' ' + f(y - h - rh) + 'L' + f(x + w / 2 + d) + ' ' + f(y - h - rh - e) + 'L' + f(x + w + d + 0.8) + ' ' + f(y - h - e + 0.6) + 'L' + f(x + w + 0.8) + ' ' + f(y - h + 0.6) + 'z" fill="' + roof + '" stroke="#3a2a1a" stroke-width=".7"/>';
+    s += '<rect x="' + f(x + w * 0.38) + '" y="' + f(y - h * 0.55) + '" width="' + f(w * 0.24) + '" height="' + f(h * 0.55) + '" fill="#5a4026"/>';
+    if (h > 7) s += '<rect x="' + f(x + w * 0.4) + '" y="' + f(y - h - rh * 0.45) + '" width="' + f(w * 0.2) + '" height="' + f(rh * 0.3) + '" fill="#4a3a28"/>';
+    return s;
+  }
+  function tower(x, y, w, h, top) {
+    var s = '<rect x="' + x + '" y="' + (y - h) + '" width="' + w + '" height="' + h + '" fill="#d8ceb8" stroke="#3a2a1a" stroke-width=".8"/>' +
+      '<rect x="' + (x + w * 0.62) + '" y="' + (y - h) + '" width="' + (w * 0.38) + '" height="' + h + '" fill="#b3a68c"/>';
+    if (top === 'roof') s += '<path d="M' + (x - 1) + ' ' + (y - h) + 'L' + (x + w / 2) + ' ' + (y - h - w * 1.3) + 'L' + (x + w + 1) + ' ' + (y - h) + 'z" fill="#a8432f" stroke="#3a2a1a" stroke-width=".8"/>';
+    else if (top === 'dome') s += '<path d="M' + (x - 1) + ' ' + (y - h) + 'Q' + (x + w / 2) + ' ' + (y - h - w * 1.4) + ' ' + (x + w + 1) + ' ' + (y - h) + 'z" fill="#6f8f9a" stroke="#3a2a1a" stroke-width=".8"/>';
+    else { for (var i = 0; i < 3; i++) s += '<rect x="' + (x + i * w / 2.5) + '" y="' + (y - h - 2.4) + '" width="' + (w / 4) + '" height="2.6" fill="#d8ceb8" stroke="#3a2a1a" stroke-width=".6"/>'; }
+    s += '<rect x="' + (x + w * 0.35) + '" y="' + (y - h * 0.75) + '" width="' + (w * 0.22) + '" height="' + (h * 0.18) + '" fill="#4a3a28"/>';
+    return s;
+  }
+  var ROOFS = ['#b5523a', '#c0613f', '#a8432f', '#9c5a3a', '#b86a45'];
   function cityIcon(lv) {
-    var t = Math.min(6, lv);
-    var towers = [[22, 30, 8, 14]], s = '';
-    // seviye arttıkça kuleler ve yükseklik artar
-    var spec = [
-      [[18, 28, 28, 18]],
-      [[14, 30, 36, 16], [26, 22, 12, 24]],
-      [[10, 30, 44, 16], [16, 22, 10, 24], [36, 20, 12, 26]],
-      [[8, 30, 48, 16], [12, 20, 10, 26], [27, 16, 10, 30], [42, 22, 10, 24]],
-      [[6, 30, 52, 16], [9, 20, 10, 26], [21, 14, 9, 32], [34, 18, 10, 28], [46, 22, 10, 24]],
-      [[4, 30, 56, 16], [7, 18, 10, 28], [19, 12, 8, 34], [29, 6, 6, 40], [37, 14, 9, 32], [48, 20, 10, 26]]
-    ][t - 1];
-    spec.forEach(function (b) {
-      s += '<rect x="' + b[0] + '" y="' + b[1] + '" width="' + b[2] + '" height="' + b[3] + '" fill="#efe5cf" stroke="#2b2015" stroke-width="1.6"/>';
-      if (b[2] <= 12) s += '<path d="M' + (b[0] - 1) + ' ' + b[1] + 'l' + (b[2] / 2 + 1) + ' -7 ' + (b[2] / 2 + 1) + ' 7z" fill="#b5523a" stroke="#2b2015" stroke-width="1.4"/>';
-      for (var y = b[1] + 5; y < b[1] + b[3] - 3; y += 7) for (var x = b[0] + 3; x < b[0] + b[2] - 2; x += 6) s += '<rect x="' + x + '" y="' + y + '" width="2.4" height="3" fill="#5a4630"/>';
-    });
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" width="128" height="96">' + s + '</svg>';
+    var t = Math.min(6, lv), s = '<ellipse cx="32" cy="42" rx="' + (14 + t * 3) + '" ry="' + (4 + t * 0.7) + '" fill="rgba(60,45,25,.28)"/>';
+    // [x, y, w, h] arkadan öne; seviye arttıkça ev, kule, sur
+    var H = [[30, 30, 9, 8], [20, 33, 10, 8], [38, 35, 10, 9], [12, 38, 9, 7], [26, 40, 11, 9], [44, 40, 9, 7], [6, 43, 8, 6], [35, 44, 10, 8], [50, 44, 8, 6]];
+    var n = [3, 5, 6, 7, 8, 9][t - 1];
+    var parts = [];
+    for (var i = 0; i < n; i++) parts.push({ y: H[i][1], s: house(H[i][0], H[i][1], H[i][2], H[i][3], ROOFS[i % ROOFS.length]) });
+    if (t >= 4) parts.push({ y: 31, s: tower(22, 31, 6, 18, t >= 6 ? 'dome' : 'roof') });
+    if (t >= 5) parts.push({ y: 29, s: tower(41, 29, 5, 14, 'roof') });
+    parts.sort(function (a, b) { return a.y - b.y; });
+    s += parts.map(function (p) { return p.s; }).join('');
+    if (t >= 3) {
+      // önde alçak sur
+      s += '<path d="M3 46Q32 52 61 46V43Q32 49 3 43z" fill="#c4b89c" stroke="#3a2a1a" stroke-width=".8"/>';
+      for (var x = 6; x < 60; x += 6) s += '<rect x="' + x + '" y="' + (42.5 + Math.abs(32 - x) * -0.0 + (Math.pow((x - 32) / 29, 2) * -3 + 3)) + '" width="3" height="2.2" fill="#c4b89c" stroke="#3a2a1a" stroke-width=".5"/>';
+    }
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 52" width="128" height="104">' + s + '</svg>';
   }
   function castleIcon(lv) {
-    var s = '<path d="M8 46V20h6v4h5v-4h6v4h5v-4h6v4h5v-4h6v4h5v-4h6v26z" fill="#d7cfbe" stroke="#2b2015" stroke-width="1.8"/>' +
-      '<path d="M26 46V34q6-6 12 0v12z" fill="#3a2a1c"/>';
-    if (lv >= 2) s += '<path d="M2 46V12h5v3h4v-3h5v34z M48 46V12h5v3h4v-3h5v34z" fill="#cfc6b2" stroke="#2b2015" stroke-width="1.8"/>';
-    if (lv >= 3) s += '<path d="M24 20V6h4v3h3V6h2v3h3V6h4v14z" fill="#c8bea8" stroke="#2b2015" stroke-width="1.6"/><path d="M32 6V0" stroke="#2b2015" stroke-width="1.4"/><path d="M32 0l7 2-7 2z" fill="#c8322f"/>';
-    if (lv >= 4) s += '<path d="M8 46h48" stroke="#c9a24a" stroke-width="3"/>';
-    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" width="128" height="96">' + s + '</svg>';
+    var s = '<ellipse cx="32" cy="44" rx="27" ry="5" fill="rgba(60,45,25,.28)"/>';
+    // arka sur
+    s += '<path d="M12 36L32 28L52 36V30L32 22L12 30z" fill="#b3a68c" stroke="#3a2a1a" stroke-width=".8"/>';
+    if (lv >= 3) s += tower(26, 28, 12, 20, 'crenel');
+    else s += tower(28, 30, 8, 12, 'crenel');
+    // ön sur
+    s += '<path d="M8 44L32 50L56 44V34L32 40L8 34z" fill="#d3c9b1" stroke="#3a2a1a" stroke-width=".9"/><path d="M32 40L56 34V44L32 50z" fill="#b3a68c"/>';
+    for (var i = 0; i < 4; i++) { s += '<rect x="' + (10 + i * 5.5) + '" y="' + (33 + i * 1.4) + '" width="3" height="2.6" fill="#d3c9b1" stroke="#3a2a1a" stroke-width=".5"/>'; s += '<rect x="' + (34 + i * 5.5) + '" y="' + (38.6 - i * 1.4) + '" width="3" height="2.6" fill="#b3a68c" stroke="#3a2a1a" stroke-width=".5"/>'; }
+    s += '<path d="M28 49V43Q32 39 36 43V49z" fill="#3a2a1c"/>';
+    if (lv >= 2) s += tower(3, 45, 8, 16, lv >= 4 ? 'roof' : 'crenel') + tower(53, 45, 8, 16, lv >= 4 ? 'roof' : 'crenel');
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 52" width="128" height="104">' + s + '</svg>';
   }
   function bImg(kind, lv) {
     var k = kind + lv;

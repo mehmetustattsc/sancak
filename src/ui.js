@@ -1327,50 +1327,186 @@ function unitDrawPos(u, now) {
   }
   return { x: c.x, y: c.y, sea: c.t === 0 };
 }
+/* ---------- arazi: yumuşak kıyılar, kara zemini, dağ ve orman (bir kez çizilir); sahiplik örtüsü sahiplik değişince ---------- */
+var TER = null;
+function terHash(a, b) { var h = Math.sin(a * 127.1 + b * 311.7) * 43758.5453; return h - Math.floor(h); }
+function terKey(x, y) { return Math.round(x * 100) + ',' + Math.round(y * 100); }
+/* kenarları birleştirip zincir yapar; kapalı zincirler halka olur */
+function terChains(segs) {
+  var at = {}, used = new Array(segs.length), out = [];
+  segs.forEach(function (s, i) { [terKey(s[0], s[1]), terKey(s[2], s[3])].forEach(function (k) { (at[k] = at[k] || []).push(i); }); });
+  for (var i = 0; i < segs.length; i++) {
+    if (used[i]) continue;
+    used[i] = 1; var s = segs[i], pts = [[s[0], s[1]], [s[2], s[3]]];
+    for (var dir = 0; dir < 2; dir++) {
+      for (;;) {
+        var end = dir ? pts[0] : pts[pts.length - 1], cand = at[terKey(end[0], end[1])] || [], nx = -1;
+        for (var j = 0; j < cand.length; j++) if (!used[cand[j]]) { nx = cand[j]; break; }
+        if (nx < 0) break;
+        used[nx] = 1; var t = segs[nx], same = terKey(t[0], t[1]) === terKey(end[0], end[1]), p = same ? [t[2], t[3]] : [t[0], t[1]];
+        if (dir) pts.unshift(p); else pts.push(p);
+      }
+    }
+    var a = pts[0], b = pts[pts.length - 1], closed = pts.length > 2 && terKey(a[0], a[1]) === terKey(b[0], b[1]);
+    if (closed) pts.pop();
+    out.push({ pts: pts, closed: closed });
+  }
+  return out;
+}
+function terSmooth(ch, jit) {
+  var p = ch.pts.map(function (q, i) {
+    if (!ch.closed && (i === 0 || i === ch.pts.length - 1)) return q;
+    return [q[0] + (terHash(q[0], q[1]) - 0.5) * jit, q[1] + (terHash(q[1], q[0]) - 0.5) * jit];
+  });
+  for (var it = 0; it < 3; it++) {
+    var n = [], L = p.length;
+    if (!ch.closed) n.push(p[0]);
+    for (var i = 0; i < (ch.closed ? L : L - 1); i++) {
+      var a = p[i], b = p[(i + 1) % L];
+      n.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    if (!ch.closed) n.push(p[L - 1]);
+    p = n;
+  }
+  return p;
+}
+/* hücre kenarları: k yönündeki komşu ve iki köşe */
+function terEdges(G, test) {
+  var byPos = {}, segs = [];
+  G.cells.forEach(function (c) { byPos[terKey(c.x, c.y)] = c; });
+  G.cells.forEach(function (c) {
+    for (var k = 0; k < 6; k++) {
+      var an = Math.PI / 3 * k, n = byPos[terKey(c.x + SQ3 * Math.cos(an), c.y + SQ3 * Math.sin(an))];
+      if (!test(c, n)) continue;
+      var a1 = an - Math.PI / 6, a2 = an + Math.PI / 6;
+      segs.push([c.x + Math.cos(a1), c.y + Math.sin(a1), c.x + Math.cos(a2), c.y + Math.sin(a2)]);
+    }
+  });
+  return segs;
+}
+function terPath(cx, chains, T) {
+  cx.beginPath();
+  chains.forEach(function (p) {
+    p.forEach(function (q, i) { var x = (q[0] - T.x0) * T.k, y = (q[1] - T.y0) * T.k; i ? cx.lineTo(x, y) : cx.moveTo(x, y); });
+  });
+}
+function buildTerrain(G) {
+  var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  G.cells.forEach(function (c) { x0 = Math.min(x0, c.x); y0 = Math.min(y0, c.y); x1 = Math.max(x1, c.x); y1 = Math.max(y1, c.y); });
+  x0 -= 2; y0 -= 2; x1 += 2; y1 += 2;
+  var k = Math.min(72, 4000 / Math.max(x1 - x0, y1 - y0));
+  var T = { x0: x0, y0: y0, w: x1 - x0, h: y1 - y0, k: k, map: G.era + ":" + G.level, own: '' };
+  var cv = document.createElement('canvas'); cv.width = Math.ceil(T.w * k); cv.height = Math.ceil(T.h * k);
+  var cx = cv.getContext('2d');
+  // deniz
+  cx.fillStyle = '#2d5378'; cx.fillRect(0, 0, cv.width, cv.height);
+  for (var i = 0; i < 260; i++) { var rx = terHash(i, 1) * cv.width, ry = terHash(i, 2) * cv.height; cx.fillStyle = terHash(i, 3) > 0.5 ? 'rgba(255,255,255,.03)' : 'rgba(0,10,30,.05)'; cx.beginPath(); cx.arc(rx, ry, k * (1 + terHash(i, 4) * 3), 0, 7); cx.fill(); }
+  var coast = terChains(terEdges(G, function (c, n) { return c.t && (!n || !n.t); })).map(function (ch) { return terSmooth(ch, 0.35); });
+  T.coast = coast;
+  // sığ su bandı
+  cx.lineJoin = 'round';
+  terPath(cx, coast, T);
+  cx.strokeStyle = '#3b6a92'; cx.lineWidth = k * 1.1; cx.stroke();
+  cx.strokeStyle = '#4b7ea6'; cx.lineWidth = k * 0.55; cx.stroke();
+  // dalgalar
+  cx.strokeStyle = 'rgba(200,225,245,.22)'; cx.lineWidth = Math.max(1, k * 0.05); cx.lineCap = 'round';
+  G.cells.forEach(function (c) {
+    if (c.t || terHash(c.q, c.r) > 0.35) return;
+    var x = (c.x - x0) * k + (terHash(c.r, c.q) - 0.5) * k, y = (c.y - y0) * k;
+    cx.beginPath(); for (var j = 0; j < 3; j++) { cx.moveTo(x - k * 0.5, y + j * k * 0.16); cx.quadraticCurveTo(x - k * 0.25, y - k * 0.12 + j * k * 0.16, x, y + j * k * 0.16); cx.quadraticCurveTo(x + k * 0.25, y + k * 0.12 + j * k * 0.16, x + k * 0.5, y + j * k * 0.16); }
+    cx.stroke();
+  });
+  // kara
+  cx.save(); terPath(cx, coast, T); cx.clip();
+  cx.fillStyle = '#d3c6a0'; cx.fillRect(0, 0, cv.width, cv.height);
+  G.cells.forEach(function (c) {
+    if (!c.t) return;
+    var x = (c.x - x0) * k, y = (c.y - y0) * k, h = terHash(c.q * 3, c.r * 7);
+    var col = c.mt ? 'rgba(160,150,128,.55)' : h < 0.35 ? 'rgba(150,170,100,.35)' : h < 0.6 ? 'rgba(190,180,120,.3)' : 'rgba(225,210,170,.35)';
+    var g = cx.createRadialGradient(x, y, 0, x, y, k * 1.5); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)');
+    cx.fillStyle = g; cx.fillRect(x - k * 1.5, y - k * 1.5, k * 3, k * 3);
+  });
+  cx.restore();
+  // kıyı çizgisi
+  terPath(cx, coast, T); cx.strokeStyle = 'rgba(30,50,70,.75)'; cx.lineWidth = Math.max(1.5, k * 0.06); cx.stroke();
+  cx.strokeStyle = 'rgba(230,240,245,.35)'; cx.lineWidth = Math.max(1, k * 0.03);
+  cx.save(); cx.translate(0, k * 0.08); terPath(cx, coast, T); cx.restore(); cx.stroke();
+  // dağlar ve ormanlar (yukarıdan aşağı sıralı ki öndekiler üstte kalsın)
+  var deco = [];
+  G.cells.forEach(function (c) {
+    if (!c.t) return;
+    if (c.mt) { for (var m = 0; m < 3; m++) deco.push({ k: 'm', x: c.x + [-0.45, 0.4, -0.05][m] + (terHash(c.q, m) - 0.5) * 0.2, y: c.y + [-0.15, -0.05, 0.35][m], s: 0.75 + terHash(c.r, m) * 0.35 }); }
+    if ((c.t === 1 || c.mt) && terHash(c.r * 5, c.q * 2) < (c.mt ? 0.5 : 0.45)) {
+      var n = 2 + Math.floor(terHash(c.q, c.r * 3) * 4), ox = (terHash(c.r, 9) - 0.5) * 0.9, oy = (terHash(c.q, 9) - 0.5) * 0.7;
+      for (var t = 0; t < n; t++) deco.push({ k: 't', x: c.x + ox + (terHash(t, c.i) - 0.5) * 0.6, y: c.y + oy + (terHash(c.i, t) - 0.5) * 0.4, s: 0.8 + terHash(t, c.q) * 0.4, pine: c.y < 0 || terHash(c.i, 4) < 0.6 });
+    }
+  });
+  deco.sort(function (a, b) { return a.y - b.y; });
+  deco.forEach(function (d) {
+    var x = (d.x - x0) * k, y = (d.y - y0) * k, s = k * d.s;
+    if (d.k === 'm') {
+      cx.fillStyle = 'rgba(60,50,35,.25)'; cx.beginPath(); cx.ellipse(x + s * 0.1, y + s * 0.32, s * 0.6, s * 0.12, 0, 0, 7); cx.fill();
+      cx.beginPath(); cx.moveTo(x - s * 0.6, y + s * 0.3); cx.lineTo(x, y - s * 0.55); cx.lineTo(x + s * 0.6, y + s * 0.3); cx.closePath(); cx.fillStyle = '#a99d84'; cx.fill();
+      cx.beginPath(); cx.moveTo(x, y - s * 0.55); cx.lineTo(x + s * 0.6, y + s * 0.3); cx.lineTo(x + s * 0.08, y + s * 0.3); cx.lineTo(x + s * 0.1, y - s * 0.1); cx.closePath(); cx.fillStyle = '#7f7460'; cx.fill();
+      cx.beginPath(); cx.moveTo(x, y - s * 0.55); cx.lineTo(x - s * 0.6, y + s * 0.3); cx.lineTo(x - s * 0.35, y + s * 0.3); cx.closePath(); cx.fillStyle = '#c9bea6'; cx.fill();
+      cx.beginPath(); cx.moveTo(x, y - s * 0.55); cx.lineTo(x - s * 0.16, y - s * 0.28); cx.lineTo(x + s * 0.02, y - s * 0.33); cx.lineTo(x + s * 0.17, y - s * 0.27); cx.closePath(); cx.fillStyle = '#efe9dc'; cx.fill();
+    } else {
+      s *= 0.32;
+      cx.fillStyle = 'rgba(40,40,20,.25)'; cx.beginPath(); cx.ellipse(x + s * 0.2, y + s * 1.05, s * 0.55, s * 0.18, 0, 0, 7); cx.fill();
+      if (d.pine) {
+        cx.fillStyle = '#3f6b45'; cx.beginPath(); cx.moveTo(x, y - s * 1.2); cx.lineTo(x + s * 0.5, y + s * 0.9); cx.lineTo(x - s * 0.5, y + s * 0.9); cx.closePath(); cx.fill();
+        cx.fillStyle = '#2c5035'; cx.beginPath(); cx.moveTo(x, y - s * 1.2); cx.lineTo(x + s * 0.5, y + s * 0.9); cx.lineTo(x + s * 0.05, y + s * 0.9); cx.closePath(); cx.fill();
+      } else {
+        cx.fillStyle = '#5b7f3e'; cx.beginPath(); cx.arc(x, y, s * 0.6, 0, 7); cx.fill();
+        cx.fillStyle = '#7a9c50'; cx.beginPath(); cx.arc(x - s * 0.18, y - s * 0.18, s * 0.32, 0, 7); cx.fill();
+        cx.fillStyle = '#4a3622'; cx.fillRect(x - s * 0.06, y + s * 0.5, s * 0.12, s * 0.45);
+      }
+    }
+  });
+  T.cv = cv;
+  T.ov = document.createElement('canvas'); T.ov.width = cv.width; T.ov.height = cv.height;
+  return T;
+}
+/* sahiplik örtüsü: ülke rengi yarı saydam, kıyıya göre kırpılır; ülkeler arası sınır yumuşatılmış kesikli çizgi */
+function buildOwners(G, T) {
+  var cx = T.ov.getContext('2d'), k = T.k;
+  cx.clearRect(0, 0, T.ov.width, T.ov.height);
+  cx.save(); terPath(cx, T.coast, T); cx.clip();
+  G.cells.forEach(function (c) {
+    if (!c.t || c.f < 0) return;
+    hexPath(cx, (c.x - T.x0) * k, (c.y - T.y0) * k, k * 1.03);
+    cx.fillStyle = FACTIONS[G.factions[c.f].id].col; cx.fill();
+  });
+  cx.restore();
+  T.bord = terChains(terEdges(G, function (c, n) { return c.t && n && n.t && n.f !== c.f && n.i > c.i; })).map(function (ch) { return terSmooth(ch, 0.15); });
+}
+function drawTerrain(G) {
+  var T = TER;
+  if (!T || T.map !== G.era + ":" + G.level || T.cells !== G.cells.length) { T = TER = buildTerrain(G); T.cells = G.cells.length; }
+  var own = G.cells.map(function (c) { return c.f; }).join(',');
+  if (own !== T.own) { buildOwners(G, T); T.own = own; }
+  var p = w2s(T.x0, T.y0), sc = B.cam.s / T.k;
+  ctx.drawImage(T.cv, p.x, p.y, T.cv.width * sc, T.cv.height * sc);
+  ctx.globalAlpha = 0.38; ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(T.ov, p.x, p.y, T.ov.width * sc, T.ov.height * sc); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 0.1; ctx.drawImage(T.ov, p.x, p.y, T.ov.width * sc, T.ov.height * sc); ctx.globalAlpha = 1;
+  // sınırlar
+  ctx.save(); ctx.translate(p.x, p.y); ctx.scale(sc, sc); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  terPath(ctx, T.bord, T);
+  ctx.strokeStyle = 'rgba(40,28,18,.55)'; ctx.lineWidth = T.k * 0.11; ctx.stroke();
+  ctx.strokeStyle = 'rgba(250,240,215,.8)'; ctx.lineWidth = T.k * 0.05; ctx.setLineDash([T.k * 0.22, T.k * 0.16]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.restore();
+}
 function render(now) {
   var G = B.G, s = B.cam.s;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  // deniz zemini
-  var g = ctx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1d4560'); g.addColorStop(1, '#0f2638');
-  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  ctx.fillStyle = '#2d5378'; ctx.fillRect(0, 0, W, H);
   var vis = [];
   G.cells.forEach(function (c) {
     var p = w2s(c.x, c.y);
     if (p.x < -s * 1.2 || p.x > W + s * 1.2 || p.y < -s * 1.2 || p.y > H + s * 1.2) return;
     vis.push([c, p]);
   });
-  // hücreler
-  vis.forEach(function (v) {
-    var c = v[0], p = v[1];
-    hexPath(ctx, p.x, p.y, s * 1.005);
-    if (!c.t) {
-      ctx.fillStyle = (c.q + c.r) % 2 ? '#22506d' : '#235370'; ctx.fill();
-      if (s > 18) { ctx.strokeStyle = 'rgba(190,225,245,.18)'; ctx.lineWidth = 1.2; ctx.beginPath(); ctx.moveTo(p.x - s * 0.35, p.y); ctx.quadraticCurveTo(p.x - s * 0.17, p.y - s * 0.12, p.x, p.y); ctx.quadraticCurveTo(p.x + s * 0.17, p.y + s * 0.12, p.x + s * 0.35, p.y); ctx.stroke(); }
-      return;
-    }
-    var col = landCol(G, c);
-    var gr = ctx.createLinearGradient(p.x, p.y - s, p.x, p.y + s);
-    gr.addColorStop(0, sh(col, 0.42)); gr.addColorStop(1, sh(col, 0.22));
-    ctx.fillStyle = gr; ctx.fill();
-    if (c.mt) drawMountain(p.x, p.y, s);
-    if (c.t === 2) drawFarm(p.x, p.y, s, c.lv);
-  });
-  // ince ızgara ve sınırlar
-  vis.forEach(function (v) {
-    var c = v[0], p = v[1];
-    if (!c.t) return;
-    for (var k = 0; k < 6; k++) {
-      var a1 = Math.PI / 180 * (60 * k - 30), a2 = Math.PI / 180 * (60 * k + 30);
-      var mx = p.x + s * 0.87 * Math.cos(Math.PI / 180 * 60 * k), my = p.y + s * 0.87 * Math.sin(Math.PI / 180 * 60 * k);
-      var n = null;
-      for (var z = 0; z < c.nb.length; z++) { var o = G.cells[c.nb[z]]; var q = w2s(o.x, o.y); if (Math.hypot(q.x - (2 * mx - p.x), q.y - (2 * my - p.y)) < s * 0.3) { n = o; break; } }
-      var x1 = p.x + s * Math.cos(a1), y1 = p.y + s * Math.sin(a1), x2 = p.x + s * Math.cos(a2), y2 = p.y + s * Math.sin(a2);
-      if (!n || !n.t) { ctx.strokeStyle = '#efe3c4'; ctx.lineWidth = Math.max(1.5, s * 0.07); }
-      else if (n.f !== c.f) { if (n.i < c.i) continue; ctx.strokeStyle = 'rgba(20,14,10,.9)'; ctx.lineWidth = Math.max(2, s * 0.09); }
-      else { if (n.i < c.i) continue; ctx.strokeStyle = 'rgba(0,0,0,.13)'; ctx.lineWidth = 1; }
-      ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
-    }
-  });
+  drawTerrain(G);
+  vis.forEach(function (v) { if (v[0].t === 2) drawFarm(v[1].x, v[1].y, s, v[0].lv); });
   // boğaz: şehrin içinden geçen su yolu
   vis.forEach(function (v) {
     var c = v[0], p = v[1]; if (!c.strait) return;
@@ -1408,10 +1544,9 @@ function render(now) {
       var ci = +k, c = G.cells[ci]; if (ci === unitById(G, B.sel).c) return;
       if (unitAt(G, ci)) return;
       var p = w2s(c.x, c.y);
-      hexPath(ctx, p.x, p.y, s * 0.92);
-      ctx.fillStyle = c.t ? 'rgba(255,250,230,.42)' : 'rgba(200,235,255,.32)'; ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 1.5; ctx.stroke();
-      ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(3, s * 0.1), 0, 7); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, s * 0.5, s * 0.36, 0, 0, 7);
+      ctx.fillStyle = 'rgba(20,30,45,.25)'; ctx.fill(); ctx.strokeStyle = 'rgba(255,255,255,.95)'; ctx.lineWidth = Math.max(3, s * 0.11); ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(p.x, p.y, s * 0.2, s * 0.14, 0, 0, 7); ctx.fillStyle = 'rgba(255,255,255,.9)'; ctx.fill();
       if (B.reach[ci].emb && G.cells[ci].t === 0) { ctx.fillStyle = 'rgba(20,40,60,.7)'; ctx.font = '700 ' + Math.max(10, s * 0.32) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('BİN', p.x, p.y); }
     });
   }
@@ -1420,7 +1555,7 @@ function render(now) {
   vis.forEach(function (v) {
     var c = v[0], p = v[1];
     if (c.t === 3 || c.t === 4) {
-      var im = ART.bImg(c.t === 3 ? 'city' : 'castle', c.lv), wd = s * (c.t === 3 ? 1.25 : 1.05), ht = wd * 0.75;
+      var im = ART.bImg(c.t === 3 ? 'city' : 'castle', c.lv), wd = s * (c.t === 3 ? 1.45 : 1.2), ht = wd * 0.8125;
       var occupied = !!unitAt(G, c.i);
       var by = occupied ? p.y - s * 0.95 : p.y - ht * 0.55;
       if (im.complete) ctx.drawImage(im, p.x - wd / 2, by, wd, ht);
@@ -1495,11 +1630,16 @@ function drawMountain(x, y, s) {
   ctx.beginPath(); ctx.moveTo(x - s * 0.36, y - s * 0.16); ctx.lineTo(x - s * 0.25, y - s * 0.35); ctx.lineTo(x - s * 0.13, y - s * 0.16); ctx.closePath(); ctx.fill();
 }
 function drawFarm(x, y, s, lv) {
-  ctx.save(); hexPath(ctx, x, y, s * 0.82); ctx.clip();
-  ctx.fillStyle = lv > 1 ? 'rgba(126,170,60,.55)' : 'rgba(214,180,80,.5)'; ctx.fillRect(x - s, y - s, s * 2, s * 2);
-  ctx.strokeStyle = lv > 1 ? 'rgba(70,110,30,.6)' : 'rgba(150,110,30,.55)'; ctx.lineWidth = Math.max(1, s * 0.05);
-  for (var i = -4; i <= 4; i++) { ctx.beginPath(); ctx.moveTo(x - s + i * s * 0.25, y + s); ctx.lineTo(x + i * s * 0.25 + s * 0.4, y - s); ctx.stroke(); }
-  if (lv > 1) { ctx.strokeStyle = 'rgba(90,170,220,.9)'; ctx.lineWidth = Math.max(1.5, s * 0.07); ctx.beginPath(); ctx.moveTo(x - s, y + s * 0.1); ctx.bezierCurveTo(x - s * 0.3, y - s * 0.2, x + s * 0.2, y + s * 0.4, x + s, y); ctx.stroke(); }
+  // tarla yamaları: eğik dörtgenler, sulanınca yeşil ve kanal
+  var cols = lv > 1 ? ['#9fbf55', '#b7cf62', '#8cae4a', '#c9d46a'] : ['#d8c26a', '#c9b45c', '#e0cf7c', '#bfae5a'];
+  ctx.save(); ctx.translate(x, y); ctx.transform(1, 0.18, -0.35, 0.62, 0, 0);
+  for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) {
+    var px = (i - 1.5) * s * 0.42, py = (j - 1.5) * s * 0.42;
+    ctx.fillStyle = cols[(i * 3 + j) % 4]; ctx.fillRect(px, py, s * 0.39, s * 0.39);
+    ctx.strokeStyle = 'rgba(90,70,30,.35)'; ctx.lineWidth = Math.max(0.6, s * 0.02);
+    for (var k = 1; k < 4; k++) { ctx.beginPath(); ctx.moveTo(px + k * s * 0.1, py); ctx.lineTo(px + k * s * 0.1, py + s * 0.39); ctx.stroke(); }
+  }
+  if (lv > 1) { ctx.strokeStyle = 'rgba(80,150,210,.9)'; ctx.lineWidth = Math.max(1.5, s * 0.05); ctx.beginPath(); ctx.moveTo(-s * 0.65, -s * 0.02); ctx.lineTo(s * 0.65, -s * 0.02); ctx.stroke(); }
   ctx.restore();
 }
 function drawUnit(u, now) {
