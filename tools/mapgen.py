@@ -218,6 +218,7 @@ def build(spec):
     print(spec['name'], 'land', len(land), 'sea', len(cells) - len(land), 'cols', cols, 'rows', rows, fac, file=sys.stderr)
     for f in spec['factions']:
         assert f in caps, ('no capital', f)
+        assert any(r[2] == 3 and r[3] == f and len(r) > 7 and r[7] for r in out['cells']), ('başkent başka ülkede', spec['name'], f)
     return out
 
 def iber_owner(c, lon, lat):
@@ -526,8 +527,8 @@ def nordic_owner(c, lon, lat):
     return {'NOR': 'turkuaz', 'SWE': 'sari', 'FIN': 'buz', 'DNK': 'kirmizi', 'DEU': 'siyah', 'POL': 'turuncu',
             'EST': 'yesil', 'LVA': 'yesil', 'LTU': 'yesil'}.get(c, 'n')
 NORDIC = {
-  'name': 'İskandinavya ve Baltık', 'navy': True, 'box': (4.4, 51.9, 31.0, 63.6), 'klat': 57, 'target': 185, 'seed': 9, 'island_min': 1, 'foreign_void': True,
-  'sea_at': [(12.43, 56.03)], 'links': [((11.7, 55.34), (13.15, 56.72))],          # Øresund
+  'name': 'İskandinavya ve Baltık', 'navy': True, 'box': (4.4, 51.9, 31.0, 63.6), 'klat': 57, 'target': 270, 'seed': 9, 'island_min': 1, 'foreign_void': True,
+  'sea_at': [(10.56, 55.46), (11.18, 54.88)], 'links': [((9.33, 55.46), (11.8, 55.46))],   # Büyük Belt: su yolu ve geçit
   'countries': ['NOR', 'SWE', 'FIN', 'DNK', 'DEU', 'POL', 'EST', 'LVA', 'LTU'],
   'mt': [(6.0, 59.5, 12.5, 65.6), (12.5, 62.0, 14.5, 65.6)],
   'owner': nordic_owner,
@@ -535,7 +536,7 @@ NORDIC = {
   'titles': {'turkuaz': 'Krallık', 'sari': 'Krallık', 'kirmizi': 'Krallık', 'yesil': 'Birlik'},
   'caps': {'turkuaz': 'Oslo', 'sari': 'Stokholm', 'buz': 'Helsinki', 'kirmizi': 'Kopenhag', 'siyah': 'Berlin', 'turuncu': 'Varşova', 'yesil': 'Riga'},
   'places': [
-    ('Oslo', 10.75, 59.91, 3, 'city'), ('Stokholm', 18.07, 59.33, 3, 'city'), ('Helsinki', 24.94, 60.17, 3, 'city'), ('Kopenhag', 12.57, 55.68, 3, 'city'),
+    ('Oslo', 10.75, 59.91, 3, 'city'), ('Stokholm', 18.07, 59.33, 3, 'city'), ('Helsinki', 24.94, 60.17, 3, 'city'), ('Kopenhag', 12.2, 55.9, 3, 'city', 'kirmizi'),
     ('Berlin', 13.40, 52.52, 3, 'city'), ('Varşova', 21.01, 52.23, 3, 'city'), ('Hamburg', 9.99, 53.55, 2, 'city'), ('Gdańsk', 18.65, 54.35, 2, 'city'), ('Hannover', 9.73, 52.37, 1, 'city'), ('Riga', 24.10, 56.95, 3, 'city'),
     ('Bergen', 5.32, 60.39, 2, 'city'), ('Trondheim', 10.40, 63.43, 2, 'city'), ('Stavanger', 5.73, 58.97, 1, 'city'),
     ('Göteborg', 11.97, 57.71, 2, 'city'), ('Malmö', 13.00, 55.60, 1, 'city'), ('Sundsvall', 17.31, 62.39, 1, 'city'), ('Örebro', 15.21, 59.27, 1, 'city'),
@@ -547,13 +548,17 @@ NORDIC = {
     ('Kristiansand', 7.99, 58.15, 1, 'castle'), ('Linköping', 15.62, 58.41, 1, 'castle'), ('Visby', 18.29, 57.64, 1, 'castle'), ('Vaasa', 21.62, 63.10, 1, 'castle'),
     ('Esbjerg', 8.45, 55.47, 1, 'castle'), ('Schwerin', 11.41, 53.63, 1, 'castle'), ('Koszalin', 16.18, 54.19, 1, 'castle'), ('Klaipėda', 21.14, 55.71, 1, 'castle'),
     ('Lahti', 25.66, 60.98, 1, 'castle'), ('Białystok', 23.16, 53.13, 1, 'castle'), ('Magdeburg', 11.63, 52.12, 1, 'castle'),
+    ('Uppsala', 17.64, 59.86, 1, 'city'), ('Linköping', 15.62, 58.41, 1, 'city'), ('Vaasa', 21.62, 63.10, 1, 'city'), ('Jyväskylä', 25.75, 62.24, 1, 'castle'),
+    ('Ålesund', 6.15, 62.47, 1, 'city'), ('Lillehammer', 10.47, 61.12, 1, 'castle'), ('Pärnu', 24.50, 58.39, 1, 'city'), ('Daugavpils', 26.53, 55.87, 1, 'castle'),
+    ('Bydgoszcz', 18.00, 53.12, 1, 'city'), ('Lübeck', 10.69, 53.87, 1, 'castle'), ('Bornholm', 14.92, 55.13, 1, 'castle', 'kirmizi'), ('Visby', 18.30, 57.64, 1, 'castle'),
   ]}
 def med_owner(c, lon, lat):
     return {'ESP': 'sari', 'PRT': 'sari', 'FRA': 'mavi', 'ITA': 'yesil', 'GRC': 'turkuaz', 'ALB': 'turkuaz', 'MKD': 'turkuaz', 'TUR': 'kirmizi',
             'MAR': 'turuncu', 'DZA': 'kahve', 'TUN': 'mor', 'LBY': 'mor' if lon < 18.5 else 'siyah', 'EGY': 'siyah'}.get(c, 'n')
 MED = {
-  'name': 'Akdeniz', 'navy': True, 'box': (-10.2, 29.8, 36.2, 45.6), 'klat': 38, 'target': 225, 'seed': 10, 'island_min': 1, 'foreign_void': True,
-  'straits': ['İstanbul'], 'sea_at': [(-5.24, 36.57), (-4.41, 35.44), (28.66, 39.96), (27.01, 39.96)], 'links': [((-3.59, 36.57), (-6.07, 35.44))],   # Cebelitarık
+  'name': 'Akdeniz', 'navy': True, 'box': (-10.2, 29.8, 36.2, 45.6), 'klat': 38, 'target': 320, 'seed': 10, 'island_min': 1, 'foreign_void': True,
+  'straits': ['İstanbul'], 'sea_at': [(-5.43, 35.38), (27.93, 40.02), (26.57, 40.02), (15.68, 38.16)],
+  'links': [((-6.11, 36.31), (-6.11, 34.45)), ((27.25, 40.95), (27.25, 39.09)), ((14.31, 38.16), (16.36, 39.09))],   # Cebelitarık, Çanakkale, Messina geçitleri; Marmara
   'countries': ['ESP', 'PRT', 'FRA', 'ITA', 'GRC', 'ALB', 'MKD', 'TUR', 'MAR', 'DZA', 'TUN', 'LBY', 'EGY', 'HRV', 'BIH', 'MNE', 'CYP', 'MLT', 'BGR'],
   'mt': [(-5.5, 30.5, -2.0, 33.5), (2.5, 35.2, 7.5, 36.6), (-1.5, 42.4, 2.8, 43.0), (7.0, 44.0, 8.0, 45.6), (30.0, 36.6, 34.0, 37.6)],
   'owner': med_owner, 'styles': {'kirmizi': 'turk'},
@@ -575,6 +580,10 @@ MED = {
     ('Cebelitarık', -5.35, 36.14, 1, 'castle'), ('Nice', 7.27, 43.70, 1, 'castle'), ('Messina', 15.55, 38.19, 1, 'castle'), ('Rodos', 28.22, 36.43, 1, 'castle'),
     ('Çanakkale', 26.40, 40.15, 1, 'castle', 'kirmizi'), ('Tanca', -5.81, 35.76, 1, 'castle'), ('Annaba', 7.77, 36.90, 1, 'castle'), ('Bizerte', 9.87, 37.27, 1, 'castle'),
     ('Mersa Matruh', 27.24, 31.35, 1, 'castle'), ('Split', 16.44, 43.51, 1, 'castle'), ('Valletta', 14.51, 35.90, 1, 'castle'), ('Zaragoza', -0.88, 41.65, 1, 'castle'),
+    ('Agadir', -9.60, 30.42, 1, 'city', 'turuncu'), ('Meknes', -5.55, 33.89, 1, 'castle', 'turuncu'), ('Ouarzazate', -6.90, 30.92, 1, 'castle', 'turuncu'), ('Oujda', -1.91, 34.68, 1, 'city', 'turuncu'),
+    ('Tlemcen', -1.32, 34.88, 1, 'castle'), ('Sousse', 10.64, 35.83, 1, 'city'), ('Misrata', 15.09, 32.38, 1, 'city'), ('Málaga', -4.42, 36.72, 1, 'castle', 'n'),
+    ('Porto', -8.61, 41.15, 1, 'city', 'n'), ('Montpellier', 3.88, 43.61, 1, 'castle'), ('Floransa', 11.25, 43.77, 1, 'city'), ('Bursa', 29.06, 40.19, 1, 'city'),
+    ('Konya', 32.49, 37.87, 1, 'city', 'n'), ('Larissa', 22.42, 39.64, 1, 'castle'), ('Saraybosna', 18.41, 43.86, 1, 'city'), ('Asyut', 31.18, 27.18, 1, 'city'),
   ]}
 def steppe_owner(c, lon, lat):
     if c == 'MNG': return 'siyah' if lon < 97 else 'kahve'          # Naymanlar / Moğollar
