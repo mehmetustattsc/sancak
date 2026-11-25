@@ -1410,7 +1410,7 @@ function buildTerrain(G) {
   var x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
   G.cells.forEach(function (c) { x0 = Math.min(x0, c.x); y0 = Math.min(y0, c.y); x1 = Math.max(x1, c.x); y1 = Math.max(y1, c.y); });
   x0 -= 2; y0 -= 2; x1 += 2; y1 += 2;
-  var k = Math.min(72, 4000 / Math.max(x1 - x0, y1 - y0));
+  var k = Math.min(48, 2400 / Math.max(x1 - x0, y1 - y0)); // telefonda tuval belleği sınırlı
   var T = { x0: x0, y0: y0, w: x1 - x0, h: y1 - y0, k: k, map: G.era + ":" + G.level, own: '' };
   var cv = document.createElement('canvas'); cv.width = Math.ceil(T.w * k); cv.height = Math.ceil(T.h * k);
   var cx = cv.getContext('2d');
