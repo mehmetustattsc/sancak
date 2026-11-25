@@ -496,7 +496,8 @@ def africa_owner(c, lon, lat):
     if c == 'ITA': return 'mor'
     return 'n'                                   # Kıbrıs, Malta tarafsız
 AFRICA = {
-  'name': 'Kuzey Afrika ve Doğu Akdeniz', 'navy': True, 'box': (8.5, 29.4, 37.5, 41.4), 'klat': 35, 'target': 165, 'seed': 8, 'island_min': 1, 'foreign_void': True,
+  'name': 'Kuzey Afrika ve Doğu Akdeniz', 'navy': True, 'box': (8.5, 29.4, 37.5, 41.4), 'klat': 35, 'target': 245, 'seed': 8, 'island_min': 1, 'foreign_void': True,
+  'sea_at': [(27.0, 40.69)], 'links': [((27.5, 41.4), (26.5, 39.98)), ((15.0, 37.85), (16.5, 38.56))],   # Çanakkale ve Messina geçitleri
   'countries': ['TUN', 'LBY', 'EGY', 'ISR', 'PSE', 'LBN', 'SYR', 'JOR', 'TUR', 'CYP', 'GRC', 'ITA', 'MLT'],
   'mt': [(35.5, 33.0, 36.6, 34.6), (30.0, 36.5, 34.0, 37.6), (21.0, 38.5, 22.6, 40.2), (15.6, 39.2, 16.6, 40.6)],
   'owner': africa_owner, 'styles': {'kirmizi': 'turk'},
@@ -514,9 +515,12 @@ AFRICA = {
     ('Selanik', 22.94, 40.64, 2, 'city'), ('Patras', 21.73, 38.25, 1, 'city'), ('Kandiye', 25.13, 35.34, 1, 'city'),
     ('Palermo', 13.36, 38.12, 2, 'city'), ('Bari', 16.87, 41.12, 1, 'city'), ('Reggio', 15.65, 38.11, 1, 'city'),
     ('Adana', 35.32, 37.00, 1, 'city'), ('Kayseri', 35.49, 38.73, 1, 'city'), ('Lefkoşa', 33.36, 35.17, 1, 'city'),
-    ('Çanakkale', 26.40, 40.15, 1, 'castle'), ('Kütahya', 29.98, 39.42, 1, 'castle'), ('Akka', 35.07, 32.93, 2, 'castle'), ('Antakya', 36.16, 36.20, 1, 'castle'),
+    ('Çanakkale', 26.40, 40.15, 1, 'castle'), ('Kütahya', 29.98, 39.42, 1, 'castle', 'n'), ('Akka', 35.07, 32.93, 2, 'castle'), ('Antakya', 36.16, 36.20, 1, 'castle'),
     ('Süveyş', 32.55, 29.97, 1, 'castle'), ('Tobruk', 23.96, 32.08, 1, 'castle'), ('Bizerte', 9.87, 37.27, 1, 'castle'), ('Mistra', 22.37, 37.07, 1, 'castle'),
     ('Siraküza', 15.29, 37.07, 1, 'castle'), ('Valletta', 14.51, 35.90, 1, 'castle'), ('Rodos', 28.22, 36.43, 1, 'castle'),
+    ('Gabes', 10.10, 33.88, 1, 'city', 'mavi'), ('Kayrevan', 10.10, 35.68, 1, 'castle', 'mavi'), ('Sirte', 16.59, 31.21, 1, 'castle'), ('Tobruk', 23.96, 32.08, 1, 'castle'),
+    ('Süveyş', 32.55, 29.97, 1, 'castle'), ('Gazze', 34.47, 31.50, 1, 'city'), ('Beyrut', 35.50, 33.89, 1, 'city'), ('Humus', 36.72, 34.73, 1, 'castle'),
+    ('Adana', 35.32, 37.00, 1, 'city', 'yesil'), ('Lefkoşa', 33.36, 35.19, 1, 'city'), ('Rodos', 28.22, 36.43, 1, 'castle'), ('Valletta', 14.51, 35.90, 1, 'castle'),
   ]}
 def nordic_owner(c, lon, lat):
     return {'NOR': 'turkuaz', 'SWE': 'sari', 'FIN': 'buz', 'DNK': 'kirmizi', 'DEU': 'siyah', 'POL': 'turuncu',
@@ -621,7 +625,8 @@ def fareast_owner(c, lon, lat):
         return 'sari'                                                 # Qing
     return 'n'                                                        # Moğolistan tarafsız
 FAREAST = {
-  'name': 'Uzak Doğu 1904', 'navy': True, 'box': (112.5, 29.6, 146.0, 50.5), 'klat': 40, 'target': 175, 'seed': 12, 'island_min': 1, 'foreign_void': True,
+  'name': 'Uzak Doğu 1904', 'navy': True, 'box': (112.5, 29.6, 146.0, 50.5), 'klat': 40, 'target': 260, 'seed': 12, 'island_min': 1, 'foreign_void': True,
+  'links': [((140.07, 41.1), (141.64, 43.19))],   # Tsugaru geçidi
   'countries': ['JPN', 'KOR', 'PRK', 'RUS', 'CHN', 'MNG'],
   'mt': [(136.0, 35.0, 139.5, 37.5), (127.5, 38.5, 129.5, 41.5), (125.5, 41.0, 129.0, 43.0), (140.0, 38.5, 141.5, 41.0)],
   'owner': fareast_owner, 'styles': {'sari': 'cin', 'yesil': 'cin', 'turuncu': 'cin', 'kirmizi': 'cin', 'mavi': 'cin'},
@@ -640,6 +645,8 @@ FAREAST = {
     ('Port Arthur', 121.26, 38.81, 2, 'castle', 'buz'), ('Shimonoseki', 130.94, 33.95, 1, 'castle'), ('Hakodate', 140.73, 41.77, 1, 'castle'), ('Nagoya', 136.91, 35.18, 1, 'castle'),
     ('Sahalin', 142.73, 46.96, 1, 'castle'), ('Incheon', 126.70, 37.46, 1, 'castle'), ('Shanhaiguan', 119.75, 40.0, 1, 'castle'), ('Xuzhou', 117.18, 34.26, 1, 'castle'),
     ('Yingkou', 122.24, 40.67, 1, 'castle'),
+    ('Korsakov', 142.72, 46.64, 1, 'castle', 'buz'), ('Bikin', 134.27, 46.82, 1, 'city', 'buz'), ('Iman', 133.73, 45.90, 1, 'castle', 'buz'), ('Hamhung', 127.54, 39.92, 1, 'city', 'mavi'),
+    ('Kaesong', 126.55, 37.97, 1, 'castle', 'mavi'), ('Wuhan', 114.30, 30.59, 1, 'city', 'turuncu'), ('Hailar', 119.77, 49.21, 1, 'city', 'yesil'), ('Shenyang Kalesi', 123.0, 42.5, 1, 'castle'),
   ]}
 def samerica_owner(c, lon, lat):
     if c == 'BRA':

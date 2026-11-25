@@ -227,9 +227,9 @@ var ERA_LEVELS = [[
     story: 'Demiryolları, fabrikalar ve büyük ordular. Kanal’ın iki yakasında sekiz devlet. Ordun ikmal hattından kopmasın: şehirden ve kaleden 3 hücreden uzaklaşan birlik zayıflar ve iyileşmez.' },
   { map: 4, par: 55, limit: 115, aiEco: 0.85, grace: 3,
     story: 'Uçsuz bozkırlar, bataklıklar ve Karadeniz. Mesafeler uzun, ikmal her şey: şehirden şehre ilerle. Baltık’tan Kafkas eteklerine sekiz devlet.' },
-  { map: 7, par: 50, limit: 100, aiEco: 0.85, grace: 3,
+  { map: 7, par: 60, limit: 120, aiEco: 0.85, grace: 3,
     story: 'Nil, çöl kıyıları ve Doğu Akdeniz. Şehirler kıyıda, aralarında uzun yollar var: ikmal hattını denizle ve şehirlerle kur. Yedi devlet, tek deniz.' },
-  { map: 11, bonus: true, par: 40, limit: 90, aiEco: 1.0, grace: 3,
+  { map: 11, bonus: true, par: 50, limit: 110, aiEco: 1.0, grace: 3,
     story: 'Bonus sefer. 1904, Uzak Doğu: adalar, yarımada ve Mançurya ovaları. Altı güç Port Arthur ile denizin hâkimiyeti için çarpışıyor.' }
 ], [
   { map: 8, par: 40, limit: 90, aiEco: 0.85, grace: 3,
