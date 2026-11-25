@@ -82,7 +82,8 @@ def build(spec):
     land = {k for k, c in cells.items() if c['land']}
     if os.environ.get('DUMP') == spec['name']:   # hata ayıklama: DUMP='Harita adı' ile hücre koordinatları
         for k, c in sorted(cells.items()):
-            if (-8 < c['lon'] < -2 and 34.5 < c['lat'] < 37.8) or (24.5 < c['lon'] < 31.5 and 38 < c['lat'] < 42): print('  dump', k, round(c['lon'], 2), round(c['lat'], 2), c['land'], c.get('c'), file=sys.stderr)
+            bx = [float(v) for v in os.environ.get('DUMPBOX', '-8,34.5,-2,37.8').split(',')]
+            if bx[0] < c['lon'] < bx[2] and bx[1] < c['lat'] < bx[3]: print('  dump', k, round(c['lon'], 2), round(c['lat'], 2), c['land'], c.get('c'), file=sys.stderr)
     # drop tiny land components that are not wanted (or all islands on land-only maps)
     comp = {}; cid = 0
     for k in land:
@@ -258,7 +259,8 @@ def italy_owner(c, lon, lat):
         return 'turuncu'
     return 'n'
 ITALY = {
-  'name': 'İtalya ve Akdeniz', 'legacy': True, 'navy': True, 'box': (5.0, 36.6, 19.2, 47.9), 'target': 72, 'seed': 2,
+  'name': 'İtalya ve Akdeniz', 'legacy': True, 'navy': True, 'box': (5.0, 36.6, 19.2, 47.9), 'target': 130, 'seed': 2,
+  'sea_at': [(15.48, 38.26)], 'links': [((14.98, 37.62), (16.48, 38.26))],          # Messina Boğazı: su yolu ve geçit
   'countries': ['ITA', 'SMR', 'VAT', 'FRA', 'MCO', 'CHE', 'AUT', 'DEU', 'LIE', 'SVN', 'HRV', 'BIH', 'MNE'],
   'owner': italy_owner,
   'factions': ['yesil', 'sari', 'turuncu', 'mavi', 'siyah', 'bordo'],
@@ -276,6 +278,10 @@ ITALY = {
     ('Canossa', 10.46, 44.58, 1, 'castle'), ('Bard', 7.75, 45.61, 2, 'castle'), ('Klis', 16.52, 43.56, 1, 'castle'),
     ('Bled', 14.10, 46.37, 1, 'castle'), ('Erice', 12.59, 38.04, 1, 'castle'), ('Chillon', 6.93, 46.41, 1, 'castle'),
     ('Verona', 10.99, 45.44, 1, 'castle'),
+    ('Bologna', 11.34, 44.49, 1, 'city'), ('Pisa', 10.40, 43.72, 1, 'city'), ('Perugia', 12.39, 43.11, 1, 'castle'), ('Pescara', 14.21, 42.46, 1, 'city'),
+    ('Taranto', 17.24, 40.47, 1, 'city'), ('Cosenza', 16.25, 39.30, 1, 'castle'), ('Messina', 15.55, 38.19, 1, 'city'), ('Trieste', 13.77, 45.65, 1, 'city'),
+    ('Bolzano', 11.35, 46.50, 1, 'castle'), ('Bern', 7.45, 46.95, 1, 'city'), ('Toulon', 5.93, 43.12, 1, 'castle'), ('Avignon', 4.81, 43.95, 1, 'city'),
+    ('Graz', 15.44, 47.07, 1, 'city'), ('Saraybosna', 18.41, 43.86, 1, 'city'), ('Rijeka', 14.44, 45.33, 1, 'castle'), ('Bonifacio', 9.16, 41.39, 1, 'castle'),
   ]}
 
 def balkan_owner(c, lon, lat):

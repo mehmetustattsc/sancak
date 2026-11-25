@@ -214,7 +214,7 @@ var ANNEX_STEP = 1.25;                  // her ilhak bir sonrakini %25 pahalı y
 var ERA_LEVELS = [[
   { map: 0, par: 30, limit: 60, aiEco: 0.8, grace: 3,
     story: 'Yarımada altı sancağa bölünmüş. Kuzeyde dağlar, güneyde verimli ovalar. Tahtı, yarımadayı ilk birleştiren alır.' },
-  { map: 1, par: 38, limit: 70, aiEco: 0.85, grace: 3,
+  { map: 1, par: 48, limit: 90, aiEco: 0.85, grace: 3,
     story: 'Zengin şehirler, karlı Alpler ve Akdeniz. Denizi tutan kıyıları, dağları tutan geçitleri tutar.' },
   { map: 2, par: 45, limit: 100, aiEco: 0.85, grace: 3,
     story: 'Doğu ile Batı’nın kavşağı. Sekiz sancak, iki deniz ve bir Boğaz. İstanbul’u tutan iki denizin geçidini tutar; ama her sancak aynı şansla başlar.' },

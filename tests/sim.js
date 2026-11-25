@@ -17,6 +17,7 @@ function play(level, player, seed, idle, upgrades) {
 const N = +(process.argv[2] || 4);
 for (let level = 0; level < E.LEVELS.length; level++) {
   const m = M[E.LEVELS[level].map];
+  if (process.env.ONLY !== undefined && String(E.LEVELS[level].map) !== process.env.ONLY) continue;
   const out = m.factions.map(p => {
     let w = 0, ts = [], res = [];
     for (let s = 1; s <= N; s++) { const r = play(level, p, s); res.push(r.over); if (r.over === 1) { w++; ts.push(r.turn); } }
