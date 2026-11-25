@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 from matplotlib.patches import RegularPolygon
 COL={'mavi':'#2f6fd6','siyah':'#3a3a40','kirmizi':'#c8322f','sari':'#e0b322','turkuaz':'#1fa5a0','yesil':'#3c9a3c','bordo':'#8c2042','turuncu':'#e07b22','mor':'#7a3fb0','kahve':'#8a5a2b','buz':'#8fc8e8','n':'#b9b2a5'}
 M=json.load(open('src/maps.json'))
+if len(sys.argv)>2: M=[M[int(i)] for i in sys.argv[2].split(',')]
+if len(M)==1: M=M*2
 fig,axs=plt.subplots(1,len(M),figsize=(9*len(M),11))
 for ax,m in zip(axs,M):
   for c in m['cells']:

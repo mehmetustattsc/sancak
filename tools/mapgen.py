@@ -230,7 +230,7 @@ def iber_owner(c, lon, lat):
         return 'sari'
     return 'n'
 IBER = {
-  'name': 'İber Yarımadası', 'legacy': True, 'navy': True, 'box': (-9.7, 35.9, 3.6, 44.0), 'target': 64, 'seed': 1, 'island_min': 1, 'pad_w': 1,
+  'name': 'İber Yarımadası', 'legacy': True, 'navy': True, 'box': (-9.7, 35.9, 3.6, 44.0), 'target': 115, 'seed': 1, 'island_min': 1, 'pad_w': 1,
   'countries': ['ESP', 'PRT', 'FRA', 'AND'],
   'owner': iber_owner,
   'factions': ['sari', 'yesil', 'kirmizi', 'kahve', 'turkuaz', 'mavi'],
@@ -240,12 +240,15 @@ IBER = {
     ('Lizbon', -9.14, 38.72, 3, 'city'), ('Toulouse', 1.44, 43.60, 3, 'city'),
     ('Sevilla', -5.98, 37.39, 2, 'city'), ('Gırnata', -3.60, 37.18, 2, 'city'), ('Barselona', 2.17, 41.39, 2, 'city'),
     ('Valensiya', -0.38, 39.47, 2, 'city'), ('Burgos', -3.70, 42.34, 2, 'city'), ('Porto', -8.61, 41.15, 2, 'city'),
-    ('Santiago', -8.54, 42.88, 1, 'city'), ('Valladolid', -4.72, 41.65, 1, 'city'),
-    ('Murcia', -1.13, 37.99, 1, 'city'), ('Badajoz', -6.97, 38.88, 1, 'city'), ('Pamplona', -1.64, 42.81, 1, 'city'),
+    ('Santiago', -8.54, 42.88, 1, 'city'), ('Valladolid', -4.72, 41.65, 1, 'city', 'kahve'),
+    ('Murcia', -1.13, 37.99, 1, 'city'), ('Badajoz', -6.97, 38.88, 1, 'city'), ('Pamplona', -1.64, 42.81, 1, 'city', 'mavi'),
     ('Montpellier', 3.88, 43.61, 1, 'city'), ('Coimbra', -8.43, 40.20, 1, 'city'), ('Palma', 2.65, 39.57, 1, 'city'),
     ('Segovia', -4.12, 40.95, 1, 'castle'), ('Calatrava', -3.83, 38.90, 1, 'castle'), ('Loarre', -0.61, 42.33, 1, 'castle'),
     ('Carcassonne', 2.35, 43.21, 2, 'castle'), ('Almería', -2.47, 36.84, 1, 'castle'), ('Tarifa', -5.60, 36.01, 1, 'castle'),
     ('Peñíscola', 0.40, 40.36, 1, 'castle'), ('Guimarães', -8.29, 41.44, 1, 'castle'), ('Trujillo', -5.88, 39.46, 1, 'castle'),
+    ('Salamanca', -5.66, 40.97, 1, 'city', 'kahve'), ('Oviedo', -5.85, 43.36, 1, 'city'), ('Bilbao', -2.93, 43.26, 1, 'city'), ('Cádiz', -6.29, 36.53, 1, 'city'),
+    ('Málaga', -4.42, 36.72, 1, 'city'), ('Cuenca', -2.13, 40.07, 1, 'castle', 'kirmizi'), ('Bordeaux', -0.58, 44.84, 1, 'city'), ('Faro', -7.93, 37.02, 1, 'castle'),
+    ('Lleida', 0.62, 41.62, 1, 'castle'), ('Albacete', -1.86, 38.99, 1, 'city'), ('Évora', -7.91, 38.57, 1, 'castle'), ('Jaén', -3.79, 37.78, 1, 'castle'),
   ]}
 
 def italy_owner(c, lon, lat):

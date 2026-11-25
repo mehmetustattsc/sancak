@@ -212,7 +212,7 @@ var DIFF_ECO = [0.88, 1, 1.15];          // zorluk: bot ekonomisi
 var DIFF_MEDAL = [0.75, 1, 1.5];        // zorluk: madalya çarpanı
 var ANNEX_STEP = 1.25;                  // her ilhak bir sonrakini %25 pahalı yapar
 var ERA_LEVELS = [[
-  { map: 0, par: 30, limit: 60, aiEco: 0.8, grace: 3,
+  { map: 0, par: 38, limit: 75, aiEco: 0.8, grace: 3,
     story: 'Yarımada altı sancağa bölünmüş. Kuzeyde dağlar, güneyde verimli ovalar. Tahtı, yarımadayı ilk birleştiren alır.' },
   { map: 1, par: 48, limit: 90, aiEco: 0.85, grace: 3,
     story: 'Zengin şehirler, karlı Alpler ve Akdeniz. Denizi tutan kıyıları, dağları tutan geçitleri tutar.' },
