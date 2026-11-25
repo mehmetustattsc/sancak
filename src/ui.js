@@ -319,10 +319,6 @@ function legendsHTML() {
           '<div><span class="k">Yara</span>Birliği yok olursa 5 tur dinlenir</div>'
           : '<div class="xp"><div class="bar"><i style="width:' + pct + '%"></i></div><span>' + L.hint + (L.goal.n > 1 ? ' (' + pr + '/' + L.goal.n + ')' : '') + '</span></div>') +
         '</div></div>';
-    }).join('') + '</div>' +
-    '<div class="spyrow"><span class="tl">' + I.dagger + '<em>' + I.coin + ASSN_COST + '</em></span>' + [['city', I.city], ['smith', I.hammer], ['port', I.anchor]].map(function (w) {
-      var r = sabInfo(G, G.player, c.i, w[0]);
-      return '<button class="trb' + (r.ok ? '' : ' off') + '" data-sab="' + w[0] + '" data-c="' + c.i + '"' + (r.ok ? '' : ' data-why="' + esc(r.why) + '"') + '>' + w[1] + '−1<small>%' + Math.round(r.chance * 100) + '</small></button>';
     }).join('') + '</div>';
 }
 function renderGenerals() {
@@ -623,7 +619,11 @@ function spyRow(G, c) {
     var r = spyInfo(G, G.player, c.i, m);
     return '<button class="trb' + (r.ok ? '' : ' off') + '" data-spy="' + m + '" data-c="' + c.i + '"' + (r.ok ? '' : ' data-why="' + esc(r.why) + '"') + '>' +
       (m === 'steal' ? I.coin + '+' + r.gain : I.fire) + '<small>%' + Math.round(r.chance * 100) + '</small></button>';
-  }).join('') + '</div>';
+  }).join('') + '</div>' +
+    '<div class="spyrow"><span class="tl">' + I.dagger + '<em>' + I.coin + ASSN_COST + '</em></span>' + [['city', I.city], ['smith', I.hammer], ['port', I.anchor]].map(function (w) {
+      var r = sabInfo(G, G.player, c.i, w[0]);
+      return '<button class="trb' + (r.ok ? '' : ' off') + '" data-sab="' + w[0] + '" data-c="' + c.i + '"' + (r.ok ? '' : ' data-why="' + esc(r.why) + '"') + '>' + w[1] + '−1<small>%' + Math.round(r.chance * 100) + '</small></button>';
+    }).join('') + '</div>';
 }
 /* moral: sarı yukarı ok yükseliş, mavi aşağı ok düşüş, 4+ düşmanla çevriliyse iki mavi ok */
 function moraleTag(G, u, named) {

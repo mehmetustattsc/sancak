@@ -11,7 +11,7 @@ async def main():
         br = await p.chromium.launch(**kw)
         ctx = await br.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=2, has_touch=True)
         pg = await ctx.new_page(); errs = []
-        pg.on('pageerror', lambda e: errs.append(str(e)))
+        pg.on('pageerror', lambda e: errs.append(str(e) + ' @ ' + str(e.stack)[:300]))
         await pg.route('**/fonts.googleapis.com/**', lambda r: r.abort())
         await pg.add_init_script('window.__sancakNoOffers = true')
         await pg.goto('file://' + os.path.join(ROOT, 'web', 'index.html')); await pg.wait_for_timeout(500)
@@ -107,6 +107,6 @@ async def main():
         await pg.click('#tabbar [data-go="gen"]'); await pg.wait_for_timeout(200); await shot('17-gen')
         await pg.click('#tabbar [data-go="help"]'); await pg.wait_for_timeout(200); await shot('18-help')
         print('HATALAR', errs)
-        assert not errs
+        assert not errs, errs
         await br.close()
 asyncio.run(main())
