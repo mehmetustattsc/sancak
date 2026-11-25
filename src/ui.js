@@ -367,7 +367,7 @@ function renderHelp() {
     sec(I.handshake, 'Diplomasi ve pazarlık', '<ul><li>Savaş ya da ittifak (' + ALLY_TURNS + ' tur, en fazla ' + MAX_ALLIES + ' müttefik). Müttefikin boş şehrine girmek ihanettir.</li><li>Pazarlık masasında her teklifi yapabilirsin. İpucu şansını gösterir; karşı taraf düşünüp cevap verir. Sana ihtiyacı ne kadar çoksa eksik teklifi o kadar kabul eder.</li><li>Gelen tekliflere <b>Pazarlık</b> ile karşı teklif verebilirsin.</li><li>Çok zayıf ülkeyi altınla <b>bağlı krallık</b> yapabilirsin; her ilhak bir sonrakini %25 pahalılaştırır.</li></ul>') +
     sec(I.crown, 'Generaller ve efsaneler', '<ul><li>Sefere en fazla ' + MAX_GENS + ' general seç. General birliğini güçlendirir; birlik yok olursa general yaralanır (3 tur, efsane 5 tur).</li><li>Efsaneler bir başarıyla sürpriz olarak katılır, her çağda kullanılır. Koşulları Generaller sekmesinde.</li></ul>') +
     sec(I.jet, 'Modern Çağ: hava saldırısı', '<p>Her tur bir kez, şehirlerinin ' + AIR_RANGE + ' hücre çevresindeki bir düşmana dokun ve uçak düğmesine bas. Karşılık gelmez; sığınaktakine yarı hasar.</p>') +
-    sec(I.medal, 'Kazanmak ve madalyalar', '<ul><li>Şehirlerin %60’ını al ya da bütün rakipleri yık. Zaferden sonra istersen fethe devam edip istediğin an bitirebilirsin.</li><li>Madalyalar Karargâh’ta kalıcı geliştirmeye ve general eğitimine harcanır. Zor seviye ×1,5, bonus sefer ×1,5.</li><li>Bonus sefer, çağın bütün seferleri kazanılınca açılır. 3 kayıt yerin var.</li></ul>');
+    sec(I.medal, 'Kazanmak ve madalyalar', '<ul><li>Şehirlerin %60’ını al ya da bütün rakipleri yık. Bir devletin son şehrini alan, kalan bütün topraklarını (kale, tarla, arazi) da alır. Zaferden sonra istersen fethe devam edip istediğin an bitirebilirsin.</li><li>Madalyalar Karargâh’ta kalıcı geliştirmeye ve general eğitimine harcanır. Zor seviye ×1,5, bonus sefer ×1,5.</li><li>Bonus sefer, çağın bütün seferleri kazanılınca açılır. 3 kayıt yerin var.</li></ul>');
 }
 function renderSettings() {
   $('#scr-set .wrap').innerHTML = '<div class="topbar"><h2>Ayarlar</h2></div>' +
@@ -1006,7 +1006,7 @@ function animEvent(e, sp) {
     if (G.cells[e.c].nm) fx({ k: 'text', c: e.c, txt: G.cells[e.c].nm, col: '#fff' });
     d = 300 / sp;
   } else if (e.t === 'elim') {
-    toast(factionName(G, e.f) + ' yıkıldı!'); d = 700 / sp;
+    toast(factionName(G, e.f) + ' yıkıldı!' + (e.by >= 0 ? ' Topraklar → ' + factionName(G, e.by) : '')); d = 700 / sp; dirty = true;
   } else if (e.t === 'wounded') {
     var gg = G.factions[e.f].generals.filter(function (x) { return x.id === e.gen; })[0];
     if (gg && e.f === G.player) toast(gg.name + ' yaralandı');
@@ -1061,7 +1061,7 @@ function noteLog(G) {
       if (e.t === 'attack' && e.af !== P && e.killA && e.df === P) S.kills++;
     } else if (e.t === 'ally' && (e.a === P || e.b === P)) S.notes.push(I.handshake + factionName(G, e.a === P ? e.b : e.a) + ' ile ittifak');
     else if (e.t === 'betray' && e.b === P) S.notes.push(I.skull + factionName(G, e.a) + ' ihanet etti');
-    else if (e.t === 'elim') S.notes.push(I.flag + factionName(G, e.f) + ' yıkıldı');
+    else if (e.t === 'elim') S.notes.push(I.flag + factionName(G, e.f) + ' yıkıldı' + (e.by >= 0 ? ' → ' + factionName(G, e.by) : ''));
   });
 }
 function showTurnSummary() {

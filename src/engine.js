@@ -494,7 +494,7 @@ function capture(G, c, fi) {
   if (fi === G.player && c.t === 4 && from !== fi) G.stats.forts = (G.stats.forts || 0) + 1;
   if (from >= 0 && c.t === 3) { G.recentLoss = G.recentLoss || []; G.recentLoss[from] = G.turn; }
   G.log.push({ t: 'capture', c: c.i, from: from, to: fi });
-  checkElim(G, from);
+  checkElim(G, from, fi);
   checkWin(G);
 }
 var WIN_SHARE = 0.6; // şehirlerin %60'ı ya da bütün rakiplerin yıkılması
@@ -508,7 +508,8 @@ function checkWin(G) {
   var s = cityShare(G, G.player);
   if (s.mine >= s.need) G.over = 1;
 }
-function checkElim(G, fi) {
+/* yıkılan devletin kalan toprakları (kale, arazi, çiftlik) son şehrini alana geçer */
+function checkElim(G, fi, by) {
   if (fi < 0) return;
   var f = G.factions[fi];
   if (!f.alive) return;
@@ -516,8 +517,13 @@ function checkElim(G, fi) {
   if (has) return;
   f.alive = false;
   G.units = G.units.filter(function (u) { return u.f !== fi; });
-  G.cells.forEach(function (c) { if (c.f === fi) c.f = -1; });
-  G.log.push({ t: 'elim', f: fi });
+  var heir = (by !== undefined && by >= 0 && by !== fi && G.factions[by].alive) ? by : -1;
+  G.cells.forEach(function (c) {
+    if (c.f !== fi) return;
+    c.f = heir;
+    if (heir >= 0 && heir === G.player && c.t === 4) G.stats.forts = (G.stats.forts || 0) + 1;
+  });
+  G.log.push({ t: 'elim', f: fi, by: heir });
   if (fi === G.player) G.over = -1;
   else if (G.player >= 0 && G.factions.every(function (x, i) { return i === G.player || !x.alive; })) G.over = 1;
 }
@@ -578,7 +584,7 @@ function cedeCell(G, ci, to) {
   group.forEach(function (x) { x.f = to; });
   group.forEach(function (x) { var u = unitAt(G, x.i); if (u && u.f === from) relocate(G, u); });
   G.log.push({ t: 'cede', c: ci, from: from, to: to });
-  checkElim(G, from);
+  checkElim(G, from, to);
 }
 function relocate(G, u) {
   var seen = {}, q = [u.c]; seen[u.c] = 1;
