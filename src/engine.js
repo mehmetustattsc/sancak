@@ -271,6 +271,7 @@ function newGame(o) {
     if (c[2]) {
       cell.f = c[3] === 'n' ? -1 : fidx[c[3]]; cell.mt = c[4]; cell.lv = c[5]; cell.nm = c[6] || ''; cell.cap = c[7] || 0; if (c[8]) cell.strait = 1;
       cell.smith = 0; cell.port = 0; cell.o0 = cell.f;
+      var rs = RES[M.name] && RES[M.name][cell.nm]; if (rs && cell.t === 3) cell.res = rs;
     } else { cell.f = -1; }
     G.cells.push(cell);
   });
@@ -347,14 +348,34 @@ function unitRange(G, u) {
   return r;
 }
 
+/* ---------- değerli şehirler: ticaret merkezi (t), altın madeni (a), demir madeni (d); harita adına göre sabit ----------
+   Başkentlerde yok; çoğu sınırlarda ve tarafsız yerlerde. Bolu her haritada altın madeni (sahibinin isteği). */
+var RES = {
+  'İber Yarımadası': { Barselona: 't', Sevilla: 't', Porto: 't', Palma: 't', Badajoz: 'a', Oviedo: 'd', Pamplona: 'd' },
+  'İtalya ve Akdeniz': { Venedik: 't', Cenova: 't', Ragusa: 't', Palermo: 't', Sassari: 'a', Graz: 'd', Grenoble: 'd' },
+  'Balkanlar ve Anadolu': { Selanik: 't', Ragusa: 't', 'İzmir': 't', Kalas: 't', Kandiye: 't', 'Draç': 't', Bolu: 'a', 'Üsküp': 'a', Mora: 'a', Sofya: 'd' },
+  'Batı Avrupa': { Amsterdam: 't', Hamburg: 't', Bordeaux: 't', Bristol: 't', Venedik: 't', 'Zürih': 't', Dresden: 'a', Salzburg: 'a', 'Nürnberg': 'd', Limoges: 'd' },
+  'Doğu Cephesi ve Kafkasya': { Danzig: 't', Trabzon: 't', 'Köstence': 't', Minsk: 't', 'Çaritsin': 't', Kolojvar: 'a', Sofya: 'a', Yekaterinoslav: 'd', Voronej: 'd' },
+  'Avrupa': { Amsterdam: 't', Hamburg: 't', Marsilya: 't', Barselona: 't', Venedik: 't', Selanik: 't', 'Gdańsk': 't', 'İzmir': 't', Kluj: 'a', Bolu: 'a', Glasgow: 'd', Graz: 'd', Saraybosna: 'd' },
+  'Britanya ve Kuzey Denizleri': { Gent: 't', Hamburg: 't', Norwich: 't', Glasgow: 't', Waterford: 't', Ribe: 't', Oslo: 'a', Cardiff: 'd' },
+  'Kuzey Afrika ve Doğu Akdeniz': { 'İskenderiye': 't', Halep: 't', Sfaks: 't', Bingazi: 't', 'İzmir': 't', Kandiye: 't', Bari: 't', 'Lefkoşa': 'a', Bolu: 'a', Kayseri: 'd' },
+  'İskandinavya ve Baltık': { Bergen: 't', 'Gdańsk': 't', Hamburg: 't', Tallinn: 't', Aarhus: 't', Turku: 't', 'Örebro': 'd', Trondheim: 'a' },
+  'Akdeniz': { 'Port Said': 't', Venedik: 't', Barselona: 't', Bordeaux: 't', 'İzmir': 't', Selanik: 't', Sfaks: 't', 'Marakeş': 't', Konstantin: 'd', Saraybosna: 'd', Sofya: 'a', Bolu: 'a' },
+  'Moğol Bozkırı': { Buhara: 't', 'Kaşgar': 't', Turfan: 't', Ganzhou: 't', Belh: 't', Kaifeng: 't', Saray: 't', Ulanbatur: 'a', Hotan: 'a', Taiyuan: 'd' },
+  'Uzak Doğu 1904': { Qingdao: 't', Busan: 't', Osaka: 't', Harbin: 't', Hangzhou: 't', 'Blagoveşçensk': 'a', Pyongyang: 'd' },
+  'Güney Amerika': { Rosario: 't', Guayaquil: 't', Barranquilla: 't', Recife: 't', 'Asunción': 't', Manaus: 't', 'Belo Horizonte': 'a', Cochabamba: 'a', Georgetown: 'a', Antofagasta: 'd', Maracaibo: 'd' }
+};
+var RES_GOLD = { t: 8, a: 12, d: 0 }, RES_IRON = { t: 0, a: 0, d: 3 };
+function resGold(c) { return c.res ? RES_GOLD[c.res] + (c.res === 't' && c.port ? 4 : 0) : 0; }
+
 /* ---------- ekonomi ---------- */
 function income(G, fi) {
   var g = 0, food = 0, iron = 0, up = 0;
   G.cells.forEach(function (c) {
     if (c.f !== fi || !c.t) return;
     if (c.t === 3) {
-      if (c.fresh) { g += (CITY_INCOME[c.lv] + c.port * 2) / 10; return; }
-      g += CITY_INCOME[c.lv]; food += 1; iron += c.smith; g += c.port * 2;
+      if (c.fresh) { g += (CITY_INCOME[c.lv] + c.port * 2 + resGold(c)) / 10; return; }
+      g += CITY_INCOME[c.lv] + resGold(c); food += 1; iron += c.smith + (c.res ? RES_IRON[c.res] : 0); g += c.port * 2;
     }
     if (c.t === 2) food += FARM_FOOD[c.lv] + upg(G, fi, 'tarim');
   });
@@ -569,7 +590,7 @@ function revolts(G, fi) {
     }
   });
 }
-function spyGain(G, c) { return Math.round((CITY_INCOME[c.lv] + c.port * 2) * G.factions[c.f].eco * 2); }
+function spyGain(G, c) { return Math.round((CITY_INCOME[c.lv] + c.port * 2 + resGold(c)) * G.factions[c.f].eco * 2); }
 function spyInfo(G, fi, ci, m) {
   var c = G.cells[ci], f = G.factions[fi], r = { ok: false, cost: SPY_COST, chance: 0, gain: 0 };
   if (!c || c.t !== 3 || c.f < 0 || c.f === fi) { r.why = 'Casus yalnız düşman şehrine'; return r; }
@@ -734,7 +755,7 @@ function power(G, fi) {
   return Math.max(1, n);
 }
 function cellValue(G, c) {
-  if (c.t === 3) return 60 + 25 * c.lv + 20 * c.smith + 15 * c.port;
+  if (c.t === 3) return 60 + 25 * c.lv + 20 * c.smith + 15 * c.port + (c.res ? 45 : 0);
   if (c.t === 4) return 45 + 15 * c.lv;
   return 0;
 }
@@ -1410,7 +1431,7 @@ function aiUnit(G, u, DM, DMn, R) {
     var d = D[ci] !== undefined ? D[ci] : 999;
     var c = G.cells[ci];
     var hostile = c.t && foe(G, c.f, fi);
-    var sc = d - (hostile ? 0.6 : 0) - (c.t === 3 && hostile ? 3 : 0) + (R() * 0.3);
+    var sc = d - (hostile ? 0.6 : 0) - (c.t === 3 && hostile ? 3 + (c.res ? 1.5 : 0) : 0) + (R() * 0.3);
     if (!isNaval(u) && !res[ci].emb && enemyAdj(G, ci, fi) && u.hp < 60) sc += 1.5;
     if (!bestM || sc < bestM.sc) bestM = { sc: sc, ci: ci };
   });
@@ -1440,7 +1461,7 @@ function takeEmpty(G, u, res) {
     if (c.t !== 3 && c.t !== 4) return;
     // müttefike ihanet: yalnız çok güçlüyken ve ara sıra
     if (isAlly(G, u.f, c.f) && !(power(G, u.f) >= 2 * power(G, c.f) && G.turn % 4 === 0)) return;
-    var sc = (c.t === 3 ? 10 : 5) + (c.cap ? 5 : 0) - r.cost;
+    var sc = (c.t === 3 ? 10 : 5) + (c.cap ? 5 : 0) + (c.res ? 3 : 0) - r.cost;
     if (!best || sc > best.sc) best = { sc: sc, ci: ci };
   });
   return best ? best.ci : null;
@@ -1451,5 +1472,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, TOWERS: TOWERS, TRADE_MAX: TRADE_MAX, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, spyInfo: spyInfo, sabInfo: sabInfo, sabotage: sabotage, sendSpy: sendSpy, assnInfo: assnInfo, assassinate: assassinate, revoltChance: revoltChance, angry: angry, SPY_COST: SPY_COST, ASSN_COST: ASSN_COST, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, TOWERS: TOWERS, TRADE_MAX: TRADE_MAX, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, spyInfo: spyInfo, RES: RES, resGold: resGold, RES_IRON: RES_IRON, sabInfo: sabInfo, sabotage: sabotage, sendSpy: sendSpy, assnInfo: assnInfo, assassinate: assassinate, revoltChance: revoltChance, angry: angry, SPY_COST: SPY_COST, ASSN_COST: ASSN_COST, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
 };

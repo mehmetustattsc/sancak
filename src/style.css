@@ -672,3 +672,4 @@ p.bad { color: #ff8a6a; }
 .spyrow .tl em svg { width: 14px; height: 14px; }
 .spyrow .trb small { margin-left: 4px; opacity: .8; font-size: 11px; }
 .facts .bad { color: #ff8a6a; } .facts .good { color: #e8c977; }
+.facts .res { color: #e8c977; white-space: nowrap; }

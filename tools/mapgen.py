@@ -409,6 +409,7 @@ EAST = {
     ('Poltava', 34.55, 49.59, 1, 'city'), ('Çernigov', 31.29, 51.49, 1, 'city'), ('Zaporoje', 35.14, 47.84, 1, 'castle'), ('Herson', 32.62, 46.64, 1, 'city'), ('Akmescit', 34.10, 44.95, 1, 'city'),
     ('Samsun', 36.33, 41.29, 1, 'city'), ('Tiflis', 44.79, 41.72, 1, 'city', 'n'), ('Batum', 41.64, 41.65, 1, 'castle'), ('Debrecen', 21.63, 47.53, 1, 'city'), ('Košice', 21.26, 48.72, 1, 'castle'),
     ('Volgograd Kalesi', 44.0, 49.5, 1, 'castle'), ('Penza', 45.0, 53.2, 1, 'city', 'n'), ('Tambov', 41.45, 52.72, 1, 'city', 'turuncu'),
+    ('Bolu', 31.61, 40.73, 1, 'city'),
   ]}
 def europe_owner(c, lon, lat):
     return {'ESP': 'sari', 'PRT': 'sari', 'FRA': 'mavi', 'GBR': 'buz', 'IRL': 'buz', 'DEU': 'siyah', 'POL': 'turuncu',
@@ -449,6 +450,7 @@ EUROPE = {
     ('Stuttgart', 9.18, 48.78, 1, 'city'), ('Königsberg', 20.51, 54.71, 1, 'castle'), ('Lviv', 24.03, 49.84, 1, 'city'), ('Linz', 14.29, 48.31, 1, 'castle'), ('Debrecen', 21.63, 47.53, 1, 'city'),
     ('Timişoara', 21.23, 45.75, 1, 'city'), ('Niş', 21.90, 43.32, 1, 'castle', 'mor'), ('Konya', 32.49, 37.87, 1, 'city'), ('Samsun', 36.33, 41.29, 1, 'city', 'n'), ('Kayseri', 35.49, 38.73, 1, 'castle', 'n'),
     ('Cagliari', 9.11, 39.22, 1, 'city'), ('Ajaccio', 8.74, 41.92, 1, 'castle'), ('Patras', 21.73, 38.25, 1, 'city'), ('Kişinev', 28.86, 47.01, 1, 'city'),
+    ('Bolu', 31.61, 40.73, 1, 'city'),
   ]}
 def north_owner(c, lon, lat):
     if c == 'GBR':
@@ -526,6 +528,7 @@ AFRICA = {
     ('Gabes', 10.10, 33.88, 1, 'city', 'mavi'), ('Kayrevan', 10.10, 35.68, 1, 'castle', 'mavi'), ('Sirte', 16.59, 31.21, 1, 'castle'), ('Tobruk', 23.96, 32.08, 1, 'castle'),
     ('Süveyş', 32.55, 29.97, 1, 'castle'), ('Gazze', 34.47, 31.50, 1, 'city'), ('Beyrut', 35.50, 33.89, 1, 'city'), ('Humus', 36.72, 34.73, 1, 'castle'),
     ('Adana', 35.32, 37.00, 1, 'city', 'yesil'), ('Lefkoşa', 33.36, 35.19, 1, 'city'), ('Rodos', 28.22, 36.43, 1, 'castle'), ('Valletta', 14.51, 35.90, 1, 'castle'),
+    ('Bolu', 31.61, 40.73, 1, 'city'),
   ]}
 def nordic_owner(c, lon, lat):
     return {'NOR': 'turkuaz', 'SWE': 'sari', 'FIN': 'buz', 'DNK': 'kirmizi', 'DEU': 'siyah', 'POL': 'turuncu',
@@ -588,6 +591,7 @@ MED = {
     ('Tlemcen', -1.32, 34.88, 1, 'castle'), ('Sousse', 10.64, 35.83, 1, 'city'), ('Misrata', 15.09, 32.38, 1, 'city'), ('Málaga', -4.42, 36.72, 1, 'castle', 'n'),
     ('Porto', -8.61, 41.15, 1, 'city', 'n'), ('Montpellier', 3.88, 43.61, 1, 'castle'), ('Floransa', 11.25, 43.77, 1, 'city'), ('Bursa', 29.06, 40.19, 1, 'city'),
     ('Konya', 32.49, 37.87, 1, 'city', 'n'), ('Larissa', 22.42, 39.64, 1, 'castle'), ('Saraybosna', 18.41, 43.86, 1, 'city'), ('Asyut', 31.18, 27.18, 1, 'city'),
+    ('Bolu', 31.61, 40.73, 1, 'city'),
   ]}
 def steppe_owner(c, lon, lat):
     if c == 'MNG': return 'siyah' if lon < 97 else 'kahve'          # Naymanlar / Moğollar

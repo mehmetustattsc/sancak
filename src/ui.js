@@ -362,7 +362,7 @@ function renderHelp() {
   var sec = function (ic, title, body, open) { return '<details class="gd"' + (open ? ' open' : '') + '><summary><span class="gi">' + ic + '</span>' + title + '</summary><div class="gb">' + body + '</div></details>'; };
   $('#scr-help .wrap').innerHTML = '<div class="topbar"><h2>Rehber</h2></div>' +
     sec(I.flag, 'Tur nasıl oynanır', '<ol><li>Birliğine dokun: gidebileceği yerler açılır, saldırabileceği düşmanlar kırmızı halkalı.</li><li>Boş yere dokun: yürür. Düşmana dokun: tahmin çıkar, <b>Saldır</b>.</li><li>Şehrine dokun: asker al, geliştir. Boş arazine dokun: kule kur.</li><li>Geri al düğmesi açıksa son hamleni geri alabilirsin. Saldırı ve anlaşmalar geri alınmaz.</li><li>Bitince <b>Devam et</b>. Botların turundan sonra kısa bir özet gelir.</li></ol>', true) +
-    sec(I.coin, 'Kaynaklar ve ticaret', '<ul><li><b>Altın</b> şehirlerden, <b>gıda</b> tarla ve şehirlerden, <b>demir</b> demirciden gelir. Her birlik turda 1 gıda yer; gıda biterse herkes can kaybeder.</li><li><b>Ordu sınırı:</b> 2 + şehir başına 2 + kale başına 1 (kuleler sayılmaz).</li><li><b>Ticaret</b> başkentte, turda en fazla ' + TRADE_MAX + ' takas. İlk ' + TRADE_FAIR + ' takas adil, sonrakilerde tüccar her seferinde %25 daha pahalı (kırmızı çerçeve).</li></ul>') +
+    sec(I.coin, 'Kaynaklar ve ticaret', '<ul><li>Bazı şehirler değerlidir: <b>⚖ ticaret merkezi</b> (limanı varsa daha çok altın), <b>◆ altın madeni</b> ve <b>⛏ demir madeni</b>. Kimin elindeyse ona ek gelir verir.</li><li><b>Altın</b> şehirlerden, <b>gıda</b> tarla ve şehirlerden, <b>demir</b> demirciden gelir. Her birlik turda 1 gıda yer; gıda biterse herkes can kaybeder.</li><li><b>Ordu sınırı:</b> 2 + şehir başına 2 + kale başına 1 (kuleler sayılmaz).</li><li><b>Ticaret</b> başkentte, turda en fazla ' + TRADE_MAX + ' takas. İlk ' + TRADE_FAIR + ' takas adil, sonrakilerde tüccar her seferinde %25 daha pahalı (kırmızı çerçeve).</li></ul>') +
     sec(I.sword, 'Savaş', '<ul><li>Üçgen: yaya atlıyı, atlı menzilliyi, menzilli yayayı yener (×1,5).</li><li>Menzilliler uzaktan vurur, uzaktan vurulan karşılık veremez.</li><li>Dağ, şehir ve kale savunma verir. Yaralı birlik daha zayıf vurur.</li><li>Atlı düşmanı yok ederse zincirleme saldırmaya ve ilerlemeye devam eder.</li><li>Kendi birliklerinin içinden geçebilirsin, dolu hücrede duramazsın.</li></ul>') +
     sec(I.mUp, 'Moral', '<ul><li><b>Sarı ok:</b> yanında 2 dost birlik ya da son turda düşman yok etmek (+%10).</li><li><b>Mavi ok:</b> kıskaç (−%20), ağır kıskaç (−%30), çevrili (−%45). 4 düşmanla sarılınca iki mavi ok.</li><li>Yakın ve Modern Çağ’da şehir ya da kaleden uzaklaşan birlik <b>ikmalsiz</b> kalır: −%15 ve iyileşmez.</li></ul>') +
     sec(I.castle, 'Yapılar ve kuleler', '<ul><li><b>Şehir</b> 6, <b>kale</b> 4, <b>demirci</b> 3, <b>tarla</b> ve <b>liman</b> 2 seviye.</li><li>Alınan şehir geliştirmelerini korur; yalnız alındığı tur gelirin 1/10’unu verir.</li><li>Her tur kendi boş arazine bir kule: <b>savunma</b> (saldırmaz, 2 tur), <b>savaş kulesi</b> (yanındakine saldırır, 2 tur), <b>ok kulesi</b> / top tabyası / füze bataryası (2 hücre uzağa, 3 tur).</li><li>İnşaat sırasında kule yarı savunmalıdır.</li></ul>') +
@@ -660,6 +660,7 @@ function cellHTML(c) {
   var kindIcon = c.t === 3 ? I.city : c.t === 4 ? I.castle : c.t === 2 ? I.wheat : c.mt ? I.mount : I.flag;
   var facts = '';
   if (c.t === 3) facts += '<span>' + I.coin + '+' + Math.round((CITY_INCOME[c.lv] + c.port * 2) * (G.factions[f] ? G.factions[f].eco : 1)) + '</span>' + (c.smith ? '<span>' + I.hammer + c.smith + '</span>' : '') + (c.port ? '<span>' + I.anchor + c.port + '</span>' : '') + '<span>' + I.shield + '+' + (8 * c.lv) + '%</span>';
+  if (c.t === 3 && c.res) facts += '<span class="res">' + (c.res === 't' ? I.scale + 'Ticaret +' + resGold(c) : c.res === 'a' ? I.coin + 'Altın madeni +' + resGold(c) : I.iron + 'Demir madeni +' + RES_IRON.d) + '</span>';
   if (c.t === 3) { var rv = revoltChance(G, c); if (rv >= 0.05) facts += '<span class="bad">' + I.fire + '%' + Math.round(rv * 100) + '</span>'; if (c.spy && c.spy.f === G.player && c.spy.until >= G.turn) facts += '<span class="good">' + I.spy + '</span>'; }
   if (c.t === 4) facts += '<span>' + I.shield + '+' + Math.round(CASTLE_DEF[c.lv] * 100) + '%</span>';
   if (c.t === 2) facts += '<span>' + I.food + '+' + FARM_FOOD[c.lv] + '</span>';
@@ -1589,6 +1590,7 @@ function render(now) {
       badge(bx, byy, s, String(c.lv), c.t === 3 ? '#f1e7d2' : '#d7cfbe');
       if (c.smith) badge(bx + s * 0.34, byy, s, '⚒', '#c3ccd3');
       if (c.port) badge(bx + s * (c.smith ? 0.68 : 0.34), byy, s, '⚓', '#a9d0ea');
+      if (c.res) { var rx = p.x + s * 0.62; badge(rx, byy, s, c.res === 't' ? '⚖' : c.res === 'a' ? '◆' : '⛏', c.res === 't' ? '#e9d7a8' : c.res === 'a' ? '#f2c230' : '#b8c2ca'); }
       if (c.nm && s > 22 && !occupied) label(c.nm, p.x, p.y + s * 0.62, s);
       if (c.nm && s > 22 && occupied) label(c.nm, p.x, by - s * 0.02, s, true);
     }
