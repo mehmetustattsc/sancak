@@ -236,9 +236,9 @@ var ERA_LEVELS = [[
     story: 'Fiyortlar, ormanlar ve Baltık. Yedi devlet, dar boğazlar ve uzun kıyılar. Donanma ile hava gücü bu kuzey denizinde kilit.' },
   { map: 9, par: 65, limit: 135, aiEco: 0.85, grace: 3,
     story: 'Cebelitarık’tan Boğaz’a dokuz devlet ve tek deniz. Donanma, hava saldırısı ve çıkarma birlikte kullanılmalı. Yeşil oklar dar boğazdan karadan geçişi gösterir.' },
-  { map: 5, par: 40, limit: 100, aiEco: 0.85, grace: 3,
+  { map: 5, par: 55, limit: 130, aiEco: 0.85, grace: 3,
     story: 'Lizbon’dan Anadolu’ya on devlet. Tanklar hızlı, roketler uzağa vurur. Her tur bir hava saldırın var: şehirlerinin 4 hücre çevresindeki bir düşmanı vur.' },
-  { map: 12, bonus: true, par: 25, limit: 70, aiEco: 1.15, grace: 3,
+  { map: 12, bonus: true, par: 35, limit: 90, aiEco: 1.15, grace: 3,
     story: 'Bonus sefer. And Dağları’ndan Amazon’a dokuz ülke. Pasifik ile Atlantik birbirine bağlı değil: iki ayrı donanma gerekir. Orman tarafsız ve geniş.' }
 ]];
 var LEVELS = ERA_LEVELS[0];
