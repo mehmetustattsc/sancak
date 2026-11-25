@@ -101,9 +101,10 @@ def build(spec):
         if comp[k] != main and (not spec['navy'] or size[comp[k]] < spec.get('island_min', 2)):
             cells[k] = {'land': 0, 'lon': cells[k]['lon'], 'lat': cells[k]['lat']}; land.discard(k)
     # deniz yaz: kaba ızgarada kaybolan dar denizler (Marmara gibi)
+    carved = set()
     for lon, lat in spec.get('sea_at', []):
         k = min(land, key=lambda k: ((cells[k]['lon'] - lon) * K) ** 2 + (cells[k]['lat'] - lat) ** 2)
-        cells[k] = {'land': 0, 'lon': cells[k]['lon'], 'lat': cells[k]['lat']}; land.discard(k)
+        cells[k] = {'land': 0, 'lon': cells[k]['lon'], 'lat': cells[k]['lat']}; land.discard(k); carved.add(k)
     # sea: keep only sea cells within 2 of land (navy) else within 1 (decor)
     keep = {}
     for k, c in cells.items():
@@ -119,7 +120,7 @@ def build(spec):
             u = st.pop()
             for v in neigh(*u):
                 if v in sea and v not in seen: seen.add(v); st.append(v); part.append(v)
-        if len(part) < 8:
+        if len(part) < 8 and not carved.intersection(part):
             for v in part: del cells[v]
     # haritanın içinde kalan boşlukları doldur: denize değen boşluk deniz olur (gemi gidebilsin), karayla çevrili boşluk tarafsız kara
     w_, h_ = math.sqrt(3) * s, 1.5 * s
@@ -300,8 +301,8 @@ def balkan_owner(c, lon, lat):
     if c in ('BIH', 'HRV'): return 'sari'
     return 'n'                                                             # Arnavutluk tarafsız
 BALKAN = {
-  'name': 'Balkanlar ve Anadolu', 'legacy': True, 'navy': True, 'box': (15.6, 34.8, 33.6, 46.3), 'target': 135, 'seed': 3, 'island_min': 1, 'foreign_void': True,
-  'sea_at': [(28.4, 40.75), (27.2, 40.6)], 'straits': ['İstanbul'],
+  'name': 'Balkanlar ve Anadolu', 'legacy': True, 'navy': True, 'box': (15.6, 34.8, 33.6, 46.3), 'target': 220, 'seed': 3, 'island_min': 1, 'foreign_void': True,
+  'sea_at': [(27.3, 40.51)], 'straits': ['İstanbul', 'Çimenlik'],   # Marmara; İstanbul ve Çanakkale boğaz şehirleri
   'styles': {'kirmizi': 'turk', 'kahve': 'turk'},
   'countries': ['TUR', 'GRC', 'BGR', 'ROU', 'SRB', 'KOS', 'MNE', 'MKD', 'BIH', 'HRV', 'ALB'],
   'owner': balkan_owner,
@@ -309,7 +310,7 @@ BALKAN = {
   'titles': {'kirmizi': 'Beylik', 'kahve': 'Sultanlık', 'mor': 'İmparatorluk', 'siyah': 'Çarlık', 'yesil': 'Voyvodalık', 'bordo': 'Despotluk', 'sari': 'Banlık'},
   'caps': {'kirmizi': 'Bursa', 'kahve': 'Konya', 'mor': 'İstanbul', 'turkuaz': 'Atina', 'siyah': 'Tırnova', 'bordo': 'Belgrad', 'yesil': 'Tergovişte', 'sari': 'Saraybosna'},
   'places': [
-    ('İstanbul', 28.97, 41.01, 3, 'city'), ('Bursa', 29.06, 40.19, 3, 'city'), ('Konya', 32.49, 37.87, 3, 'city'), ('Atina', 23.73, 37.98, 3, 'city'),
+    ('İstanbul', 28.70, 41.08, 3, 'city'), ('Bursa', 29.06, 40.19, 3, 'city'), ('Konya', 32.49, 37.87, 3, 'city'), ('Atina', 23.73, 37.98, 3, 'city'),
     ('Tırnova', 25.63, 43.08, 3, 'city'), ('Belgrad', 20.46, 44.82, 3, 'city'), ('Tergovişte', 25.46, 44.93, 3, 'city'), ('Saraybosna', 18.41, 43.86, 3, 'city'),
     ('Edirne', 26.56, 41.68, 2, 'city', 'kirmizi'), ('Selanik', 22.94, 40.64, 2, 'city'), ('Ankara', 32.85, 39.93, 2, 'city'), ('İzmir', 27.14, 38.42, 2, 'city'),
     ('Sofya', 23.32, 42.70, 2, 'city'), ('Üsküp', 21.43, 42.00, 2, 'city'), ('Kraiova', 23.80, 44.32, 1, 'city'), ('Ragusa', 18.09, 42.65, 2, 'city', 'sari'),
@@ -320,7 +321,12 @@ BALKAN = {
     ('Kütahya', 29.98, 39.42, 1, 'castle'), ('Alanya', 32.00, 36.54, 1, 'castle'), ('Vize', 27.77, 41.57, 1, 'castle', 'mor'), ('Rumeli', 27.6, 41.1, 1, 'castle'),
     ('Vidin', 22.88, 43.99, 1, 'castle'), ('Semendire', 20.93, 44.66, 2, 'castle'), ('Braşov', 25.59, 45.65, 1, 'castle'), ('Prizren', 20.74, 42.21, 1, 'castle'),
     ('Jajce', 17.27, 44.34, 1, 'castle'), ('Mistra', 22.37, 37.07, 1, 'castle'), ('Akrokorint', 22.87, 37.89, 1, 'castle'), ('Kruja', 19.79, 41.51, 1, 'castle'),
-    ('Çimenlik', 26.40, 40.15, 1, 'castle'), ('Silistre', 27.26, 44.12, 1, 'castle'),
+    ('Çimenlik', 26.40, 40.48, 1, 'castle'), ('Silistre', 27.26, 44.12, 1, 'castle'),
+    ('Sinop', 33.15, 42.02, 1, 'castle'), ('Eskişehir', 30.52, 39.78, 1, 'city'), ('Afyon', 30.54, 38.76, 1, 'castle'), ('Manisa', 27.43, 38.61, 1, 'city', 'kahve'),
+    ('Bergama', 27.18, 39.12, 1, 'castle'), ('Bolu', 31.61, 40.73, 1, 'city'), ('Isparta', 30.55, 37.76, 1, 'city'), ('Bükreş', 26.10, 44.43, 1, 'city'),
+    ('Köstence', 28.63, 44.17, 1, 'castle'), ('Burgaz', 27.47, 42.50, 1, 'city'), ('Kavala', 24.41, 40.94, 1, 'castle'), ('Larissa', 22.42, 39.64, 1, 'city'),
+    ('Patras', 21.73, 38.25, 1, 'city'), ('Eğriboz', 23.60, 38.46, 1, 'castle'), ('Tiran', 19.82, 41.33, 1, 'city'), ('Mostar', 17.81, 43.34, 1, 'castle'),
+    ('Podgorica', 19.26, 42.44, 1, 'city'), ('Banja Luka', 17.19, 44.77, 1, 'city'), ('Ohri', 20.80, 41.12, 1, 'castle'), ('Gelibolu', 26.67, 40.41, 1, 'castle'),
   ]}
 def west_owner(c, lon, lat):
     if c in ('FRA',): return 'n' if (lon < -0.9 and lat > 46.8) else 'mavi'      # Bretanya tarafsız

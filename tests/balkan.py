@@ -22,7 +22,7 @@ async def main():
         await shot('B0-era')
         await pg.click('.lvl[data-l="2"]'); await pg.wait_for_timeout(300)
         txt = await pg.evaluate('()=>document.querySelector("#modal").textContent')
-        assert 'Kızıl Beylik' in txt and 'Boğaz' in txt, 'beylik adı ve hikâye görünmeli'
+        assert 'Osmanlı Beyliği' in txt and 'Boğaz' in txt, 'beylik adı ve hikâye görünmeli'
         await pg.click('[data-f="kirmizi"]'); await pg.wait_for_timeout(200); await shot('B1-setup')
         await pg.click('#sGo'); await pg.wait_for_timeout(1200); await shot('B2-start')
         await pg.click('#hFit'); await pg.wait_for_timeout(300); await shot('B3-fit')

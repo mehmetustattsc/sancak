@@ -216,7 +216,7 @@ var ERA_LEVELS = [[
     story: 'Yarımada altı sancağa bölünmüş. Kuzeyde dağlar, güneyde verimli ovalar. Tahtı, yarımadayı ilk birleştiren alır.' },
   { map: 1, par: 48, limit: 90, aiEco: 0.85, grace: 3,
     story: 'Zengin şehirler, karlı Alpler ve Akdeniz. Denizi tutan kıyıları, dağları tutan geçitleri tutar.' },
-  { map: 2, par: 45, limit: 100, aiEco: 0.85, grace: 3,
+  { map: 2, par: 55, limit: 115, aiEco: 0.85, grace: 3,
     story: 'Doğu ile Batı’nın kavşağı. Sekiz sancak, iki deniz ve bir Boğaz. İstanbul’u tutan iki denizin geçidini tutar; ama her sancak aynı şansla başlar.' },
   { map: 6, par: 40, limit: 85, aiEco: 0.85, grace: 3,
     story: 'Adalar, fiyortlar ve soğuk denizler. Yedi sancağın çoğu denizle ayrılmış: donanmasız fetih olmaz. Yeşil oklar dar boğazlardan karadan geçişi gösterir.' },

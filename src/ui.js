@@ -1416,7 +1416,7 @@ function buildTerrain(G) {
   var cx = cv.getContext('2d');
   // deniz
   cx.fillStyle = '#2d5378'; cx.fillRect(0, 0, cv.width, cv.height);
-  for (var i = 0; i < 260; i++) { var rx = terHash(i, 1) * cv.width, ry = terHash(i, 2) * cv.height; cx.fillStyle = terHash(i, 3) > 0.5 ? 'rgba(255,255,255,.03)' : 'rgba(0,10,30,.05)'; cx.beginPath(); cx.arc(rx, ry, k * (1 + terHash(i, 4) * 3), 0, 7); cx.fill(); }
+  for (var i = 0; i < 0; i++) { var rx = terHash(i, 1) * cv.width, ry = terHash(i, 2) * cv.height; cx.fillStyle = terHash(i, 3) > 0.5 ? 'rgba(255,255,255,.03)' : 'rgba(0,10,30,.05)'; cx.beginPath(); cx.arc(rx, ry, k * (1 + terHash(i, 4) * 3), 0, 7); cx.fill(); }
   var coast = terChains(terEdges(G, function (c, n) { return c.t && (!n || !n.t); })).map(function (ch) { return terSmooth(ch, 0.35); });
   T.coast = coast;
   // sığ su bandı
@@ -1527,7 +1527,9 @@ function render(now) {
   vis.forEach(function (v) {
     var c = v[0], p = v[1]; if (!c.strait) return;
     var seas = c.nb.map(function (j) { return G.cells[j]; }).filter(function (o) { return o.t === 0; });
-    var a = seas.filter(function (o) { return o.r < c.r; })[0], b = seas.filter(function (o) { return o.r > c.r; })[0]; if (!a || !b) return;
+    var a = null, b = null, bd = 0;
+    seas.forEach(function (x) { seas.forEach(function (y) { var d = Math.hypot(x.x - y.x, x.y - y.y); if (d > bd) { bd = d; a = x; b = y; } }); });
+    if (!a || bd < 2) return;
     var pa = w2s((c.x + a.x) / 2, (c.y + a.y) / 2), pb = w2s((c.x + b.x) / 2, (c.y + b.y) / 2);
     var mx = (pa.x + pb.x) / 2 + s * 0.38, my = (pa.y + pb.y) / 2;
     ctx.save(); ctx.lineCap = 'round';
