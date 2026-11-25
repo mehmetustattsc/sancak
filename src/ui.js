@@ -88,6 +88,13 @@ function hexPath(c, x, y, r) {
   for (var k = 0; k < 6; k++) { var a = Math.PI / 180 * (60 * k - 30); var px = x + r * Math.cos(a), py = y + r * Math.sin(a); k ? c.lineTo(px, py) : c.moveTo(px, py); }
   c.closePath();
 }
+var MIX = {};
+function miniMix(col) {
+  // ülke rengini toprak rengiyle karıştır (üst üste binen altıgenler iz bırakmasın)
+  if (MIX[col]) return MIX[col];
+  var n = parseInt(col.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255, k = 0.6;
+  return (MIX[col] = 'rgb(' + Math.round(r * k + 211 * (1 - k)) + ',' + Math.round(g * k + 198 * (1 - k)) + ',' + Math.round(b * k + 160 * (1 - k)) + ')');
+}
 function drawMini(cv, mi, owners) {
   var M = MAPS[mi], dpr = Math.min(2, window.devicePixelRatio || 1);
   var W = cv.clientWidth || 84, Ht = cv.clientHeight || 64;
@@ -98,12 +105,27 @@ function drawMini(cv, mi, owners) {
   xs.forEach(function (p) { minx = Math.min(minx, p.x); maxx = Math.max(maxx, p.x); miny = Math.min(miny, p.y); maxy = Math.max(maxy, p.y); });
   minx--; maxx++; miny--; maxy++;
   var s = Math.min(W / (maxx - minx), Ht / (maxy - miny)), ox = (W - (maxx - minx) * s) / 2 - minx * s, oy = (Ht - (maxy - miny) * s) / 2 - miny * s;
-  M.cells.forEach(function (h, i) {
-    var p = xs[i];
-    if (!h[2]) c.fillStyle = '#244a66';
-    else { var f = owners ? owners[i] : h[3]; c.fillStyle = f === 'n' || !FACTIONS[f] ? NEUTRAL_COL : FACTIONS[f].col; }
-    hexPath(c, p.x * s + ox, p.y * s + oy, s * 0.98); c.fill();
-    if (h[2] === 3) { c.fillStyle = '#f3ecdc'; c.fillRect(p.x * s + ox - s * 0.35, p.y * s + oy - s * 0.35, s * 0.7, s * 0.7); }
+  // yeni harita çizimiyle aynı dil: yumuşak kıyı, toprak zemin, soluk ülke rengi, kesikli sınır
+  var cells = M.cells.map(function (h, i) { return { i: i, q: h[0], r: h[1], x: xs[i].x, y: xs[i].y, t: h[2], f: owners ? owners[i] : h[3] }; });
+  var GG = { cells: cells }, T = { x0: 0, y0: 0, k: 1 };
+  var coast = terChains(terEdges(GG, function (a, n) { return a.t && (!n || !n.t); })).map(function (ch) { return terSmooth(ch, 0.35); });
+  var bord = terChains(terEdges(GG, function (a, n) { return a.t && n && n.t && n.f !== a.f && n.i > a.i; })).map(function (ch) { return terSmooth(ch, 0.15); });
+  c.fillStyle = '#2d5378'; c.fillRect(0, 0, W, Ht);
+  c.setTransform(dpr * s, 0, 0, dpr * s, dpr * ox, dpr * oy); c.lineJoin = 'round';
+  terPath(c, coast, T); c.strokeStyle = '#4b7ea6'; c.lineWidth = 0.7; c.stroke();
+  c.save(); terPath(c, coast, T); c.clip();
+  c.fillStyle = '#d3c6a0'; c.fillRect(minx, miny, maxx - minx, maxy - miny);
+  cells.forEach(function (h) {
+    if (!h.t || h.f === 'n' || !FACTIONS[h.f]) return;
+    hexPath(c, h.x, h.y, 1.06); c.fillStyle = miniMix(FACTIONS[h.f].col); c.fill();
+  });
+  c.restore();
+  terPath(c, bord, T); c.strokeStyle = 'rgba(40,28,18,.55)'; c.lineWidth = 0.12; c.stroke();
+  terPath(c, coast, T); c.strokeStyle = 'rgba(30,50,70,.8)'; c.lineWidth = Math.max(0.06, 0.9 / s); c.stroke();
+  cells.forEach(function (h) {
+    if (h.t !== 3) return;
+    c.beginPath(); c.arc(h.x, h.y, 0.32, 0, 7); c.fillStyle = '#3a2a1a'; c.fill();
+    c.beginPath(); c.arc(h.x, h.y, 0.2, 0, 7); c.fillStyle = '#f3ecdc'; c.fill();
   });
 }
 
