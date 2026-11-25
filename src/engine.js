@@ -349,7 +349,10 @@ function income(G, fi) {
   var g = 0, food = 0, iron = 0, up = 0;
   G.cells.forEach(function (c) {
     if (c.f !== fi || !c.t) return;
-    if (c.t === 3) { g += CITY_INCOME[c.lv]; food += 1; iron += c.smith; g += c.port * 2; }
+    if (c.t === 3) {
+      if (c.fresh) { g += (CITY_INCOME[c.lv] + c.port * 2) / 10; return; }
+      g += CITY_INCOME[c.lv]; food += 1; iron += c.smith; g += c.port * 2;
+    }
     if (c.t === 2) food += FARM_FOOD[c.lv] + upg(G, fi, 'tarim');
   });
   G.units.forEach(function (u) { if (u.f === fi && !UT[u.type].tower) up += 1; });
@@ -362,6 +365,7 @@ function startTurn(G, fi, first) {
   if (!first) {
     var inc = income(G, fi);
     f.gold += inc.g; f.iron += inc.iron; f.food += inc.food - inc.up;
+    G.cells.forEach(function (c) { if (c.f === fi && c.fresh) c.fresh = 0; });
     if (f.food < 0) {
       f.food = 0;
       G.units.forEach(function (u) { if (u.f === fi) u.hp = Math.max(1, u.hp - 8); });
@@ -487,9 +491,8 @@ function capture(G, c, fi) {
   var from = c.f;
   if (from === fi) return;
   c.f = fi;
-  if (c.t === 3) { c.lv = Math.max(1, c.lv - 1); c.smith = Math.min(c.smith, Math.max(0, c.lv - 1)); }
-  if (c.t === 2 && c.lv > 1) c.lv = 1;
-  if (c.t === 4 && c.lv > 1) c.lv--;
+  // geliştirmeler korunur; yeni alınan şehir ilk turda gelirin yalnız 1/10'unu verir
+  if (c.t === 3) c.fresh = 1;
   if (fi === G.player && c.t === 3) G.stats.cities++;
   if (fi === G.player && c.t === 4 && from !== fi) G.stats.forts = (G.stats.forts || 0) + 1;
   if (from >= 0 && c.t === 3) { G.recentLoss = G.recentLoss || []; G.recentLoss[from] = G.turn; }
