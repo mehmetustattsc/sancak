@@ -319,6 +319,10 @@ function legendsHTML() {
           '<div><span class="k">Yara</span>Birliği yok olursa 5 tur dinlenir</div>'
           : '<div class="xp"><div class="bar"><i style="width:' + pct + '%"></i></div><span>' + L.hint + (L.goal.n > 1 ? ' (' + pr + '/' + L.goal.n + ')' : '') + '</span></div>') +
         '</div></div>';
+    }).join('') + '</div>' +
+    '<div class="spyrow"><span class="tl">' + I.dagger + '<em>' + I.coin + ASSN_COST + '</em></span>' + [['city', I.city], ['smith', I.hammer], ['port', I.anchor]].map(function (w) {
+      var r = sabInfo(G, G.player, c.i, w[0]);
+      return '<button class="trb' + (r.ok ? '' : ' off') + '" data-sab="' + w[0] + '" data-c="' + c.i + '"' + (r.ok ? '' : ' data-why="' + esc(r.why) + '"') + '>' + w[1] + '−1<small>%' + Math.round(r.chance * 100) + '</small></button>';
     }).join('') + '</div>';
 }
 function renderGenerals() {
@@ -370,7 +374,7 @@ function renderHelp() {
     sec(I.handshake, 'Diplomasi ve pazarlık', '<ul><li>Savaş ya da ittifak (' + ALLY_TURNS + ' tur, en fazla ' + MAX_ALLIES + ' müttefik). Müttefikin boş şehrine girmek ihanettir.</li><li>Pazarlık masasında her teklifi yapabilirsin. İpucu şansını gösterir; karşı taraf düşünüp cevap verir. Sana ihtiyacı ne kadar çoksa eksik teklifi o kadar kabul eder.</li><li>Gelen tekliflere <b>Pazarlık</b> ile karşı teklif verebilirsin.</li><li>Çok zayıf ülkeyi altınla <b>bağlı krallık</b> yapabilirsin; her ilhak bir sonrakini %25 pahalılaştırır.</li></ul>') +
     sec(I.crown, 'Generaller ve efsaneler', '<ul><li>Sefere en fazla ' + MAX_GENS + ' general seç. General birliğini güçlendirir; birlik yok olursa general yaralanır (3 tur, efsane 5 tur).</li><li>Efsaneler bir başarıyla sürpriz olarak katılır, her çağda kullanılır. Koşulları Generaller sekmesinde.</li></ul>') +
     sec(I.jet, 'Modern Çağ: hava saldırısı', '<p>Her tur bir kez, şehirlerinin ' + AIR_RANGE + ' hücre çevresindeki bir düşmana dokun ve uçak düğmesine bas. Karşılık gelmez; sığınaktakine yarı hasar.</p>') +
-    sec(I.spy, 'Casus, suikast ve isyan', '<ul><li><b>İsyan:</b> içinde birlik olmayan şehir ayaklanabilir. Sonradan alınmış şehirde ihtimal yüksek, baştan beri senin olanda çok düşük. Ayaklanan şehir eski sahibine döner. Son şehir ayaklanmaz. ' + I.fire + ' işareti ihtimali gösterir.</li><li><b>Casus</b> (turda bir, ' + SPY_COST + ' altın): düşman şehrine dokun, görevi seç: <b>gelir çal</b> ya da <b>kışkırt</b>. Başarılı casus 3 tur orada kalır; o şehre saldırınca +%15.</li><li><b>Suikastçı</b> (turda bir, ' + ASSN_COST + ' altın): yalnız düşman generaline. Sınırdaki ve yalnız generale kolay, ülkenin ortasındaki ve korunan generale zor. Başarılıysa general dinlenmeye çekilir.</li><li>Yakalanırsan o ülke birkaç tur seninle konuşmaz. Karargâh’ta casus, suikastçı ve diplomatları geliştirebilirsin.</li></ul>') +
+    sec(I.spy, 'Casus, suikast ve isyan', '<ul><li><b>İsyan:</b> içinde birlik olmayan şehir ayaklanabilir. Sonradan alınmış şehirde ihtimal yüksek, baştan beri senin olanda çok düşük. Ayaklanan şehir eski sahibine döner. Son şehir ayaklanmaz. ' + I.fire + ' işareti ihtimali gösterir.</li><li><b>Casus</b> (turda bir, ' + SPY_COST + ' altın): düşman şehrine dokun, görevi seç: <b>gelir çal</b> ya da <b>kışkırt</b>. Başarılı casus 3 tur orada kalır; o şehre saldırınca +%15.</li><li><b>Suikastçı</b> (turda bir, ' + ASSN_COST + ' altın): yalnız düşman generaline. Sınırdaki ve yalnız generale kolay, ülkenin ortasındaki ve korunan generale zor. Başarılıysa general dinlenmeye çekilir. Düşman şehrinde <b>sabotaj</b> da yapar: şehir seviyesini, demirciyi ya da limanı bir düşürür. Başkentte ve ülkenin içlerinde zordur.</li><li>Yakalanırsan o ülke birkaç tur seninle konuşmaz. Karargâh’ta casus, suikastçı ve diplomatları geliştirebilirsin.</li></ul>') +
     sec(I.medal, 'Kazanmak ve madalyalar', '<ul><li>Şehirlerin %60’ını al ya da bütün rakipleri yık. Bir devletin son şehrini alan, kalan bütün topraklarını (kale, tarla, arazi) da alır. Zaferden sonra istersen fethe devam edip istediğin an bitirebilirsin.</li><li>Madalyalar Karargâh’ta kalıcı geliştirmeye ve general eğitimine harcanır. Zor seviye ×1,5, bonus sefer ×1,5.</li><li>Bonus sefer, çağın bütün seferleri kazanılınca açılır. 3 kayıt yerin var.</li></ul>');
 }
 function renderSettings() {
@@ -711,6 +715,10 @@ function renderPanel() {
     assassinate(G, G.player, d.id); B.undo = []; updateHud();
     playLog(function () { renderPanel(); updateHud(); });
   };
+  el.querySelectorAll('[data-sab]:not(.off)').forEach(function (b) { b.onclick = function () {
+    sabotage(G, G.player, +b.dataset.c, b.dataset.sab); B.undo = []; updateHud();
+    playLog(function () { renderPanel(); updateHud(); dirty = true; });
+  }; });
   el.querySelectorAll('[data-spy]:not(.off)').forEach(function (b) { b.onclick = function () {
     sendSpy(G, G.player, +b.dataset.c, b.dataset.spy); B.undo = []; updateHud();
     playLog(function () { renderPanel(); updateHud(); dirty = true; });
@@ -1036,6 +1044,13 @@ function animEvent(e, sp) {
         : (e.ok ? (me ? 'Suikast başarılı' : 'Generaline suikast!') : (me ? 'Suikastçı yakalandı' : 'Suikastçı yakalandı: ' + factionName(G, e.f)));
       fx({ k: 'text', c: e.c, txt: txt, col: e.ok === me ? '#e8c977' : '#ff8a6a' }); toast(txt); d = 600 / sp;
     }
+  } else if (e.t === 'sab') {
+    if (e.f === G.player || e.to === G.player) {
+      var wn = e.w === 'city' ? 'Şehir' : e.w === 'smith' ? 'Demirci' : 'Liman';
+      var tx = e.ok ? wn + ' patlatıldı!' : 'Sabotajcı yakalandı';
+      if (e.ok) fx({ k: 'boom', c: e.c });
+      fx({ k: 'text', c: e.c, txt: tx, col: (e.ok === (e.f === G.player)) ? '#e8c977' : '#ff8a6a' }); toast(tx); d = 700 / sp; dirty = true;
+    }
   } else if (e.t === 'revolt') {
     if (e.from === G.player || e.to === G.player || B.phase === 'ai') ensureVisible(e.c);
     fx({ k: 'text', c: e.c, txt: 'İsyan!', col: '#ff8a6a' }); toast((G.cells[e.c].nm || 'Şehir') + ' ayaklandı'); d = 700 / sp; dirty = true;
@@ -1096,6 +1111,7 @@ function noteLog(G) {
     } else if (e.t === 'ally' && (e.a === P || e.b === P)) S.notes.push(I.handshake + factionName(G, e.a === P ? e.b : e.a) + ' ile ittifak');
     else if (e.t === 'betray' && e.b === P) S.notes.push(I.skull + factionName(G, e.a) + ' ihanet etti');
     else if (e.t === 'revolt' && (e.from === P || e.to === P)) S.notes.push(I.fire + (G.cells[e.c].nm || 'Şehir') + (e.to === P ? ' isyanla sana döndü' : ' ayaklandı'));
+    else if (e.t === 'sab' && e.to === P) S.notes.push(I.dagger + factionName(G, e.f) + (e.ok ? ' ' + (G.cells[e.c].nm || 'şehrinde') + ' sabotaj yaptı' : ' sabotajcısı yakalandı'));
     else if ((e.t === 'spy' || e.t === 'assn') && e.to === P) S.notes.push((e.t === 'spy' ? I.spy : I.dagger) + factionName(G, e.f) + (e.ok ? (e.t === 'spy' ? (e.m === 'steal' ? ' ' + e.amt + ' altın çaldı' : ' şehrini kışkırttı') : ' generaline suikast yaptı') : ' casusu yakalandı'));
     else if (e.t === 'elim') S.notes.push(I.flag + factionName(G, e.f) + ' yıkıldı' + (e.by >= 0 ? ' → ' + factionName(G, e.by) : ''));
   });
@@ -1487,7 +1503,7 @@ function drawTerrain(G) {
   if (own !== T.own) { buildOwners(G, T); T.own = own; }
   var p = w2s(T.x0, T.y0), sc = B.cam.s / T.k;
   ctx.drawImage(T.cv, p.x, p.y, T.cv.width * sc, T.cv.height * sc);
-  ctx.globalAlpha = 0.38; ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(T.ov, p.x, p.y, T.ov.width * sc, T.ov.height * sc); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 0.1; ctx.drawImage(T.ov, p.x, p.y, T.ov.width * sc, T.ov.height * sc); ctx.globalAlpha = 1;
+  ctx.globalAlpha = 0.26; ctx.globalCompositeOperation = 'multiply'; ctx.drawImage(T.ov, p.x, p.y, T.ov.width * sc, T.ov.height * sc); ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 0.07; ctx.drawImage(T.ov, p.x, p.y, T.ov.width * sc, T.ov.height * sc); ctx.globalAlpha = 1;
   // sınırlar
   ctx.save(); ctx.translate(p.x, p.y); ctx.scale(sc, sc); ctx.lineJoin = 'round'; ctx.lineCap = 'round';
   terPath(ctx, T.bord, T);

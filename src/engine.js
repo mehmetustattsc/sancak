@@ -637,6 +637,33 @@ function assassinate(G, fi, uid, R) {
   G.log.push({ t: 'assn', f: fi, to: u.f, c: u.c, ok: ok, gen: g.id });
   return true;
 }
+/* sabotaj: suikastçı düşman şehrinde şehir seviyesini, demirciyi ya da limanı patlatır (turda bir, suikastla ortak) */
+function sabInfo(G, fi, ci, what) {
+  var c = G.cells[ci], r = { ok: false, cost: ASSN_COST, chance: 0 };
+  if (!c || c.t !== 3 || c.f < 0 || c.f === fi) { r.why = 'Sabotaj yalnız düşman şehrine'; return r; }
+  var lv = what === 'city' ? c.lv - 1 : what === 'smith' ? c.smith : c.port;
+  var ch = 0.45 + 0.08 * covertLv(G, fi, 'suikast') - (unitAt(G, ci) ? 0.10 : 0) - 0.05 * (depthOf(G, c, c.f) - 1) - (c.cap ? 0.10 : 0);
+  r.chance = Math.max(0.05, Math.min(0.85, ch));
+  if (isAlly(G, fi, c.f)) r.why = 'Müttefike sabotaj olmaz';
+  else if (lv <= 0) r.why = what === 'city' ? 'Şehir daha fazla düşmez' : what === 'smith' ? 'Demirci yok' : 'Liman yok';
+  else if (G.assnUsed && G.assnUsed[fi] === G.turn) r.why = 'Bu tur suikastçı gönderdin';
+  else if (G.factions[fi].gold < ASSN_COST) r.why = 'Yetersiz altın';
+  else r.ok = true;
+  return r;
+}
+function sabotage(G, fi, ci, what, R) {
+  var r = sabInfo(G, fi, ci, what); if (!r.ok) return false;
+  var c = G.cells[ci], to = c.f;
+  G.factions[fi].gold -= ASSN_COST; G.assnUsed = G.assnUsed || {}; G.assnUsed[fi] = G.turn;
+  var ok = (R || Math.random)() < r.chance;
+  if (ok) {
+    if (what === 'city') { c.lv--; c.smith = Math.min(c.smith, Math.max(0, c.lv - 1)); }
+    else if (what === 'smith') c.smith--;
+    else c.port--;
+  } else caught(G, to, fi);
+  G.log.push({ t: 'sab', f: fi, to: to, c: ci, w: what, ok: ok });
+  return true;
+}
 /* bot: ara sıra kendi kaybettiği ya da boş bırakılmış düşman şehrini kışkırtır, zengin şehirden çalar, sınırdaki generale suikast dener */
 function aiCovert(G, fi, R) {
   var f = G.factions[fi], did = false;
@@ -655,6 +682,11 @@ function aiCovert(G, fi, R) {
     var bu = null, bc = 0.35;
     G.units.forEach(function (u) { if (u.f >= 0 && u.f !== fi && u.gen) { var a = assnInfo(G, fi, u.id); if (a.ok && a.chance > bc) { bc = a.chance; bu = u.id; } } });
     if (bu && assassinate(G, fi, bu, R)) did = true;
+    else {
+      var bc2 = null, bl = 3;
+      G.cells.forEach(function (c) { if (c.t === 3 && c.f >= 0 && c.f !== fi && !isAlly(G, fi, c.f) && c.lv + c.smith > bl && sabInfo(G, fi, c.i, 'city').chance >= 0.4) { bl = c.lv + c.smith; bc2 = c; } });
+      if (bc2 && sabotage(G, fi, bc2.i, bc2.smith > 1 ? 'smith' : 'city', R)) did = true;
+    }
   }
   return did;
 }
@@ -1419,5 +1451,5 @@ function runAI(G, fi, R) { var it = aiTurn(G, fi, R); while (!it.next().done) { 
 if (typeof module !== 'undefined') module.exports = {
   setMaps: function (m) { MAPS = m; }, newGame: newGame, endTurn: endTurn, runAI: runAI, aiTurn: aiTurn, reach: reach, moveUnit: moveUnit,
   attack: attack, canAttack: canAttack, predict: predict, recruit: recruit, upgrade: upgrade, upgradeInfo: upgradeInfo, recruitInfo: recruitInfo,
-  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, TOWERS: TOWERS, TRADE_MAX: TRADE_MAX, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, spyInfo: spyInfo, sendSpy: sendSpy, assnInfo: assnInfo, assassinate: assassinate, revoltChance: revoltChance, angry: angry, SPY_COST: SPY_COST, ASSN_COST: ASSN_COST, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
+  assignGeneral: assignGeneral, income: income, annexInfo: annexInfo, answerDeal: answerDeal, dealHint: dealHint, dealNeed: dealNeed, annex: annex, isAlly: isAlly, allyCount: allyCount, makeAlly: makeAlly, proposeDeal: proposeDeal, applyDeal: applyDeal, aiOffer: aiOffer, cedeCell: cedeCell, power: power, morale: morale, moraleInfo: moraleInfo, MORALE: MORALE, MORALE_UP: MORALE_UP, LEGENDS: LEGENDS, MAX_GENS: MAX_GENS, ROLE_TYPE: ROLE_TYPE, SKILLS: SKILLS, armyCap: armyCap, armySize: armySize, UPGRADES: UPGRADES, DIFF_MEDAL: DIFF_MEDAL, ANNEX_STEP: ANNEX_STEP, cityShare: cityShare, buildTower: buildTower, trade: trade, tradeInfo: tradeInfo, towerInfo: towerInfo, TOWERS: TOWERS, TRADE_MAX: TRADE_MAX, unitAt: unitAt, GENERALS: GENERALS, LEVELS: LEVELS, canAir: canAir, airStrike: airStrike, spyInfo: spyInfo, sabInfo: sabInfo, sabotage: sabotage, sendSpy: sendSpy, assnInfo: assnInfo, assassinate: assassinate, revoltChance: revoltChance, angry: angry, SPY_COST: SPY_COST, ASSN_COST: ASSN_COST, airReady: airReady, airDmg: airDmg, AIR_RANGE: AIR_RANGE, ERA_LEVELS: ERA_LEVELS, levelsOf: levelsOf, setEra: setEra, supplied: supplied, UT: UT, starsFor: starsFor, rng: rng
 };
