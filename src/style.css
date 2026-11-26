@@ -673,3 +673,4 @@ p.bad { color: #ff8a6a; }
 .spyrow .trb small { margin-left: 4px; opacity: .8; font-size: 11px; }
 .facts .bad { color: #ff8a6a; } .facts .good { color: #e8c977; }
 .facts .res { color: #e8c977; white-space: nowrap; }
+.mapback { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 60; width: auto; padding: 12px 26px; box-shadow: 0 6px 20px rgba(0,0,0,.5); }

@@ -517,7 +517,7 @@ function capture(G, c, fi) {
   if (from === fi) return;
   c.f = fi;
   // geliştirmeler korunur; yeni alınan şehir ilk turda gelirin yalnız 1/10'unu verir
-  if (c.t === 3) c.fresh = 1;
+  if (c.t === 3) { c.fresh = 1; c.capT = G.turn; }
   if (fi === G.player && c.t === 3) G.stats.cities++;
   if (fi === G.player && c.t === 4 && from !== fi) G.stats.forts = (G.stats.forts || 0) + 1;
   if (from >= 0 && c.t === 3) { G.recentLoss = G.recentLoss || []; G.recentLoss[from] = G.turn; }
@@ -573,7 +573,9 @@ function revoltChance(G, c) {
   if (c.t !== 3 || c.f < 0 || unitAt(G, c.i)) return 0;
   var n = 0; G.cells.forEach(function (x) { if (x.t === 3 && x.f === c.f) n++; });
   if (n < 2) return 0;
-  var own = origOf(c) === c.f, p = own ? 0.01 : 0.06;
+  // sonradan alınmış şehirde ihtimal %6'dan başlar, her tur azalır; ~10 turda yerleşik şehir gibi %1'e iner
+  var own = origOf(c) === c.f, held = c.capT === undefined ? 10 : G.turn - c.capT;
+  var p = own ? 0.01 : Math.max(0.01, 0.06 - 0.005 * held);
   if (G.factions[c.f].food <= 0) p += 0.04;
   if (incited(G, c)) p += own ? 0.15 : 0.30;
   return p;

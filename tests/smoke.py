@@ -95,7 +95,10 @@ async def main():
         # menüler (sefer bittiyse sonuç ekranından çık)
         await pg.wait_for_timeout(900)
         if await pg.locator('#rMenu').count():
-            await shot('15-result'); await pg.click('#rMenu'); await pg.wait_for_timeout(300)
+            await shot('15-result')
+            await pg.click('#rMap'); await pg.wait_for_timeout(400); await shot('15b-result-map')
+            await pg.click('#mapBack'); await pg.wait_for_timeout(200)
+            await pg.click('#rMenu'); await pg.wait_for_timeout(300)
         elif await pg.locator('#hPause').count():
             await pg.click('#hPause'); await pg.wait_for_timeout(200); await shot('15-menu'); await pg.click('#pQuit'); await pg.wait_for_timeout(300)
         await pg.click('#tabbar [data-go="home"]'); await pg.wait_for_timeout(300); await shot('16-home-resume')

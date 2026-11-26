@@ -1256,6 +1256,7 @@ function finish(win, timeout, stopped) {
     '<p class="muted">Yok edilen düşman: ' + G.stats.kills + ' · alınan şehir: ' + G.stats.cities + ' · kaybedilen birlik: ' + G.stats.lost + '</p>' +
     ups.map(function (t) { return '<div class="rankup">' + t + '</div>'; }).join('') +
     newGens.map(function (x) { return '<div class="rankup">Yeni general açıldı: ' + x.name + '</div>'; }).join('') +
+    '<div class="row"><button class="btn ghost" id="rMap">' + I.fit + ' Haritayı göster</button></div>' +
     (canGoOn ? '<div class="row"><button class="btn" id="rCont">Haritayı fethetmeye devam et</button></div>' : '') +
     '<div class="row">' + (win && hasNext ? '<button class="btn' + (canGoOn ? ' ghost' : '') + '" id="rNext">Sonraki sefer</button>' : '<button class="btn" id="rAgain">' + (win ? 'Tekrar oyna' : 'Tekrar dene') + '</button>') + '</div>' +
     '<div class="row"><button class="btn ghost" id="rMenu">Seferler</button>' + (win && hasNext ? '<button class="btn ghost" id="rAgain">Tekrar</button>' : '') + '</div></div>');
@@ -1270,6 +1271,14 @@ function finish(win, timeout, stopped) {
     updateHud(); renderPanel(); dirty = true; persistGame();
     banner('Fetih sürüyor: bütün rakipleri yık', 1800);
     if (B.phase === 'ai') runAI();
+  };
+  $('#rMap').onclick = function () {
+    // sonuç penceresini gizle, haritanın son halini bütün olarak göster; düğmeyle geri dön
+    $('#modal').hidden = true;
+    if (B) { B.cam.s = B.fit; B.cam.x = (B.bounds.minx + B.bounds.maxx) / 2; B.cam.y = (B.bounds.miny + B.bounds.maxy) / 2; clampCam(B); dirty = true; }
+    var bk = document.createElement('button'); bk.id = 'mapBack'; bk.className = 'btn mapback'; bk.textContent = 'Sonuca dön';
+    bk.onclick = function () { bk.remove(); $('#modal').hidden = false; };
+    document.body.appendChild(bk);
   };
   $('#rMenu').onclick = function () { closeModal(); B = null; $('#scr-battle').hidden = true; openEra(x.e); };
   if (newLegs.length) revealLegends(newLegs, G.era);
@@ -1612,6 +1621,7 @@ function render(now) {
       badge(bx, byy, s, String(c.lv), c.t === 3 ? '#f1e7d2' : '#d7cfbe');
       if (c.smith) badge(bx + s * 0.34, byy, s, '⚒', '#c3ccd3');
       if (c.port) badge(bx + s * (c.smith ? 0.68 : 0.34), byy, s, '⚓', '#a9d0ea');
+      if (c.f === G.player && revoltChance(G, c) >= 0.03) badge(p.x - s * 0.62, byy, s, '🔥', '#ff8a6a');
       if (c.res) { var rx = p.x + s * 0.62; badge(rx, byy, s, c.res === 't' ? '⚖' : c.res === 'a' ? '◆' : '⛏', c.res === 't' ? '#e9d7a8' : c.res === 'a' ? '#f2c230' : '#b8c2ca'); }
       if (c.nm && s > 22 && !occupied) label(c.nm, p.x, p.y + s * 0.62, s);
       if (c.nm && s > 22 && occupied) label(c.nm, p.x, by - s * 0.02, s, true);
